@@ -6,6 +6,7 @@ namespace LumiaValley.Game
 {
     /// <summary>
     /// Teste de pipeline: MonoGame UWP ARM no Lumia, com backbuffer baixo e touch.
+    /// O backbuffer 640x360 e escalado pelo SwapChainPanel para a tela do dispositivo.
     /// Depois substituir pelo Game1 descompilado (reference/StardewValley/StardewValley/Game1.cs).
     /// </summary>
     public class Game1 : Microsoft.Xna.Framework.Game
