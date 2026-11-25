@@ -29,9 +29,12 @@ jobs:
             throw "Secret ASSETS_TOKEN nao configurado no repo LumiaValley"
           }
 
+          $token = $env:ASSETS_TOKEN.Trim()
+          Write-Host "Token length: $($token.Length)"
+
           $assetsRepo = "uaitibat/LumiaValley-assets"
           $headers = @{
-            Authorization = "Bearer $env:ASSETS_TOKEN"
+            Authorization = "Bearer $token"
             Accept = "application/vnd.github+json"
             "X-GitHub-Api-Version" = "2022-11-28"
           }
@@ -119,10 +122,11 @@ jobs:
         run: |
           if (-not $env:ASSETS_TOKEN) { throw "Secret ASSETS_TOKEN nao configurado" }
 
+          $token = $env:ASSETS_TOKEN.Trim()
           $assetsRepo = "uaitibat/LumiaValley-assets"
           $api = "https://api.github.com/repos/$assetsRepo"
           $headers = @{
-            Authorization = "Bearer $env:ASSETS_TOKEN"
+            Authorization = "Bearer $token"
             Accept = "application/vnd.github+json"
             "X-GitHub-Api-Version" = "2022-11-28"
           }
@@ -153,7 +157,7 @@ jobs:
 
           foreach ($p in $assets) {
             $uploadHeaders = @{
-              Authorization = "Bearer $env:ASSETS_TOKEN"
+              Authorization = "Bearer $token"
               Accept = "application/vnd.github+json"
               "Content-Type" = "application/octet-stream"
             }
