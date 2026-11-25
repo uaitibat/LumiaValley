@@ -23,23 +23,29 @@ jobs:
       - name: Baixar assets do cofre privado
         shell: pwsh
         env:
-          GH_TOKEN: ${{ secrets.ASSETS_TOKEN }}
+          ASSETS_TOKEN: ${{ secrets.ASSETS_TOKEN }}
         run: |
-          if (-not $env:GH_TOKEN) {
+          if (-not $env:ASSETS_TOKEN) {
             throw "Secret ASSETS_TOKEN nao configurado no repo LumiaValley"
           }
 
           $assetsRepo = "uaitibat/LumiaValley-assets"
-
-          gh api "repos/$assetsRepo" --jq '.full_name + " private=" + (.private|tostring)'
-          if ($LASTEXITCODE -ne 0) {
-            throw "O token nao consegue acessar $assetsRepo. Conferir resource owner/repository access do PAT."
+          $headers = @{
+            Authorization = "Bearer $env:ASSETS_TOKEN"
+            Accept = "application/vnd.github+json"
+            "X-GitHub-Api-Version" = "2022-11-28"
           }
 
+          $user = Invoke-RestMethod -Headers $headers -Uri "https://api.github.com/user"
+          Write-Host "Token valido para: $($user.login)"
+
           $zip = Join-Path $env:RUNNER_TEMP "Content.zip"
-          gh api -H "Accept: application/vnd.github.raw" `
-            "repos/$assetsRepo/contents/Content.zip" --output $zip
-          if ($LASTEXITCODE -ne 0) { throw "Falha ao baixar Content.zip do cofre" }
+          $rawHeaders = @{}
+          foreach ($key in $headers.Keys) { $rawHeaders[$key] = $headers[$key] }
+          $rawHeaders["Accept"] = "application/vnd.github.raw"
+          Invoke-WebRequest -Headers $rawHeaders `
+            -Uri "https://api.github.com/repos/$assetsRepo/contents/Content.zip" `
+            -OutFile $zip
 
           New-Item -ItemType Directory -Force Content | Out-Null
           Expand-Archive -Path $zip -DestinationPath Content -Force
@@ -109,23 +115,53 @@ jobs:
       - name: Publicar appx no cofre privado
         shell: pwsh
         env:
-          GH_TOKEN: ${{ secrets.ASSETS_TOKEN }}
+          ASSETS_TOKEN: ${{ secrets.ASSETS_TOKEN }}
         run: |
-          if (-not $env:GH_TOKEN) { throw "Secret ASSETS_TOKEN nao configurado" }
+          if (-not $env:ASSETS_TOKEN) { throw "Secret ASSETS_TOKEN nao configurado" }
 
           $assetsRepo = "uaitibat/LumiaValley-assets"
-          $tag = "latest"
+          $api = "https://api.github.com/repos/$assetsRepo"
+          $headers = @{
+            Authorization = "Bearer $env:ASSETS_TOKEN"
+            Accept = "application/vnd.github+json"
+            "X-GitHub-Api-Version" = "2022-11-28"
+          }
 
-          gh release delete $tag --yes -R $assetsRepo 2>$null
-          if ($LASTEXITCODE -ne 0) { $global:LASTEXITCODE = 0 }
+          try {
+            Invoke-RestMethod -Method Delete -Headers $headers `
+              -Uri "$api/releases/tags/latest" | Out-Null
+            Write-Host "Release antiga removida"
+          } catch {
+            Write-Host "Sem release antiga para remover"
+          }
 
-          $assets = @(Get-ChildItem out -File | ForEach-Object { $_.FullName })
+          $sha = (git rev-parse --short HEAD).Trim()
+          $body = @{
+            tag_name = "latest"
+            name = "LumiaValley ARM (latest)"
+            body = "Build automatico: $sha"
+            draft = $false
+            prerelease = $false
+          } | ConvertTo-Json
+
+          $release = Invoke-RestMethod -Method Post -Headers $headers `
+            -Uri "$api/releases" -Body $body
+
+          $uploadUrl = ($release.upload_url -split '\{')[0]
+          $assets = @(Get-ChildItem out -File)
           if ($assets.Count -eq 0) { throw "Nenhum arquivo em out/ para publicar" }
 
-          gh release create $tag -R $assetsRepo `
-            --title "LumiaValley ARM (latest)" `
-            --notes "Build automatico: $(git rev-parse --short HEAD)" `
-            $assets
-          if ($LASTEXITCODE -ne 0) { throw "falha ao publicar appx no cofre" }
+          foreach ($p in $assets) {
+            $uploadHeaders = @{
+              Authorization = "Bearer $env:ASSETS_TOKEN"
+              Accept = "application/vnd.github+json"
+              "Content-Type" = "application/octet-stream"
+            }
+            $name = [uri]::EscapeDataString($p.Name)
+            Invoke-RestMethod -Method Post -Headers $uploadHeaders `
+              -Uri "$uploadUrl?name=$name" `
+              -Body ([IO.File]::ReadAllBytes($p.FullName)) | Out-Null
+            Write-Host "Publicado: $($p.Name)"
+          }
 
-          Write-Host "Appx publicado (privado): https://github.com/$assetsRepo/releases/tag/$tag"
+          Write-Host "Appx publicado (privado): https://github.com/$assetsRepo/releases/tag/latest"
