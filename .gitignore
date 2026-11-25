@@ -1,0 +1,13 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.appx
+*.appxbundle
+*.pfx
+
+# Codigo descompilado e assets do jogo sao copyrighted: ficam locais, nao sobem.
+reference/
+Content/
+Content-156/
