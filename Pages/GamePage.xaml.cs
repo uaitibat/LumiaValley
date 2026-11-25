@@ -1,3 +1,4 @@
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using LumiaValley.Game;
 using MonoGame.Framework;
