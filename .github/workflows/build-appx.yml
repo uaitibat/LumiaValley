@@ -132,24 +132,30 @@ jobs:
           }
 
           try {
-            Invoke-RestMethod -Method Delete -Headers $headers `
-              -Uri "$api/releases/tags/latest" | Out-Null
-            Write-Host "Release antiga removida"
+            $release = Invoke-RestMethod -Headers $headers `
+              -Uri "$api/releases/tags/latest"
+            Write-Host "Release existente reaproveitada"
+
+            foreach ($old in $release.assets) {
+              Invoke-RestMethod -Method Delete -Headers $headers `
+                -Uri "$api/releases/assets/$($old.id)" | Out-Null
+              Write-Host "Asset antigo removido: $($old.name)"
+            }
           } catch {
-            Write-Host "Sem release antiga para remover"
+            Write-Host "Criando release latest"
+
+            $sha = (git rev-parse --short HEAD).Trim()
+            $body = @{
+              tag_name = "latest"
+              name = "LumiaValley ARM (latest)"
+              body = "Build automatico: $sha"
+              draft = $false
+              prerelease = $false
+            } | ConvertTo-Json
+
+            $release = Invoke-RestMethod -Method Post -Headers $headers `
+              -Uri "$api/releases" -Body $body
           }
-
-          $sha = (git rev-parse --short HEAD).Trim()
-          $body = @{
-            tag_name = "latest"
-            name = "LumiaValley ARM (latest)"
-            body = "Build automatico: $sha"
-            draft = $false
-            prerelease = $false
-          } | ConvertTo-Json
-
-          $release = Invoke-RestMethod -Method Post -Headers $headers `
-            -Uri "$api/releases" -Body $body
 
           $uploadUrl = ($release.upload_url -split '\{')[0]
           Write-Host "uploadUrl: $uploadUrl"
