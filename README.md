@@ -4,17 +4,35 @@ Port experimental de **Stardew Valley 1.5.6** para **Lumia 640 / Windows 10 Mobi
 
 ## Estado atual
 
-- Extração completa do `Stardew Valley.dll` com ILSpy 9.0 em `reference/StardewValley/` (753 arquivos C#).
-- Dependências descompiladas em `reference/Dependencies/` (xTile, BmFont, CPExtBmFont, GameData, Lidgren, TextCopy).
-- Esqueleto UWP ARM com MonoGame 3.8.0.1641 e workflow de appx via GitHub Actions.
-- `Game/Game1.cs` é apenas o teste de pipeline (backbuffer 640x360 + touch). Ainda não é o jogo.
+- Pipeline UWP ARM validado no Lumia: backbuffer 640x360, touch por tap e escala pelo `SwapChainPanel` funcionando.
+- Esqueleto UWP ARM com MonoGame 3.8.0.1641 e build via GitHub Actions.
+- `Game/Game1.cs` ainda é o teste de pipeline (fundo verde + quadrado amarelo). O jogo real ainda não foi migrado.
+- Código descompilado com ILSpy 9.0 fica **somente local** em `reference/` (753 arquivos C# + dependências).
 
-## Estrutura
+## Arquitetura do build (repo público + cofre privado)
 
-- `reference/` — código descompilado (somente local, **ignorado pelo git**).
-- `Content-156/` — assets podados da 1.5.6 (somente local, **ignorados pelo git**).
-- `tools/prepare_content.sh` — gera `Content-156/` a partir da instalação Steam.
-- `.github/workflows/build-appx.yml` — build ARM + assinatura + release `latest`.
+O repo `uaitibat/LumiaValley` é **público** e contém só código escrito por nós. Para não publicar assets nem appx:
+
+1. `uaitibat/LumiaValley-assets` é um repo **privado** usado apenas como cofre. Ele não roda workflow, então não consome minutos de Actions.
+2. A release `assets` desse cofre contém `Content.zip` (14 MB, base + pt-BR, sem XACT).
+3. O workflow `build-appx` do repo público baixa esse zip usando o secret `ASSETS_TOKEN`, extrai em `Content/`, compila, assina e publica o `.appx` na release `latest` **do cofre privado**.
+4. A release pública do `LumiaValley` não é mais usada para o appx.
+
+### Setup único
+
+- Criar o repo privado `uaitibat/LumiaValley-assets`.
+- Criar nele uma release com tag `assets` e anexar `Content.zip`.
+- Criar um PAT fine-grained com acesso somente a `LumiaValley-assets` e permissão **Contents: read+write**.
+- Adicionar esse PAT como secret `ASSETS_TOKEN` em `LumiaValley` (Settings → Secrets and variables → Actions).
+
+Depois disso, qualquer push (ou `Run workflow`) gera o appx no cofre privado.
+
+## Estrutura local
+
+- `reference/` — código descompilado (ignorado pelo git).
+- `Content/` — assets podados da 1.5.6 (ignorado pelo git; vem do cofre no CI).
+- `tools/prepare_content.sh` — gera `Content/` a partir da instalação Steam (`SKIP_XACT=1 bash tools/prepare_content.sh`).
+- `.github/workflows/build-appx.yml` — build ARM + assinatura + publicação no cofre.
 
 ## Base confirmada
 
@@ -24,18 +42,17 @@ Port experimental de **Stardew Valley 1.5.6** para **Lumia 640 / Windows 10 Mobi
 
 ## Aviso legal
 
-Código descompilado e assets do jogo são propriedade da ConcernedApe. Este repositório deve conter
-apenas o código do port escrito por nós. Não publicar `reference/`, `Content/` ou appx com assets
-do jogo em repositório público.
+Código descompilado e assets do jogo são propriedade da ConcernedApe. O repo público contém apenas
+código do port escrito por nós. Assets e appx ficam exclusivamente no cofre privado, para uso pessoal.
 
 ## Como gerar o appx
 
-No GitHub, abra a aba **Actions → build-appx → Run workflow**. O job compila Release ARM,
-assina o pacote e publica a release `latest` com o `.appx`.
+Abra **Actions → build-appx → Run workflow** no repo `LumiaValley`. O `.appx` aparece na release
+`latest` do repo privado `LumiaValley-assets`.
 
 ## Próximos passos
 
-1. Validar o appx de teste no Lumia (Modo Desenvolvedor + Device Portal).
-2. Substituir `Game1.cs` pelo `Game1` descompilado, removendo Steam/Galaxy/Skia/Lidgren/Emit.
-3. Trocar filesystem por `ApplicationData.Current.LocalFolder` e adicionar UI touch.
+1. Migrar a primeira fatia do `Game1` descompilado (init + leitura de um XNB), reescrevendo o código em vez de copiar.
+2. Trocar filesystem por `ApplicationData.Current.LocalFolder` e mapear touch para o input do jogo.
+3. Remover Steam/Galaxy/Skia/Lidgren/Reflection.Emit.
 4. Reduzir XACT e incluir áudio essencial.

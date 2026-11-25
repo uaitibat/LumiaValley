@@ -7,7 +7,7 @@ obj/
 *.appxbundle
 *.pfx
 
-# Codigo descompilado e assets do jogo sao copyrighted: ficam locais, nao sobem.
+# Codigo descompilado e copyrighted: fica apenas local, nunca sobe.
 reference/
 Content/
-Content-156/
+*.zip

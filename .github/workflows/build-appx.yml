@@ -7,8 +7,7 @@ on:
       - '**.md'
 
 permissions:
-  actions: write
-  contents: write
+  contents: read
 
 concurrency:
   group: build-appx-lumia-valley
@@ -19,20 +18,38 @@ jobs:
     runs-on: windows-2022
 
     steps:
-      - name: Limpar artefatos antigos
+      - uses: actions/checkout@v4
+
+      - name: Baixar assets do cofre privado
         shell: pwsh
         env:
-          GH_TOKEN: ${{ github.token }}
+          ASSETS_TOKEN: ${{ secrets.ASSETS_TOKEN }}
         run: |
-          $repo = $env:GITHUB_REPOSITORY
-          $ids = @(gh api "repos/$repo/actions/artifacts?per_page=100" --paginate `
-            --jq '.artifacts[] | select(.name | startswith("LumiaValley-")) | .id' 2>$null)
-          Write-Host "Artefatos LumiaValley antigos: $($ids.Count)"
-          foreach ($id in $ids) {
-            gh api --method DELETE "repos/$repo/actions/artifacts/$id" | Out-Null
+          if (-not $env:ASSETS_TOKEN) {
+            throw "Secret ASSETS_TOKEN nao configurado no repo LumiaValley"
           }
 
-      - uses: actions/checkout@v4
+          $assetsRepo = "uaitibat/LumiaValley-assets"
+          $headers = @{
+            Authorization = "Bearer $env:ASSETS_TOKEN"
+            Accept = "application/vnd.github+json"
+            "X-GitHub-Api-Version" = "2022-11-28"
+          }
+
+          $release = Invoke-RestMethod `
+            -Headers $headers `
+            -Uri "https://api.github.com/repos/$assetsRepo/releases/tags/assets"
+
+          $asset = $release.assets | Where-Object { $_.name -eq "Content.zip" } | Select-Object -First 1
+          if (-not $asset) { throw "Content.zip nao encontrado na release 'assets' do cofre" }
+
+          $zip = Join-Path $env:RUNNER_TEMP "Content.zip"
+          $dlHeaders = $headers + @{ Accept = "application/octet-stream" }
+          Invoke-WebRequest -Headers $dlHeaders -Uri $asset.url -OutFile $zip
+
+          New-Item -ItemType Directory -Force Content | Out-Null
+          Expand-Archive -Path $zip -DestinationPath Content -Force
+          Write-Host "Assets extraidos: $((Get-ChildItem Content -Recurse -File).Count) arquivos"
 
       - name: Configurar MSBuild
         uses: microsoft/setup-msbuild@v2
@@ -95,19 +112,26 @@ jobs:
           if ($deps) { Copy-Item $deps.FullName out/Dependencies -Recurse -Force }
           Get-ChildItem out -Recurse -File | ForEach-Object { Write-Host ("  " + $_.FullName) }
 
-      - name: Publicar release com o appx
+      - name: Publicar appx no cofre privado
         shell: pwsh
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.ASSETS_TOKEN }}
         run: |
+          if (-not $env:GH_TOKEN) { throw "Secret ASSETS_TOKEN nao configurado" }
+
+          $assetsRepo = "uaitibat/LumiaValley-assets"
           $tag = "latest"
-          gh release delete $tag --yes 2>$null
+
+          gh release delete $tag --yes -R $assetsRepo 2>$null
           if ($LASTEXITCODE -ne 0) { $global:LASTEXITCODE = 0 }
+
           $assets = @(Get-ChildItem out -File | ForEach-Object { $_.FullName })
           if ($assets.Count -eq 0) { throw "Nenhum arquivo em out/ para publicar" }
-          gh release create $tag `
+
+          gh release create $tag -R $assetsRepo `
             --title "LumiaValley ARM (latest)" `
             --notes "Build automatico: $(git rev-parse --short HEAD)" `
             $assets
-          if ($LASTEXITCODE -ne 0) { throw "falha ao publicar release" }
-          Write-Host "Release publicada: https://github.com/$env:GITHUB_REPOSITORY/releases/tag/$tag"
+          if ($LASTEXITCODE -ne 0) { throw "falha ao publicar appx no cofre" }
+
+          Write-Host "Appx publicado (privado): https://github.com/$assetsRepo/releases/tag/$tag"

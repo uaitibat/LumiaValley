@@ -3,8 +3,10 @@
 # SKIP_XACT=1 pula os 475 MB de audio (bom para o teste inicial do pipeline).
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 SRC="${1:-/home/uaiti/.steam/steam/steamapps/common/Stardew Valley/Content}"
-DST="${2:-/home/uaiti/stardew-uwp/Content}"
+DST="${2:-$SCRIPT_DIR/../Content}"
 SKIP_XACT="${SKIP_XACT:-0}"
 
 if [ ! -d "$SRC" ]; then
