@@ -28,6 +28,11 @@ Código descompilado e assets do jogo são propriedade da ConcernedApe. Este rep
 apenas o código do port escrito por nós. Não publicar `reference/`, `Content/` ou appx com assets
 do jogo em repositório público.
 
+## Como gerar o appx
+
+No GitHub, abra a aba **Actions → build-appx → Run workflow**. O job compila Release ARM,
+assina o pacote e publica a release `latest` com o `.appx`.
+
 ## Próximos passos
 
 1. Validar o appx de teste no Lumia (Modo Desenvolvedor + Device Portal).
