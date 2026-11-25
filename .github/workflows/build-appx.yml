@@ -23,26 +23,23 @@ jobs:
       - name: Baixar assets do cofre privado
         shell: pwsh
         env:
-          ASSETS_TOKEN: ${{ secrets.ASSETS_TOKEN }}
+          GH_TOKEN: ${{ secrets.ASSETS_TOKEN }}
         run: |
-          if (-not $env:ASSETS_TOKEN) {
+          if (-not $env:GH_TOKEN) {
             throw "Secret ASSETS_TOKEN nao configurado no repo LumiaValley"
           }
 
           $assetsRepo = "uaitibat/LumiaValley-assets"
-          $headers = @{
-            Authorization = "Bearer $env:ASSETS_TOKEN"
-            Accept = "application/vnd.github+json"
-            "X-GitHub-Api-Version" = "2022-11-28"
+
+          gh api "repos/$assetsRepo" --jq '.full_name + " private=" + (.private|tostring)'
+          if ($LASTEXITCODE -ne 0) {
+            throw "O token nao consegue acessar $assetsRepo. Conferir resource owner/repository access do PAT."
           }
 
           $zip = Join-Path $env:RUNNER_TEMP "Content.zip"
-          $rawHeaders = @{}
-          foreach ($key in $headers.Keys) { $rawHeaders[$key] = $headers[$key] }
-          $rawHeaders["Accept"] = "application/vnd.github.raw"
-          Invoke-WebRequest -Headers $rawHeaders `
-            -Uri "https://api.github.com/repos/$assetsRepo/contents/Content.zip" `
-            -OutFile $zip
+          gh api -H "Accept: application/vnd.github.raw" `
+            "repos/$assetsRepo/contents/Content.zip" --output $zip
+          if ($LASTEXITCODE -ne 0) { throw "Falha ao baixar Content.zip do cofre" }
 
           New-Item -ItemType Directory -Force Content | Out-Null
           Expand-Archive -Path $zip -DestinationPath Content -Force
