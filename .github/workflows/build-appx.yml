@@ -37,7 +37,9 @@ jobs:
           }
 
           $zip = Join-Path $env:RUNNER_TEMP "Content.zip"
-          $rawHeaders = $headers + @{ Accept = "application/vnd.github.raw" }
+          $rawHeaders = @{}
+          foreach ($key in $headers.Keys) { $rawHeaders[$key] = $headers[$key] }
+          $rawHeaders["Accept"] = "application/vnd.github.raw"
           Invoke-WebRequest -Headers $rawHeaders `
             -Uri "https://api.github.com/repos/$assetsRepo/contents/Content.zip" `
             -OutFile $zip
