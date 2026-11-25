@@ -152,6 +152,9 @@ jobs:
             -Uri "$api/releases" -Body $body
 
           $uploadUrl = ($release.upload_url -split '\{')[0]
+          Write-Host "uploadUrl: $uploadUrl"
+          if (-not $uploadUrl) { throw "upload_url vazio na resposta da API" }
+
           $assets = @(Get-ChildItem out -File)
           if ($assets.Count -eq 0) { throw "Nenhum arquivo em out/ para publicar" }
 
@@ -162,8 +165,9 @@ jobs:
               "Content-Type" = "application/octet-stream"
             }
             $name = [uri]::EscapeDataString($p.Name)
+            $uri = $uploadUrl + "?name=" + $name
             Invoke-RestMethod -Method Post -Headers $uploadHeaders `
-              -Uri "$uploadUrl?name=$name" `
+              -Uri $uri `
               -Body ([IO.File]::ReadAllBytes($p.FullName)) | Out-Null
             Write-Host "Publicado: $($p.Name)"
           }
