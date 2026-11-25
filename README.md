@@ -14,14 +14,13 @@ Port experimental de **Stardew Valley 1.5.6** para **Lumia 640 / Windows 10 Mobi
 O repo `uaitibat/LumiaValley` é **público** e contém só código escrito por nós. Para não publicar assets nem appx:
 
 1. `uaitibat/LumiaValley-assets` é um repo **privado** usado apenas como cofre. Ele não roda workflow, então não consome minutos de Actions.
-2. A release `assets` desse cofre contém `Content.zip` (14 MB, base + pt-BR, sem XACT).
-3. O workflow `build-appx` do repo público baixa esse zip usando o secret `ASSETS_TOKEN`, extrai em `Content/`, compila, assina e publica o `.appx` na release `latest` **do cofre privado**.
+2. O cofre contém `Content.zip` no root (11 MB, base + pt-BR, sem XACT).
+3. O workflow `build-appx` do repo público baixa esse zip via Contents API usando o secret `ASSETS_TOKEN`, extrai em `Content/`, compila, assina e publica o `.appx` na release `latest` **do cofre privado**.
 4. A release pública do `LumiaValley` não é mais usada para o appx.
 
 ### Setup único
 
-- Criar o repo privado `uaitibat/LumiaValley-assets`.
-- Criar nele uma release com tag `assets` e anexar `Content.zip`.
+- Criar o repo privado `uaitibat/LumiaValley-assets` — **feito**, com `Content.zip` no commit `57fa2db`.
 - Criar um PAT fine-grained com acesso somente a `LumiaValley-assets` e permissão **Contents: read+write**.
 - Adicionar esse PAT como secret `ASSETS_TOKEN` em `LumiaValley` (Settings → Secrets and variables → Actions).
 
