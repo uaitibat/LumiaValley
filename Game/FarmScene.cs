@@ -34,6 +34,7 @@ namespace LumiaValley.Game
         private double elapsedMs;
         private int gameMinutes = 360;
         private int energy = 100;
+        private int failedSheets;
 
         public FarmScene(SaveSlot slot = null)
         {
@@ -75,13 +76,19 @@ namespace LumiaValley.Game
                 {
                     if (string.IsNullOrEmpty(sheet.ImageSource))
                         continue;
+                    var path = "Maps/" + sheet.ImageSource;
                     try
                     {
-                        sheets[sheet.Id] = content.Load<Texture2D>("Maps/" + sheet.ImageSource);
+                        sheets[sheet.Id] = content.Load<Texture2D>(path + ".pt-BR");
                     }
-                    catch (Exception ex)
+                    catch
                     {
-                        System.Diagnostics.Debug.WriteLine("Tilesheet " + sheet.ImageSource + ": " + ex.Message);
+                        try { sheets[sheet.Id] = content.Load<Texture2D>(path); }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine("Tilesheet " + path + ": " + ex.Message);
+                            failedSheets++;
+                        }
                     }
                 }
             }
@@ -318,6 +325,10 @@ namespace LumiaValley.Game
             if (slot != null && !string.IsNullOrEmpty(slot.FarmerName))
                 batch.DrawString(font, slot.FarmerName + " - " + slot.FarmName,
                     new Vector2(24 + ox, 60 + oy), Color.White);
+
+            if (failedSheets > 0)
+                batch.DrawString(font, "TS Falhas: " + failedSheets,
+                    new Vector2(24 + ox, 88 + oy), new Color(255, 90, 90));
         }
 
     }
