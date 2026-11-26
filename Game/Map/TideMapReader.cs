@@ -181,7 +181,7 @@ namespace LumiaValley.Game.Map
             tile.Sheet = sheet;
             tile.Index = ReadInt32();
             tile.Blend = data[pos++];
-            ReadProperties(new Dictionary<string, string>());
+            ReadProperties(tile.Properties);
             return tile;
         }
 

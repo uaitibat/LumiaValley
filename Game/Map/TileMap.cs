@@ -59,5 +59,6 @@ namespace LumiaValley.Game.Map
         public TileSheetData Sheet;
         public int Index;
         public int Blend;
+        public readonly Dictionary<string, string> Properties = new Dictionary<string, string>();
     }
 }

@@ -73,6 +73,9 @@ namespace LumiaValley.Game
             }
 
             if (map != null)
+                ApplyDefaultDecorations();
+
+            if (map != null)
             {
                 foreach (var sheet in map.TileSheets)
                 {
@@ -95,6 +98,59 @@ namespace LumiaValley.Game
             }
 
             Reset();
+        }
+
+        /// <summary>
+        /// Porte do DecoratableLocation.ReadWallpaperAndFloorTileData +
+        /// UpdateWallpaper/UpdateFloor com o papel/piso padrao (0), que o
+        /// original aplica ao entrar na casa pela primeira vez.
+        /// </summary>
+        private void ApplyDefaultDecorations()
+        {
+            var back = map.Layers.Count > 0 ? map.Layers[0] : null;
+            var buildings = map.Layers.Count > 1 ? map.Layers[1] : null;
+            if (back == null)
+                return;
+
+            const int sheetWidth = 16; // walls_and_floors
+
+            for (var y = 0; y < back.Height; y++)
+            {
+                for (var x = 0; x < back.Width; x++)
+                {
+                    var tile = back.Get(x, y);
+                    if (tile == null || !tile.Properties.ContainsKey("WallID"))
+                        continue;
+
+                    // Padrao 0: value = indice na tilesheet; o original faz
+                    // value/sheetWidth*sheetWidth*3 + value%sheetWidth + linha.
+                    var value = 0;
+                    for (var row = 0; row < 3; row++)
+                    {
+                        var layer = row == 2 && buildings != null ? buildings : back;
+                        var ty = y + row;
+                        var target = layer.Get(x, ty);
+                        if (target == null || target.Sheet == null ||
+                            target.Sheet.Id != "walls_and_floors")
+                            continue;
+                        target.Index = value / sheetWidth * sheetWidth * 3 + value % sheetWidth + row * sheetWidth;
+                    }
+                }
+            }
+
+            // Piso: o original faz value*2 + value/(sheetWidth/2)*sheetWidth
+            // e soma GetFirstFlooringTile() (0 para o padrao).
+            for (var y = 0; y < back.Height; y++)
+            {
+                for (var x = 0; x < back.Width; x++)
+                {
+                    var tile = back.Get(x, y);
+                    if (tile == null || !tile.Properties.ContainsKey("FloorID"))
+                        continue;
+                    var value = 2; // primeiro padrao de piso
+                    tile.Index = value * 2 + value / (sheetWidth / 2) * sheetWidth;
+                }
+            }
         }
 
         public void Reset()
