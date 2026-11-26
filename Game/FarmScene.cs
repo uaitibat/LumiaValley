@@ -234,8 +234,9 @@ namespace LumiaValley.Game
         {
             // FarmHouse.doAction / Game1.loadForNewGame: moveis iniciais do
             // casal (whichFarm = 0), exatamente como no original.
-            furniture.Draw(batch, 1120, 5, 4); // mesa de carvalho
-            furniture.Draw(batch, 1364, 5, 4); // tigela decorativa (em cima da mesa)
+            furniture.Draw(batch, 2048, 9, 8);  // cama do jogador
+            furniture.Draw(batch, 1120, 5, 4);  // mesa de carvalho
+            furniture.Draw(batch, 1364, 5, 4);  // tigela decorativa
             furniture.Draw(batch, 1376, 1, 10); // planta
             furniture.Draw(batch, 0, 4, 4);     // cadeira
             furniture.Draw(batch, 1466, 1, 4);  // TV
@@ -258,8 +259,23 @@ namespace LumiaValley.Game
             // Tom fixo da 1.5.6; a leitura do XNB de skinColors no UWP ARM
             // devolve valores inconsistentes, entao usamos o padrao.
             var skin = new Color(224, 172, 140);
-            var hairColor = new Color(110, 58, 30);
-            var shirtColor = new Color(88, 110, 170);
+            // Paletas identicas as da criacao de personagem.
+            var hairPalette = new[]
+            {
+                new Color(110, 58, 30), new Color(129, 66, 36), new Color(155, 79, 43),
+                new Color(193, 90, 50), new Color(224, 137, 83), new Color(246, 191, 121),
+                new Color(255, 222, 170), new Color(148, 118, 92), new Color(94, 73, 54),
+                new Color(75, 49, 32), new Color(45, 35, 25), new Color(241, 174, 73)
+            };
+            var shirtPalette = new[]
+            {
+                new Color(211, 215, 211), new Color(88, 110, 170), new Color(64, 86, 150),
+                new Color(50, 62, 120), new Color(148, 76, 70), new Color(118, 60, 56),
+                new Color(80, 44, 40), new Color(192, 148, 92), new Color(148, 106, 64),
+                new Color(96, 72, 48), new Color(212, 176, 92), new Color(164, 128, 64)
+            };
+            var hairColor = hairPalette[(slot == null ? 0 : slot.HairColor) % hairPalette.Length];
+            var shirtColor = shirtPalette[(slot == null ? 1 : slot.ShirtColor) % shirtPalette.Length];
             var pantsColor = new Color(64, 86, 150);
             // Corpo (facing 2 = olhando para a camara).
             DrawLayer(batch, farmerBase, pos, new Rectangle(0, 0, 16, 32), skin);
