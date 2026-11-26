@@ -140,6 +140,7 @@ namespace LumiaValley.Game.Screens
         private int activeField;
         private double elapsedMs;
         private int farmHintMs;
+        private int warningMs;
 
         public CharacterCreationScreen() : this(null)
         {
@@ -256,6 +257,8 @@ namespace LumiaValley.Game.Screens
             elapsedMs += Math.Min(gameTime.ElapsedGameTime.TotalMilliseconds, 50);
             if (farmHintMs > 0)
                 farmHintMs -= (int)Math.Min(gameTime.ElapsedGameTime.TotalMilliseconds, 50);
+            if (warningMs > 0)
+                warningMs -= (int)Math.Min(gameTime.ElapsedGameTime.TotalMilliseconds, 50);
 
             if (!tap.HasValue)
                 return this;
@@ -328,8 +331,16 @@ namespace LumiaValley.Game.Screens
                 return this;
             }
 
-            if (Contains(OkRect, point) && CanStart)
+            if (Contains(OkRect, point))
             {
+                if (!CanStart)
+                {
+                    // O original nao deixa sair sem os tres campos: mostra um
+                    // aviso e mantem o jogador na criacao.
+                    warningMs = 3200;
+                    return this;
+                }
+
                 draft.FarmerName = draft.FarmerName.Trim();
                 draft.FarmName = draft.FarmName.Trim();
                 draft.FavoriteThing = draft.FavoriteThing.Trim();
@@ -474,6 +485,7 @@ namespace LumiaValley.Game.Screens
             DrawRandomButton(spriteBatch);
             DrawFarmer(spriteBatch);
             DrawFarmHint(spriteBatch);
+            DrawWarning(spriteBatch);
 
             keyboard.Draw(spriteBatch, pixel, font, activeField == 2
                 ? "Nome da fazenda"
@@ -1089,6 +1101,26 @@ namespace LumiaValley.Game.Screens
                 batch.Draw(titleButtons, BackButtonRect, new Rectangle(296, 252, 66, 27), Color.White);
             else
                 DrawRow(batch, BackButtonRect, Localization.CS("StringsFromCSFiles:TitleMenu.cs.11739", "Voltar"), false);
+        }
+
+        /// <summary>Aviso exibido quando o jogador tenta confirmar sem preencher
+        /// nome, nome da fazenda e coisa favorita.</summary>
+        private void DrawWarning(SpriteBatch batch)
+        {
+            if (warningMs <= 0)
+                return;
+
+            var area = new Rectangle(360, 590, 560, 84);
+            batch.Draw(pixel, new Rectangle(area.X - 6, area.Y + 6, area.Width + 12, area.Height + 12),
+                Color.Black * 0.55f);
+            batch.Draw(pixel, area, new Color(28, 58, 38));
+            batch.Draw(pixel, new Rectangle(area.X, area.Y, area.Width, 4), new Color(126, 170, 92));
+            batch.Draw(pixel, new Rectangle(area.X, area.Bottom - 4, area.Width, 4), new Color(126, 170, 92));
+
+            ShadowText(batch, "Preencha os tres campos antes de comecar:",
+                area.X + 14, area.Y + 12, new Color(255, 236, 160), 1f);
+            ShadowText(batch, "nome, fazenda e coisa favorita.",
+                area.X + 14, area.Y + 44, TextColor, 1f);
         }
 
         private void DrawFarmHint(SpriteBatch batch)
