@@ -8,7 +8,8 @@ namespace LumiaValley.Game.Screens
     /// <summary>
     /// Home do port, reimplementada a partir das regioes de sprite da 1.5.6.
     /// Sequencia: splash da ConcernedApe -> fade branco -> pausa -> subida da
-    /// camera -> swipe do logo -> botoes. Um toque pula a introducao.
+    /// camera -> swipe do logo -> botoes. O toque no splash aciona a animacao
+    /// de surpresa; ele NAO pula o resto da introducao.
     /// </summary>
     public sealed class TitleScreen : IScreen
     {
@@ -50,6 +51,7 @@ namespace LumiaValley.Game.Screens
         private int buttonsShown;
         private int hovered = -1;
         private bool muted;
+        private double surprisedMs;
 
         private readonly float[] smallCloudX = new float[16];
         private float bigCloudX = 960f;
@@ -76,6 +78,7 @@ namespace LumiaValley.Game.Screens
             totalMs = 0;
             viewportY = 0;
             buttonsShown = 0;
+            surprisedMs = 0;
         }
 
         private static Texture2D LoadFirst(ContentManager content, params string[] assets)
@@ -124,27 +127,39 @@ namespace LumiaValley.Game.Screens
             return r.Contains((int)p.X, (int)p.Y);
         }
 
-        private void SkipIntro()
-        {
-            phase = Phase.Ready;
-            phaseMs = 1000;
-            viewportY = -1000f;
-            buttonsShown = 4;
-        }
-
         public IScreen Update(GameTime gameTime, Vector2? tap)
         {
             var dt = Math.Min(gameTime.ElapsedGameTime.TotalMilliseconds, 50);
             totalMs += dt;
             phaseMs += dt;
 
-            if (tap.HasValue && phase != Phase.Ready)
-                SkipIntro();
+            // Toque no splash nao pula a intro: ele aciona a animacao de
+            // surpresa do logo (equivalente ao skipButton da 1.5.6).
+            if (tap.HasValue && phase == Phase.Ape &&
+                Contains(new Rectangle(379, 258, 249, 201), tap.Value))
+            {
+                if (surprisedMs <= 0)
+                    surprisedMs = 1500;
+                else if (surprisedMs > 1)
+                    surprisedMs = Math.Max(1, surprisedMs - 500);
+            }
 
             switch (phase)
             {
                 case Phase.Ape:
-                    if (phaseMs >= 5000) Next(Phase.WhiteFade);
+                    if (surprisedMs > 0)
+                    {
+                        surprisedMs -= dt;
+                        if (surprisedMs <= 0)
+                        {
+                            surprisedMs = 0;
+                            Next(Phase.WhiteFade);
+                        }
+                    }
+                    else if (phaseMs >= 5000)
+                    {
+                        Next(Phase.WhiteFade);
+                    }
                     break;
                 case Phase.WhiteFade:
                     if (phaseMs >= 4000) Next(Phase.Pause);
@@ -260,11 +275,26 @@ namespace LumiaValley.Game.Screens
                     Color.White * alpha);
 
                 // Bloco esquerdo ("Concerned"): 85x69 a 3x, em x=379.
-                SafeDraw(batch, buttons,
-                    new Rectangle(379, 258, 255, 207),
-                    alternate ? new Rectangle(0, 306, 85, 69)
-                              : new Rectangle(85, 306, 85, 69),
-                    Color.White * alpha);
+                // Quando clicado, troca pelos frames de surpresa (y=375).
+                if (surprisedMs > 0)
+                {
+                    var frame = (surprisedMs > 800 || surprisedMs < 400) ? 176 : 260;
+                    var surpriseAlpha = surprisedMs < 200
+                        ? (float)(surprisedMs / 200.0)
+                        : 1f;
+                    SafeDraw(batch, buttons,
+                        new Rectangle(379, 258, 255, 207),
+                        new Rectangle(frame, 375, 85, 69),
+                        Color.White * Math.Max(0f, Math.Min(1f, surpriseAlpha)));
+                }
+                else
+                {
+                    SafeDraw(batch, buttons,
+                        new Rectangle(379, 258, 255, 207),
+                        alternate ? new Rectangle(0, 306, 85, 69)
+                                  : new Rectangle(85, 306, 85, 69),
+                        Color.White * alpha);
+                }
             }
             else if (phase == Phase.WhiteFade)
             {
