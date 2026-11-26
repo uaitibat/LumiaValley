@@ -178,6 +178,7 @@ namespace LumiaValley.Game
         public void Draw(SpriteBatch spriteBatch)
         {
             DrawMap(spriteBatch);
+            DrawFurniture(spriteBatch);
             DrawFarmer(spriteBatch);
             DrawHud(spriteBatch);
         }
@@ -219,6 +220,36 @@ namespace LumiaValley.Game
                     batch.Draw(texture, new Rectangle(x, y, 64, 64), src, Color.White);
                 }
             }
+        }
+
+        /// <summary>
+        /// Moveis que no xTile vem de tiles com a sheet errada no nosso
+        /// parser. Usamos os indices corretos do townInterior (cama) para
+        /// sobrepor as brasoes do walls_and_floors.
+        /// </summary>
+        private void DrawFurniture(SpriteBatch batch)
+        {
+            Texture2D indoor;
+            if (!sheets.TryGetValue("indoor", out indoor) || indoor == null)
+                return;
+
+            // Cama: travesseiro (16) na fileira 2, colcha (352/353) na 3,
+            // rodape (336/337) na 4.
+            for (var x = 1; x <= 10; x++)
+            {
+                DrawFurnitureTile(batch, indoor, 16, x, 2);
+                DrawFurnitureTile(batch, indoor, x % 2 == 0 ? 352 : 353, x, 3);
+                DrawFurnitureTile(batch, indoor, x % 2 == 0 ? 336 : 337, x, 4);
+            }
+        }
+
+        private static void DrawFurnitureTile(SpriteBatch batch, Texture2D tex, int index, int tx, int ty)
+        {
+            const int sheetWidth = 32;
+            var src = new Rectangle(index % sheetWidth * 16, index / sheetWidth * 16, 16, 16);
+            if (src.Right > tex.Width || src.Bottom > tex.Height)
+                return;
+            batch.Draw(tex, new Rectangle(tx * 64, ty * 64, 64, 64), src, Color.White);
         }
 
         /// <summary>Mesmas camadas do preview da criacao: corpo, calca, camisa,
