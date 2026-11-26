@@ -81,8 +81,8 @@ namespace LumiaValley.Game
 
         public void Reset()
         {
-            var worldWidth = map != null ? map.Width * 16 : ViewportConfig.VirtualWidth;
-            var worldHeight = map != null ? map.Height * 16 : ViewportConfig.VirtualHeight;
+            var worldWidth = map != null ? map.Width * 64 : ViewportConfig.VirtualWidth;
+            var worldHeight = map != null ? map.Height * 64 : ViewportConfig.VirtualHeight;
             player = new Vector2(worldWidth / 2f, worldHeight / 2f);
             target = player;
             hasTarget = false;
@@ -150,16 +150,16 @@ namespace LumiaValley.Game
         {
             if (map == null)
                 return;
-            var maxX = map.Width * 16f;
-            var maxY = map.Height * 16f;
+            var maxX = map.Width * 64f;
+            var maxY = map.Height * 64f;
             player.X = MathHelper.Clamp(player.X, 32f, maxX - 32f);
             player.Y = MathHelper.Clamp(player.Y, 48f, maxY - 16f);
         }
 
         private void UpdateCamera()
         {
-            var worldWidth = map != null ? map.Width * 16 : ViewportConfig.VirtualWidth;
-            var worldHeight = map != null ? map.Height * 16 : ViewportConfig.VirtualHeight;
+            var worldWidth = map != null ? map.Width * 64 : ViewportConfig.VirtualWidth;
+            var worldHeight = map != null ? map.Height * 64 : ViewportConfig.VirtualHeight;
             camera.X = MathHelper.Clamp(player.X - ViewportConfig.VirtualWidth / 2f,
                 0f, Math.Max(0f, worldWidth - ViewportConfig.VirtualWidth));
             camera.Y = MathHelper.Clamp(player.Y - ViewportConfig.VirtualHeight / 2f,
@@ -278,14 +278,19 @@ namespace LumiaValley.Game
             if (cursors == null)
                 return;
 
-            batch.Draw(cursors, new Rectangle(UpKey.X + ox, UpKey.Y + oy, UpKey.Width, UpKey.Height),
-                new Rectangle(0, 320, 64, 64), Color.White);
-            batch.Draw(cursors, new Rectangle(DownKey.X + ox, DownKey.Y + oy, DownKey.Width, DownKey.Height),
-                new Rectangle(0, 192, 64, 64), Color.White);
-            batch.Draw(cursors, new Rectangle(LeftKey.X + ox, LeftKey.Y + oy, LeftKey.Width, LeftKey.Height),
-                new Rectangle(0, 256, 64, 64), Color.White);
-            batch.Draw(cursors, new Rectangle(RightKey.X + ox, RightKey.Y + oy, RightKey.Width, RightKey.Height),
-                new Rectangle(64, 256, 64, 64), Color.White);
+            // Setas do Cursors: tile 44 (esquerda) e 33 (direita), giradas
+            // 90 graus para cima/baixo em torno do centro de cada tecla.
+            DrawArrow(batch, UpKey, ox, oy, (float)(-Math.PI / 2.0));
+            DrawArrow(batch, DownKey, ox, oy, (float)(Math.PI / 2.0));
+            DrawArrow(batch, LeftKey, ox, oy, 0f);
+            DrawArrow(batch, RightKey, ox, oy, (float)Math.PI);
+        }
+
+        private void DrawArrow(SpriteBatch batch, Rectangle key, int ox, int oy, float rotation)
+        {
+            var center = new Vector2(key.X + ox + key.Width / 2f, key.Y + oy + key.Height / 2f);
+            batch.Draw(cursors, center, new Rectangle(0, 256, 64, 64), Color.White,
+                rotation, new Vector2(32, 32), 1f, SpriteEffects.None, 0f);
         }
 
         private static bool Contains(Rectangle r, Vector2 p)

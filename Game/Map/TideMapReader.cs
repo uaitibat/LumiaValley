@@ -134,8 +134,9 @@ namespace LumiaValley.Game.Map
             ReadString(); // descricao
             layer.Width = ReadInt32();
             layer.Height = ReadInt32();
-            layer.TileWidth = ReadInt32();
-            layer.TileHeight = ReadInt32();
+            // xTile Layer.zoom = 4: o tbin guarda 16x16, o mapa usa 64x64.
+            layer.TileWidth = ReadInt32() * 4;
+            layer.TileHeight = ReadInt32() * 4;
             ReadProperties(new Dictionary<string, string>());
 
             layer.Tiles = new TileData[layer.Width * layer.Height];
