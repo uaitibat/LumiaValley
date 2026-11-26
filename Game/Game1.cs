@@ -32,8 +32,8 @@ namespace LumiaValley.Game
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
-            graphics.PreferredBackBufferWidth = ViewportConfig.BackBufferWidth;
-            graphics.PreferredBackBufferHeight = ViewportConfig.BackBufferHeight;
+            graphics.PreferredBackBufferWidth = ViewportConfig.PreferredBackBufferWidth;
+            graphics.PreferredBackBufferHeight = ViewportConfig.PreferredBackBufferHeight;
             graphics.SupportedOrientations =
                 DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
             Content.RootDirectory = "Content";
@@ -81,7 +81,8 @@ namespace LumiaValley.Game
                 if (gesture.GestureType != GestureType.Tap)
                     continue;
 
-                var p = ViewportConfig.ToVirtual(gesture.Position);
+                var vp = GraphicsDevice.Viewport;
+                var p = ViewportConfig.ToVirtual(gesture.Position, vp.Width, vp.Height);
                 var x = (int)p.X;
                 var y = (int)p.Y;
 
@@ -111,8 +112,12 @@ namespace LumiaValley.Game
         {
             GraphicsDevice.Clear(new Color(28, 64, 44));
 
-            // Desenha tudo em 1280x720; o transform reduz para o backbuffer 640x360.
-            spriteBatch.Begin(transformMatrix: Matrix.CreateScale(ViewportConfig.Scale));
+            // O MonoGame UWP pode redimensionar o backbuffer para o SwapChainPanel.
+            // Calcula a escala a partir do viewport real para sempre preencher a tela.
+            var vp = GraphicsDevice.Viewport;
+            var scale = ViewportConfig.GetScale(vp.Width, vp.Height);
+
+            spriteBatch.Begin(transformMatrix: Matrix.CreateScale(scale.X, scale.Y, 1f));
 
             if (xnbLoaded)
             {
