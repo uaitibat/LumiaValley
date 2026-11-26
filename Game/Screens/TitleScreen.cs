@@ -250,22 +250,21 @@ namespace LumiaValley.Game.Screens
 
                 if (hit >= 0)
                 {
-                    if (hovered == hit)
+                    // Um unico toque ja executa o botao (sem selecao em duas etapas).
+                    switch (hit)
                     {
-                        switch (hit)
-                        {
-                            case 0: return new NewGameScreen();
-                            case 1: return new LoadGameScreen();
-                            case 2: return new CoopScreen();
-                            case 3: return new ConfirmExitScreen();
-                        }
-                    }
-                    else
-                    {
-                        hovered = hit;
+                        case 0: return new NewGameScreen();
+                        case 1: return new LoadGameScreen();
+                        case 2: return new CoopScreen();
+                        case 3: return new ConfirmExitScreen();
                     }
                 }
-                else if (Contains(new Rectangle(16, 16, 36, 36), tap.Value))
+                else
+                {
+                    hovered = -1;
+                }
+
+                if (Contains(new Rectangle(16, 16, 36, 36), tap.Value))
                 {
                     Settings.SoundEnabled = !Settings.SoundEnabled;
                 }
