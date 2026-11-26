@@ -49,7 +49,8 @@ namespace LumiaValley
 
             var view = ApplicationView.GetForCurrentView();
             view.SetDesiredBoundsMode(ApplicationViewBoundsMode.UseCoreWindow);
-            view.IsFullScreenMode = true;
+            if (!view.IsFullScreenMode)
+                view.TryEnterFullScreenMode();
 
             if (ApiInformation.IsTypePresent("Windows.UI.ViewManagement.StatusBar"))
             {
