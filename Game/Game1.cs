@@ -2,42 +2,26 @@ using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input.Touch;
+using LumiaValley.Game.Screens;
 
 namespace LumiaValley.Game
 {
     /// <summary>
-    /// Tela de titulo minima do port: sprites reais da 1.5.6 e selecao por toque.
-    /// Desenha em coordenadas virtuais 1280x720 (mesmo espaco do Stardew).
-    /// Nao copia a logica do TitleMenu descompilado; apenas reusa as regioes dos sprites.
+    /// Host do port. Nao contem logica de telas: apenas gerencia o viewport,
+    /// a cena em 640x360, o blit final e a troca de IScreen.
     /// </summary>
     public class Game1 : Microsoft.Xna.Framework.Game
     {
-        private static readonly Rectangle LogoSource = new Rectangle(0, 0, 400, 187);
-        private static readonly Rectangle[] ButtonSources =
-        {
-            new Rectangle(0, 187, 74, 58),    // New
-            new Rectangle(74, 187, 74, 58),   // Load
-            new Rectangle(148, 187, 74, 58),  // Co-op
-            new Rectangle(222, 187, 74, 58)   // Exit
-        };
-
         private readonly GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
         private RenderTarget2D sceneTarget;
-        private Texture2D dayBg;
-        private Texture2D titleButtons;
-        private Texture2D pixel;
-        private int selected = -1;
-        private bool xnbLoaded;
-        private FarmScene farm;
-        private bool inFarm;
+        private IScreen current;
 
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             // Nao impor PreferredBackBuffer: no UWP o MonoGame dimensiona a swap
-            // chain pelo SwapChainPanel. Forcar 640x360 faz o Viewport reportar
-            // 640x360 enquanto a superficie real e 1280x720 (canto superior esquerdo).
+            // chain pelo SwapChainPanel.
             graphics.SupportedOrientations =
                 DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
             Content.RootDirectory = "Content";
@@ -48,53 +32,25 @@ namespace LumiaValley.Game
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            pixel = new Texture2D(GraphicsDevice, 1, 1);
-            pixel.SetData(new[] { Color.White });
-
             sceneTarget = new RenderTarget2D(
                 GraphicsDevice,
                 ViewportConfig.SceneWidth,
                 ViewportConfig.SceneHeight);
 
-            try
-            {
-                dayBg = Content.Load<Texture2D>("LooseSprites/daybg");
-                titleButtons = Content.Load<Texture2D>("Minigames/TitleButtons");
-                xnbLoaded = dayBg != null && titleButtons != null;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Falha ao carregar XNB: " + ex);
-                xnbLoaded = false;
-            }
-
-            try
-            {
-                farm = new FarmScene();
-                farm.Load(Content, GraphicsDevice);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Falha ao carregar cena da fazenda: " + ex);
-                farm = null;
-            }
+            ChangeScreen(new TitleScreen());
 
             base.LoadContent();
         }
 
-        // Botoes em coordenadas virtuais: 222x174 (mesma escala 3f do TitleMenu).
-        private static Rectangle ButtonDest(int index)
+        private void ChangeScreen(IScreen next)
         {
-            const int width = 222;
-            const int height = 174;
-            const int spacing = 20;
-            var total = ButtonSources.Length * width + (ButtonSources.Length - 1) * spacing;
-            var x = (ViewportConfig.VirtualWidth - total) / 2 + index * (width + spacing);
-            return new Rectangle(x, 470, width, height);
+            next?.Load(Content, GraphicsDevice);
+            current = next;
         }
 
         protected override void Update(GameTime gameTime)
         {
+            Vector2? tap = null;
             while (TouchPanel.IsGestureAvailable)
             {
                 var gesture = TouchPanel.ReadGesture();
@@ -102,48 +58,17 @@ namespace LumiaValley.Game
                     continue;
 
                 var vp = GraphicsDevice.Viewport;
-                var p = ViewportConfig.ToVirtual(gesture.Position, vp.Width, vp.Height);
-
-                if (inFarm)
-                {
-                    if (farm != null)
-                        farm.OnTap(p);
-                }
-                else
-                {
-                    var x = (int)p.X;
-                    var y = (int)p.Y;
-
-                    for (var i = 0; i < ButtonSources.Length; i++)
-                    {
-                        if (!ButtonDest(i).Contains(x, y))
-                            continue;
-
-                        selected = i;
-                        // "New" (ou "Load") entra na cena jogavel.
-                        if ((i == 0 || i == 1) && farm != null)
-                        {
-                            farm.Reset();
-                            inFarm = true;
-                        }
-                        break;
-                    }
-                }
+                tap = ViewportConfig.ToVirtual(gesture.Position, vp.Width, vp.Height);
             }
 
-            if (inFarm && farm != null)
-                farm.Update(gameTime);
+            if (current != null)
+            {
+                var next = current.Update(gameTime, tap);
+                if (next != null && !ReferenceEquals(next, current))
+                    ChangeScreen(next);
+            }
 
             base.Update(gameTime);
-        }
-
-        private void DrawBorder(Rectangle r, Color color)
-        {
-            const int t = 3;
-            spriteBatch.Draw(pixel, new Rectangle(r.X - t, r.Y - t, r.Width + t * 2, t), color);
-            spriteBatch.Draw(pixel, new Rectangle(r.X - t, r.Bottom, r.Width + t * 2, t), color);
-            spriteBatch.Draw(pixel, new Rectangle(r.X - t, r.Y, t, r.Height), color);
-            spriteBatch.Draw(pixel, new Rectangle(r.Right, r.Y, t, r.Height), color);
         }
 
         protected override void Draw(GameTime gameTime)
@@ -157,47 +82,11 @@ namespace LumiaValley.Game
                 ViewportConfig.SceneHeight);
 
             spriteBatch.Begin(transformMatrix: Matrix.CreateScale(sceneScale.X, sceneScale.Y, 1f));
-
-            if (inFarm && farm != null)
-            {
-                farm.Draw(spriteBatch);
-            }
-            else if (xnbLoaded)
-            {
-                spriteBatch.Draw(
-                    dayBg,
-                    new Rectangle(0, 0, ViewportConfig.VirtualWidth, ViewportConfig.VirtualHeight),
-                    Color.White);
-
-                spriteBatch.Draw(titleButtons, new Rectangle(240, 20, 800, 374), LogoSource, Color.White);
-
-                for (var i = 0; i < ButtonSources.Length; i++)
-                {
-                    var dest = ButtonDest(i);
-                    var tint = i == selected ? Color.White : new Color(190, 190, 190);
-                    spriteBatch.Draw(titleButtons, dest, ButtonSources[i], tint);
-
-                    if (i == selected)
-                        DrawBorder(dest, Color.Red);
-                }
-            }
-            else
-            {
-                spriteBatch.Draw(
-                    pixel,
-                    new Rectangle(
-                        ViewportConfig.VirtualWidth / 2 - 32,
-                        ViewportConfig.VirtualHeight / 2 - 32,
-                        64, 64),
-                    Color.Wheat);
-            }
-
+            current?.Draw(spriteBatch);
             spriteBatch.End();
 
             // 2. Um unico blit escalado para o backbuffer real do SwapChainPanel.
-            // IMPORTANTE: ler o viewport DEPOIS de SetRenderTarget(null). Enquanto o
-            // RenderTarget esta bindado o viewport e 640x360; ler antes fazia o blit
-            // cobrir apenas o quarto superior esquerdo da tela.
+            // IMPORTANTE: ler o viewport DEPOIS de SetRenderTarget(null).
             GraphicsDevice.SetRenderTarget(null);
             var vp = GraphicsDevice.Viewport;
             GraphicsDevice.Clear(Color.Black);
