@@ -23,11 +23,13 @@
 
 ## Fase 1 — Boot ate a home (em andamento)
 
-- [ ] Splash/intro com os logos do jogo (animacao leve).
-- [ ] TitleMenu fiel: fundo, ceu, passaros, botoes e/selecao.
-- [ ] Botoes **New / Load / Co-op / Exit** com estados e navegacao por toque.
-- [ ] Strings carregadas de `Strings/StringsFromCSFiles.pt-BR.xnb`.
-- [ ] Transicoes entre telas sem travar o backbuffer.
+- [x] Splash/intro da ConcernedApe + fade branco + subida da camera (toque pula).
+- [x] Home com ceu, montanhas, nuvens, passaros e logo (`TitleButtons`, `Clouds`, `Cursors`).
+- [x] Botoes **New / Load / Co-op / Exit** com sprite normal/hover e selecao por toque.
+- [x] Rodape Voltar/Sobre/Idioma/Mudo/Janela + strings de `StringsFromCSFiles.pt-BR`.
+- [x] Transicoes entre telas sem travar o backbuffer (`IScreen`).
+- [ ] **Validar no Lumia**: sprites/posicoes corretos, toque pulando a intro e
+  selecao dos botoes respondendo. Ajustar o que estiver diferente.
 
 ## Fase 2 — Funcoes da home
 
