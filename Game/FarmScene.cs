@@ -199,8 +199,10 @@ namespace LumiaValley.Game
             }
 
             var layerIndex = 0;
-            foreach (var layer in map.Layers)
+            for (var li = map.Layers.Count - 1; li >= 0; li--)
             {
+                var layer = map.Layers[li];
+                layerIndex = li;
                 if (layer == null || !layer.Visible || layer.Tiles == null)
                     continue;
 
@@ -235,7 +237,6 @@ namespace LumiaValley.Game
                         drawnPerLayer[layerIndex]++;
                     }
                 }
-                layerIndex++;
             }
         }
 
