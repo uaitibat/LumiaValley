@@ -150,7 +150,7 @@ namespace LumiaValley.Game
                     case "created": slot.Created = value; break;
                     case "male": slot.IsMale = Bool(value, true); break;
                     case "skin": slot.Skin = Int(value, 0, 0, 23); break;
-                    case "hair": slot.Hair = Int(value, 0, 0, 95); break;
+                    case "hair": slot.Hair = Int(value, 0, 0, 111); break;
                     case "haircolor": slot.HairColor = Int(value, 0, 0, 11); break;
                     case "shirt": slot.Shirt = Int(value, 0, 0, 199); break;
                     case "shirtcolor": slot.ShirtColor = Int(value, 0, 0, 19); break;

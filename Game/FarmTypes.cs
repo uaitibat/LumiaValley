@@ -54,5 +54,24 @@ namespace LumiaValley.Game
             var i = Clamp(index);
             return Localization.UIString(Keys[i], Fallbacks[i]);
         }
+
+        /// <summary>
+        /// Os XNB de UI guardam "Nome_Descricao" em uma unica string. Separamos
+        /// na primeira barra para mostrar o titulo e o texto como no original.
+        /// </summary>
+        public static void Parts(int index, out string name, out string description)
+        {
+            var raw = Description(index);
+            var split = raw.IndexOf('_');
+            if (split <= 0)
+            {
+                name = Names[Clamp(index)];
+                description = raw;
+                return;
+            }
+
+            name = raw.Substring(0, split);
+            description = raw.Substring(split + 1);
+        }
     }
 }
