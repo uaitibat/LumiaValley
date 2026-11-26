@@ -52,6 +52,7 @@ namespace LumiaValley.Game.Screens
         private int hovered = -1;
         private bool muted;
         private double surprisedMs;
+        private bool homeBirdsStarted;
 
         private readonly float[] smallCloudX = new float[16];
         private float bigCloudX = 960f;
@@ -79,6 +80,7 @@ namespace LumiaValley.Game.Screens
             viewportY = 0;
             buttonsShown = 0;
             surprisedMs = 0;
+            homeBirdsStarted = false;
         }
 
         private static Texture2D LoadFirst(ContentManager content, params string[] assets)
@@ -171,7 +173,11 @@ namespace LumiaValley.Game.Screens
                 {
                     var t = (float)Math.Min(phaseMs / 2500.0, 1.0);
                     viewportY = -1000f * t * t;
-                    if (t >= 1f) Next(Phase.LogoSwipe);
+                    if (t >= 1f)
+                    {
+                        StartHomeBirds();
+                        Next(Phase.LogoSwipe);
+                    }
                     break;
                 }
                 case Phase.LogoSwipe:
@@ -195,16 +201,12 @@ namespace LumiaValley.Game.Screens
                 if (smallCloudX[i] < -447f) smallCloudX[i] = 1280f;
             }
 
-            // Os passaros ficam parados na tela enquanto a camera sobe: nao
-            // acompanham o parallax do ceu. Só comecam a cruzar da direita para
-            // a esquerda quando a camera chega na posicao final.
-            if (phase == Phase.LogoSwipe || phase == Phase.Ready)
-            {
-                birdAX -= 40f * (float)seconds;
-                birdBX -= 40f * (float)seconds;
-                if (birdAX < -80f) birdAX = 1280f;
-                if (birdBX < -80f) birdBX = 1280f;
-            }
+            // Os passaros voam o tempo todo, mas em Y fixo: a subida da camera
+            // nao puxa eles para cima como acontece com o ceu/montanhas.
+            birdAX -= 40f * (float)seconds;
+            birdBX -= 40f * (float)seconds;
+            if (birdAX < -80f) birdAX = 1280f;
+            if (birdBX < -80f) birdBX = 1280f;
 
             if (tap.HasValue && phase == Phase.Ready && buttonsShown == 4)
             {
@@ -244,6 +246,20 @@ namespace LumiaValley.Game.Screens
         {
             phase = next;
             phaseMs = 0;
+        }
+
+        /// <summary>
+        /// Quando a camera assenta, os passaros da cena de abertura dao lugar
+        /// a uma nova passada pela home, entrando pela direita.
+        /// </summary>
+        private void StartHomeBirds()
+        {
+            if (homeBirdsStarted)
+                return;
+
+            homeBirdsStarted = true;
+            birdAX = 1280f;
+            birdBX = 1360f;
         }
 
         private static void SafeDraw(
