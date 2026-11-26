@@ -110,7 +110,7 @@ namespace LumiaValley.Game
             var transform = screenTransform *
                 Matrix.CreateScale(sceneScale.X, sceneScale.Y, 1f);
 
-            spriteBatch.Begin(transformMatrix: transform, samplerState: SamplerState.PointClamp);
+            spriteBatch.Begin(transformMatrix: transform);
             current?.Draw(spriteBatch);
             spriteBatch.End();
 
