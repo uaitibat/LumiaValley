@@ -71,8 +71,16 @@ namespace LumiaValley.Game
                 if (gesture.GestureType != GestureType.Tap)
                     continue;
 
+                // O GestureSample do MonoGame UWP pode vir com a posicao do
+                // gesto deslocada no Windows 10 Mobile. Preferimos a posicao
+                // real do dedo no frame do toque quando disponivel.
+                var position = gesture.Position;
+                var touches = TouchPanel.GetState();
+                if (touches.Count > 0)
+                    position = touches[0].Position;
+
                 var vp = GraphicsDevice.Viewport;
-                var virtualPoint = ViewportConfig.ToVirtual(gesture.Position, vp.Width, vp.Height);
+                var virtualPoint = ViewportConfig.ToVirtual(position, vp.Width, vp.Height);
                 tap = current != null ? current.FromVirtual(virtualPoint) : virtualPoint;
             }
 
