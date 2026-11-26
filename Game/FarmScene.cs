@@ -144,8 +144,9 @@ namespace LumiaValley.Game
 
         public void Reset()
         {
-            // O jogo comeca com o fazendeiro acordando na cama do FarmHouse.
-            player = new Vector2(6 * 64f, 3 * 64f);
+            // O jogo comeca com o fazendeiro ao lado da cama (9,8), como no
+            // original: a cama ocupa 2x4 tiles e o jogador fica a esquerda.
+            player = new Vector2(8 * 64f, 10 * 64f);
             target = player;
             hasTarget = false;
             direction = Vector2.Zero;
@@ -325,7 +326,11 @@ namespace LumiaValley.Game
             var hairTone = slot == null ? 0 : slot.HairColor;
             var shirtTone = slot == null ? 1 : slot.ShirtColor;
             var hairColor = hairPalette[Wrap(hairTone, hairPalette.Length)];
-            var shirtColor = shirtPalette[Wrap(shirtTone, shirtPalette.Length)];
+            // ShirtColor 0 = branco da 1.5.6, mas ele fica invisivel sobre o
+            // fundo claro. Usamos o azul padrao quando o save nao traz cor.
+            var shirtColor = shirtTone <= 0
+                ? new Color(88, 110, 170)
+                : shirtPalette[Wrap(shirtTone, shirtPalette.Length)];
             var pantsColor = new Color(64, 86, 150);
             // Corpo (facing 2 = olhando para a camara).
             DrawLayer(batch, farmerBase, pos, new Rectangle(0, 0, 16, 32), skin);
@@ -416,9 +421,7 @@ namespace LumiaValley.Game
                 batch.DrawString(font, slot.FarmerName + " - " + slot.FarmName,
                     new Vector2(24 + ox, 60 + oy), Color.White);
 
-            // Identificacao do build, para validacao no aparelho.
-            batch.DrawString(font, "build " + BuildInfo.Hash,
-                new Vector2(24 + ox, 84 + oy), new Color(180, 180, 180));
+
 
 
         }
