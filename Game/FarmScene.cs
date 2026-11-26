@@ -14,6 +14,7 @@ namespace LumiaValley.Game
     public sealed class FarmScene
     {
         private Texture2D pixel;
+        private Texture2D cursors;
         private Texture2D farmerBase;
         private Texture2D hairSheet;
         private Texture2D shirtSheet;
@@ -36,6 +37,11 @@ namespace LumiaValley.Game
         private int gameMinutes = 360;
         private int energy = 100;
 
+        // Abertura: o jogador acorda na cama e levanta andando para a esquerda.
+        private double wakeMs;
+        private bool wakingUp = true;
+        private int facing = 2;
+
         public FarmScene(SaveSlot slot = null)
         {
             this.slot = slot;
@@ -48,6 +54,8 @@ namespace LumiaValley.Game
 
             try { font = content.Load<SpriteFont>("Fonts/SmallFont.pt-BR"); }
             catch { font = null; }
+            try { cursors = content.Load<Texture2D>("LooseSprites/Cursors.pt-BR"); }
+            catch { cursors = null; }
             try { furniture.Load(content); }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Furniture: " + ex.Message); }
 
@@ -146,9 +154,12 @@ namespace LumiaValley.Game
         {
             // O jogo comeca com o fazendeiro ao lado da cama (9,8), como no
             // original: a cama ocupa 2x4 tiles e o jogador fica a esquerda.
-            player = new Vector2(8 * 64f, 10 * 64f);
+            player = new Vector2(9 * 64f, 9 * 64f);
             target = player;
             hasTarget = false;
+            wakingUp = true;
+            wakeMs = 0;
+            facing = 2;
             direction = Vector2.Zero;
             UpdateCamera();
         }
@@ -161,6 +172,9 @@ namespace LumiaValley.Game
 
         public void OnTap(Vector2 screenPoint)
         {
+            if (wakingUp)
+                return;
+
             // Sem D-pad: apenas toque no mundo, como no original em desktop.
             target = screenPoint + camera;
             hasTarget = true;
@@ -176,6 +190,26 @@ namespace LumiaValley.Game
             var dt = (float)Math.Min(gameTime.ElapsedGameTime.TotalSeconds, 0.05);
             elapsedMs += dt * 1000;
             gameMinutes += (int)(dt * 12); // um dia de 20 minutos
+
+            if (wakingUp)
+            {
+                wakeMs += dt * 1000;
+                if (wakeMs < 1200)
+                {
+                    UpdateCamera();
+                    return;
+                }
+                // Levanta e sai da cama para a esquerda, virando de costas.
+                facing = 3;
+                player.X -= 96f * dt;
+                if (player.X <= 8 * 64f)
+                {
+                    player.X = 8 * 64f;
+                    wakingUp = false;
+                }
+                UpdateCamera();
+                return;
+            }
 
             const float speed = 192f;
             if (hasTarget)
@@ -280,16 +314,17 @@ namespace LumiaValley.Game
         {
             // FarmHouse.doAction / Game1.loadForNewGame: moveis iniciais do
             // casal (whichFarm = 0), exatamente como no original.
-            furniture.Draw(batch, 2048, 9, 8);  // cama do jogador
-            furniture.Draw(batch, 1120, 5, 4);  // mesa de carvalho
-            furniture.Draw(batch, 1364, 5, 4);  // tigela decorativa
-            furniture.Draw(batch, 1376, 1, 10); // planta
-            furniture.Draw(batch, 0, 4, 4);     // cadeira
-            furniture.Draw(batch, 1466, 1, 4);  // TV
-            furniture.Draw(batch, 1614, 3, 1);  // janela
-            furniture.Draw(batch, 1618, 6, 8);  // tapete
-            furniture.Draw(batch, 1602, 5, 1);  // quadro
-            furniture.Draw(batch, 1792, 0, 0);  // lareira
+            // Lista exata de Game1.loadForNewGame / FarmHouse (whichFarm=0).
+            furniture.Draw(batch, 2048, 9, 8);   // cama
+            furniture.Draw(batch, 1120, 5, 4);   // mesa de carvalho
+            furniture.Draw(batch, 1364, 5, 4);   // tigela
+            furniture.Draw(batch, 1376, 1, 10);  // planta
+            furniture.Draw(batch, 0, 4, 4);      // cadeira
+            furniture.Draw(batch, 1466, 1, 4);   // TV
+            furniture.Draw(batch, 1614, 3, 1);   // janela
+            furniture.Draw(batch, 1618, 6, 8);   // tapete
+            furniture.Draw(batch, 1602, 5, 1);   // quadro
+            furniture.Draw(batch, 1792, 8, 4);   // lareira (8,4 no original)
         }
 
         /// <summary>Mesmas camadas do preview da criacao: corpo, calca, camisa,
@@ -332,15 +367,17 @@ namespace LumiaValley.Game
                 ? new Color(88, 110, 170)
                 : shirtPalette[Wrap(shirtTone, shirtPalette.Length)];
             var pantsColor = new Color(64, 86, 150);
-            // Corpo (facing 2 = olhando para a camara).
-            DrawLayer(batch, farmerBase, pos, new Rectangle(0, 0, 16, 32), skin);
+            // Corpo: facing 2 = camara (Y=0); facing 3 = esquerda (Y=16).
+            var flip = facing == 3 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
+            var bodyY = facing == 3 ? 16 : 0;
+            DrawLayer(batch, farmerBase, pos, new Rectangle(0, bodyY, 16, 32), skin, flip);
 
             if (pantSheet != null && slot != null)
             {
                 var style = slot.Pants % 20;
                 DrawLayer(batch, pantSheet, pos,
                     new Rectangle(style % 10 * 192 + (male ? 0 : 96), style / 10 * 688, 16, 32),
-                    pantsColor);
+                    pantsColor, flip);
             }
 
             if (shirtSheet != null && slot != null && slot.Shirt >= 0 && slot.Shirt < 112)
@@ -348,15 +385,15 @@ namespace LumiaValley.Game
                 var sx = slot.Shirt * 8 % 128;
                 var sy = slot.Shirt * 8 / 128 * 32;
                 var sp = pos + new Vector2(16, 56);
-                DrawLayer(batch, shirtSheet, sp, new Rectangle(sx, sy, 8, 8), Color.White);
-                DrawLayer(batch, shirtSheet, sp, new Rectangle(sx + 128, sy, 8, 8), shirtColor);
+                DrawLayer(batch, shirtSheet, sp, new Rectangle(sx, sy, 8, 8), Color.White, flip);
+                DrawLayer(batch, shirtSheet, sp, new Rectangle(sx + 128, sy, 8, 8), shirtColor, flip);
             }
 
             if (accessorySheet != null && slot != null && slot.Accessory >= 0)
             {
                 var acc = slot.Accessory % 20;
                 DrawLayer(batch, accessorySheet, pos,
-                    new Rectangle(acc * 16 % 128, acc * 16 / 128 * 32, 16, 16), Color.White);
+                    new Rectangle(acc * 16 % 128, acc * 16 / 128 * 32, 16, 16), Color.White, flip);
             }
 
             if (hairSheet != null)
@@ -366,11 +403,11 @@ namespace LumiaValley.Game
                 var hair = Wrap(hairIndex, 56);
                 // FarmerRenderer.case 2: sourceRect 16x15 (nao 16x32).
                 DrawLayer(batch, hairSheet, pos,
-                    new Rectangle(hair % 8 * 16, hair / 8 * 96, 16, 15), hairColor);
+                    new Rectangle(hair % 8 * 16, hair / 8 * 96, 16, 15), hairColor, flip);
             }
 
             // Braco direito por cima do cabelo.
-            DrawLayer(batch, farmerBase, pos, new Rectangle(96, 0, 16, 32), skin);
+            DrawLayer(batch, farmerBase, pos, new Rectangle(96, bodyY, 16, 32), skin, flip);
         }
 
         private static int Wrap(int value, int count)
@@ -382,12 +419,12 @@ namespace LumiaValley.Game
         }
 
         private static void DrawLayer(SpriteBatch batch, Texture2D texture, Vector2 pos,
-            Rectangle source, Color color)
+            Rectangle source, Color color, SpriteEffects effects = SpriteEffects.None)
         {
             if (texture == null || source.X < 0 || source.Y < 0 ||
                 source.Right > texture.Width || source.Bottom > texture.Height)
                 return;
-            batch.Draw(texture, pos, source, color, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0f);
+            batch.Draw(texture, pos, source, color, 0f, Vector2.Zero, 4f, effects, 0f);
         }
 
         private void DrawHud(SpriteBatch batch)
@@ -397,9 +434,23 @@ namespace LumiaValley.Game
             var ox = (int)camera.X;
             var oy = (int)camera.Y;
 
-            // Barra de energia.
-            batch.Draw(pixel, new Rectangle(24 + ox, 22 + oy, 208, 28), Color.Black * 0.6f);
-            batch.Draw(pixel, new Rectangle(28 + ox, 26 + oy, (int)(200 * energy / 100f), 20), new Color(104, 184, 72));
+            // Barra de energia vertical, canto inferior direito: sprites do
+            // Cursors (256,408 / 256,424 / 256,448), exatamente como o original.
+            var bx = ViewportConfig.VirtualWidth - 60 + ox;
+            var by = ViewportConfig.VirtualHeight - 224 + oy;
+            if (cursors != null)
+            {
+                batch.Draw(cursors, new Vector2(bx, by), new Rectangle(256, 408, 12, 16),
+                    Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0f);
+                batch.Draw(cursors, new Rectangle((int)bx, (int)by + 64, 48, 160),
+                    new Rectangle(256, 424, 12, 16), Color.White);
+                batch.Draw(cursors, new Vector2(bx, by + 160), new Rectangle(256, 448, 12, 16),
+                    Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0f);
+
+                var fillHeight = (int)(270 * energy / 100f);
+                batch.Draw(pixel, new Rectangle((int)bx + 12, (int)by + 16 + (270 - fillHeight), 24, fillHeight),
+                    new Color(104, 184, 72));
+            }
 
             if (font == null)
                 return;
@@ -416,10 +467,9 @@ namespace LumiaValley.Game
             batch.DrawString(font, "500g",
                 new Vector2(ViewportConfig.VirtualWidth - 28 - font.MeasureString("500g").X + ox, 56 + oy),
                 new Color(255, 228, 120));
-
-            if (slot != null && !string.IsNullOrEmpty(slot.FarmerName))
-                batch.DrawString(font, slot.FarmerName + " - " + slot.FarmName,
-                    new Vector2(24 + ox, 60 + oy), Color.White);
+            batch.DrawString(font, energy + "/270",
+                new Vector2(ViewportConfig.VirtualWidth - 120 + ox, ViewportConfig.VirtualHeight - 60 + oy),
+                Color.White);
 
 
 
