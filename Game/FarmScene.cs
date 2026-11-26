@@ -239,7 +239,6 @@ namespace LumiaValley.Game
             {
                 DrawFurnitureTile(batch, indoor, 16, x, 2);
                 DrawFurnitureTile(batch, indoor, x % 2 == 0 ? 352 : 353, x, 3);
-                DrawFurnitureTile(batch, indoor, x % 2 == 0 ? 336 : 337, x, 4);
             }
         }
 
@@ -262,18 +261,12 @@ namespace LumiaValley.Game
 
             var pos = new Vector2((float)Math.Floor(player.X - 32), (float)Math.Floor(player.Y - 112));
             var male = slot == null || slot.IsMale;
+            // Tom fixo da 1.5.6; a leitura do XNB de skinColors no UWP ARM
+            // devolve valores inconsistentes, entao usamos o padrao.
             var skin = new Color(224, 172, 140);
             var hairColor = new Color(110, 58, 30);
             var shirtColor = new Color(88, 110, 170);
             var pantsColor = new Color(64, 86, 150);
-            if (skinSheet != null)
-            {
-                var palette = new Color[skinSheet.Width * skinSheet.Height];
-                skinSheet.GetData(palette);
-                var s = slot == null ? 0 : slot.Skin % skinSheet.Height;
-                skin = palette[s * 3 + 1];
-            }
-
             // Corpo (facing 2 = olhando para a camara).
             DrawLayer(batch, farmerBase, pos, new Rectangle(0, 0, 16, 32), skin);
 
