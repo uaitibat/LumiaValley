@@ -37,6 +37,10 @@ namespace LumiaValley.Game
         public bool Visible { get; private set; }
         public bool Shift { get; private set; }
 
+        // Depuracao: mostra onde o jogo recebeu o ultimo toque.
+        private Vector2 lastTap;
+        private bool hasTap;
+
         public Rectangle Bounds
         {
             get { return new Rectangle(140, 316, 1000, 400); }
@@ -101,6 +105,9 @@ namespace LumiaValley.Game
             if (!Visible || current == null)
                 return current ?? string.Empty;
 
+            lastTap = point;
+            hasTap = true;
+
             for (var i = 0; i < keys.Count; i++)
             {
                 var key = keys[i];
@@ -157,6 +164,12 @@ namespace LumiaValley.Game
 
             batch.Draw(pixel, Bounds, new Color(12, 28, 20) * 0.97f);
             batch.Draw(pixel, new Rectangle(Bounds.X, Bounds.Y, Bounds.Width, 3), new Color(126, 170, 92));
+
+            if (hasTap)
+            {
+                batch.Draw(pixel, new Rectangle((int)lastTap.X - 6, (int)lastTap.Y - 6, 12, 12),
+                    new Color(255, 48, 48));
+            }
 
             if (font != null && !string.IsNullOrEmpty(hint))
             {
