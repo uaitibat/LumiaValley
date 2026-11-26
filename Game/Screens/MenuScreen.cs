@@ -65,9 +65,9 @@ namespace LumiaValley.Game.Screens
         }
 
         /// <summary>
-        /// Equivale a Game1.DrawBox/drawDialogueBox: o miolo comeca 28px dentro
-        /// e as bordas usam um offset de -32 para alinhar com o canto transparente
-        /// do MenuTiles. Sem isso o fundo aparece entre a borda e o miolo bege.
+        /// Equivale a Game1.drawDialogueBox: o miolo comeca 28px dentro e as
+        /// bordas sao desenhadas sem offset. A area transparente das bordas e
+        /// preenchida pelo miolo, sem deixar o fundo aparecer.
         /// </summary>
         protected void DrawPanel(SpriteBatch batch, Rectangle area, string title)
         {
@@ -82,18 +82,16 @@ namespace LumiaValley.Game.Screens
             else
             {
                 var t = menuTiles;
-                // Miolo: source (64,128) deslocado de 28px, exatamente como o original.
                 batch.Draw(t, new Rectangle(area.X + 28, area.Y + 28, area.Width - 64, area.Height - 64),
                     new Rectangle(64, 128, 64, 64), Color.White);
-                // Cantos e bordas com offset de -32 (metade do tile de 64px).
-                batch.Draw(t, new Vector2(area.X - 32, area.Y - 32), new Rectangle(0, 0, 64, 64), Color.White);
-                batch.Draw(t, new Vector2(area.X + area.Width - 32, area.Y - 32), new Rectangle(192, 0, 64, 64), Color.White);
-                batch.Draw(t, new Vector2(area.X + area.Width - 32, area.Y + area.Height - 32), new Rectangle(192, 192, 64, 64), Color.White);
-                batch.Draw(t, new Vector2(area.X - 32, area.Y + area.Height - 32), new Rectangle(0, 192, 64, 64), Color.White);
-                batch.Draw(t, new Rectangle(area.X + 32, area.Y - 32, area.Width - 64, 64), new Rectangle(128, 0, 64, 64), Color.White);
-                batch.Draw(t, new Rectangle(area.X + 32, area.Y + area.Height - 32, area.Width - 64, 64), new Rectangle(128, 192, 64, 64), Color.White);
-                batch.Draw(t, new Rectangle(area.X - 32, area.Y + 32, 64, area.Height - 64), new Rectangle(0, 128, 64, 64), Color.White);
-                batch.Draw(t, new Rectangle(area.X + area.Width - 32, area.Y + 32, 64, area.Height - 64), new Rectangle(192, 128, 64, 64), Color.White);
+                batch.Draw(t, new Vector2(area.X, area.Y), new Rectangle(0, 0, 64, 64), Color.White);
+                batch.Draw(t, new Vector2(area.Right - 64, area.Y), new Rectangle(192, 0, 64, 64), Color.White);
+                batch.Draw(t, new Vector2(area.Right - 64, area.Bottom - 64), new Rectangle(192, 192, 64, 64), Color.White);
+                batch.Draw(t, new Vector2(area.X, area.Bottom - 64), new Rectangle(0, 192, 64, 64), Color.White);
+                batch.Draw(t, new Rectangle(area.X + 64, area.Y, area.Width - 128, 64), new Rectangle(128, 0, 64, 64), Color.White);
+                batch.Draw(t, new Rectangle(area.X + 64, area.Bottom - 64, area.Width - 128, 64), new Rectangle(128, 192, 64, 64), Color.White);
+                batch.Draw(t, new Rectangle(area.X, area.Y + 64, 64, area.Height - 128), new Rectangle(0, 128, 64, 64), Color.White);
+                batch.Draw(t, new Rectangle(area.Right - 64, area.Y + 64, 64, area.Height - 128), new Rectangle(192, 128, 64, 64), Color.White);
             }
 
             if (font != null && !string.IsNullOrEmpty(title))

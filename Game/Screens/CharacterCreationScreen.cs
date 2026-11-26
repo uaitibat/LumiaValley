@@ -513,9 +513,9 @@ namespace LumiaValley.Game.Screens
         }
 
         /// <summary>
-        /// Equivale a Game1.DrawBox: o miolo comeca 28px dentro e as bordas
-        /// usam um offset de -32 para alinhar com o canto do MenuTiles. Assim
-        /// nao aparece céu entre a moldura e o quadrado bege.
+        /// Game1.drawDialogueBox: o miolo bege comeca 28px dentro e as bordas
+        /// sao desenhadas SEM offset. As bordas tem area transparente que o
+        /// miolo preenche, entao nao aparece céu entre a moldura e o bege.
         /// </summary>
         private void DrawMenuBox(SpriteBatch batch, Rectangle area)
         {
@@ -528,14 +528,14 @@ namespace LumiaValley.Game.Screens
             var t = menuTiles;
             batch.Draw(t, new Rectangle(area.X + 28, area.Y + 28, area.Width - 64, area.Height - 64),
                 new Rectangle(64, 128, 64, 64), Color.White);
-            batch.Draw(t, new Vector2(area.X - 32, area.Y - 32), new Rectangle(0, 0, 64, 64), Color.White);
-            batch.Draw(t, new Vector2(area.Right - 32, area.Y - 32), new Rectangle(192, 0, 64, 64), Color.White);
-            batch.Draw(t, new Vector2(area.Right - 32, area.Bottom - 32), new Rectangle(192, 192, 64, 64), Color.White);
-            batch.Draw(t, new Vector2(area.X - 32, area.Bottom - 32), new Rectangle(0, 192, 64, 64), Color.White);
-            batch.Draw(t, new Rectangle(area.X + 32, area.Y - 32, area.Width - 64, 64), new Rectangle(128, 0, 64, 64), Color.White);
-            batch.Draw(t, new Rectangle(area.X + 32, area.Bottom - 32, area.Width - 64, 64), new Rectangle(128, 192, 64, 64), Color.White);
-            batch.Draw(t, new Rectangle(area.X - 32, area.Y + 32, 64, area.Height - 64), new Rectangle(0, 128, 64, 64), Color.White);
-            batch.Draw(t, new Rectangle(area.Right - 32, area.Y + 32, 64, area.Height - 64), new Rectangle(192, 128, 64, 64), Color.White);
+            batch.Draw(t, new Vector2(area.X, area.Y), new Rectangle(0, 0, 64, 64), Color.White);
+            batch.Draw(t, new Vector2(area.Right - 64, area.Y), new Rectangle(192, 0, 64, 64), Color.White);
+            batch.Draw(t, new Vector2(area.Right - 64, area.Bottom - 64), new Rectangle(192, 192, 64, 64), Color.White);
+            batch.Draw(t, new Vector2(area.X, area.Bottom - 64), new Rectangle(0, 192, 64, 64), Color.White);
+            batch.Draw(t, new Rectangle(area.X + 64, area.Y, area.Width - 128, 64), new Rectangle(128, 0, 64, 64), Color.White);
+            batch.Draw(t, new Rectangle(area.X + 64, area.Bottom - 64, area.Width - 128, 64), new Rectangle(128, 192, 64, 64), Color.White);
+            batch.Draw(t, new Rectangle(area.X, area.Y + 64, 64, area.Height - 128), new Rectangle(0, 128, 64, 64), Color.White);
+            batch.Draw(t, new Rectangle(area.Right - 64, area.Y + 64, 64, area.Height - 128), new Rectangle(192, 128, 64, 64), Color.White);
         }
 
         /// <summary>IClickableMenu.drawTextureBox: canto de 20px e sombra opcional.</summary>
@@ -781,7 +781,7 @@ namespace LumiaValley.Game.Screens
             }
 
             ShadowText(batch, Localization.UIString("Strings\\UI:Character_Animal", "Animal\nfavorito"),
-                540, 252, TextColor, 1f);
+                540, 252, TextColor, 1.1f);
         }
 
         private void DrawAppearance(SpriteBatch batch)
@@ -806,11 +806,11 @@ namespace LumiaValley.Game.Screens
             }
 
             ShadowText(batch, Localization.UIString("Strings\\UI:Character_EyeColor", "Cor dos\nolhos"),
-                556, 340, TextColor, 1f);
+                556, 340, TextColor, 1.1f);
             ShadowText(batch, Localization.UIString("Strings\\UI:Character_HairColor", "Cor de\ncabelo"),
-                556, 408, TextColor, 1f);
+                556, 408, TextColor, 1.1f);
             ShadowText(batch, Localization.UIString("Strings\\UI:Character_PantsColor", "Cor da\ncalça"),
-                556, 476, TextColor, 1f);
+                556, 476, TextColor, 1.1f);
         }
 
         private int GetAppearanceValue(int row)
@@ -830,7 +830,7 @@ namespace LumiaValley.Game.Screens
             if (font == null || string.IsNullOrEmpty(text))
                 return;
             var offset = 21f - font.MeasureString(text).X / 2f;
-            ShadowText(batch, text, x + offset, y, TextColor, 1f);
+            ShadowText(batch, text, x + offset, y, TextColor, 1.1f);
         }
 
         private void DrawCenteredValue(SpriteBatch batch, string text, int x, int y)
@@ -838,7 +838,7 @@ namespace LumiaValley.Game.Screens
             if (font == null || string.IsNullOrEmpty(text))
                 return;
             var px = x + 21f - font.MeasureString(text).X / 2f;
-            ShadowText(batch, text, px, y, TextColor, 1f);
+            ShadowText(batch, text, px, y, TextColor, 1.1f);
         }
 
         private static string AppearanceLabel(int row)
@@ -899,9 +899,9 @@ namespace LumiaValley.Game.Screens
                     HsvToRgb(hue / 100f * 360f, saturation / 100f, i / 24f));
             DrawPickerCursor(batch, x + (int)(value / 100f * 128f), y + 50);
 
-            ShadowText(batch, hue.ToString(), x + 136, y, TextColor, 0.85f);
-            ShadowText(batch, saturation.ToString(), x + 136, y + 20, TextColor, 0.85f);
-            ShadowText(batch, value.ToString(), x + 136, y + 40, TextColor, 0.85f);
+            ShadowText(batch, hue.ToString(), x + 136, y, TextColor, 1.1f);
+            ShadowText(batch, saturation.ToString(), x + 136, y + 20, TextColor, 1.1f);
+            ShadowText(batch, value.ToString(), x + 136, y + 40, TextColor, 1.1f);
         }
 
         private void DrawPickerCursor(SpriteBatch batch, float x, float y)
@@ -967,7 +967,7 @@ namespace LumiaValley.Game.Screens
             }
 
             ShadowText(batch, Localization.UIString("Strings\\UI:Character_SkipIntro", "Pular introducao"),
-                SkipIntroRect.Right + 8, SkipIntroRect.Y + 8, TextColor, 1f);
+                SkipIntroRect.Right + 8, SkipIntroRect.Y + 8, TextColor, 1.1f);
         }
 
         private void DrawRandomButton(SpriteBatch batch)
@@ -999,6 +999,11 @@ namespace LumiaValley.Game.Screens
             }
         }
 
+        /// <summary>
+        /// IClickableMenu.drawTextureBox com source (375,357,3,3) e scale 4:
+        /// num = 1, entao cada lado da moldura tem 4px. O centro do 9-slice
+        /// nao e desenhado (era ele que produzia o quadrado escuro).
+        /// </summary>
         private void DrawSelectionFrame(SpriteBatch batch, Rectangle area)
         {
             if (cursors == null)
@@ -1010,9 +1015,19 @@ namespace LumiaValley.Game.Screens
                 return;
             }
 
-            // drawTextureBox com scale 4: num = 3/3 = 1, logo a borda e 4px.
-            var src = new Rectangle(375, 357, 3, 3);
-            DrawBox9(batch, cursors, area, src, 4, Color.White);
+            const int o = 4;
+            var s = new Rectangle(375, 357, 1, 1);
+            // Centro (apenas uma linha de 1px escalada, sem preenchimento).
+            batch.Draw(cursors, new Rectangle(area.X + o, area.Y + o, area.Width - o * 2, area.Height - o * 2),
+                new Rectangle(376, 358, 1, 1), Color.White);
+            batch.Draw(cursors, new Vector2(area.X, area.Y), s, Color.White);
+            batch.Draw(cursors, new Vector2(area.Right - o, area.Y), new Rectangle(377, 357, 1, 1), Color.White);
+            batch.Draw(cursors, new Vector2(area.Right - o, area.Bottom - o), new Rectangle(377, 359, 1, 1), Color.White);
+            batch.Draw(cursors, new Vector2(area.X, area.Bottom - o), new Rectangle(375, 359, 1, 1), Color.White);
+            batch.Draw(cursors, new Rectangle(area.X + o, area.Y, area.Width - o * 2, o), new Rectangle(376, 357, 1, 1), Color.White);
+            batch.Draw(cursors, new Rectangle(area.X + o, area.Bottom - o, area.Width - o * 2, o), new Rectangle(376, 359, 1, 1), Color.White);
+            batch.Draw(cursors, new Rectangle(area.X, area.Y + o, o, area.Height - o * 2), new Rectangle(375, 358, 1, 1), Color.White);
+            batch.Draw(cursors, new Rectangle(area.Right - o, area.Y + o, o, area.Height - o * 2), new Rectangle(377, 358, 1, 1), Color.White);
         }
 
         private void DrawOk(SpriteBatch batch)
@@ -1099,7 +1114,7 @@ namespace LumiaValley.Game.Screens
                 var candidate = line.Length == 0 ? words[i] : line + " " + words[i];
                 if (line.Length > 0 && font.MeasureString(candidate).X > width)
                 {
-                    ShadowText(batch, line, x, y + lines * lineHeight, TextColor, 1f);
+                    ShadowText(batch, line, x, y + lines * lineHeight, TextColor, 1.1f);
                     lines++;
                     line = words[i];
                 }
@@ -1110,7 +1125,7 @@ namespace LumiaValley.Game.Screens
             }
 
             if (lines < maxLines && line.Length > 0)
-                ShadowText(batch, line, x, y + lines * lineHeight, TextColor, 1f);
+                ShadowText(batch, line, x, y + lines * lineHeight, TextColor, 1.1f);
         }
 
         private static Color Mix(Color a, Color b, float amount)
