@@ -199,10 +199,8 @@ namespace LumiaValley.Game
             }
 
             var layerIndex = 0;
-            for (var li = map.Layers.Count - 1; li >= 0; li--)
+            foreach (var layer in map.Layers)
             {
-                var layer = map.Layers[li];
-                layerIndex = li;
                 if (layer == null || !layer.Visible || layer.Tiles == null)
                     continue;
 
@@ -233,10 +231,14 @@ namespace LumiaValley.Game
                         if (src.X < 0 || src.Y < 0 || src.Right > texture.Width || src.Bottom > texture.Height)
                             continue;
 
-                        batch.Draw(texture, new Rectangle(x * tileW, y * tileH, tileW, tileH), src, Color.White);
+                        // Equivale ao XnaDisplayDevice.DrawTile original:
+                        // posicao em pixels + escala Layer.zoom (4).
+                        batch.Draw(texture, new Vector2(x * tileW, y * tileH), src,
+                            Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0f);
                         drawnPerLayer[layerIndex]++;
                     }
                 }
+                layerIndex++;
             }
         }
 
