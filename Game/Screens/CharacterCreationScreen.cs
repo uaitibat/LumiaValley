@@ -128,6 +128,7 @@ namespace LumiaValley.Game.Screens
         private Color[] skinColors;
         private Color[] shoeColors;
         private Texture2D skinTexture;
+        private Texture2D shoeTexture;
         private Texture2D recoloredBase;
         private int recoloredSkin = -1;
         private bool recoloredMale;
@@ -206,7 +207,7 @@ namespace LumiaValley.Game.Screens
             accessoryTexture = LoadTexture(content, "Characters/Farmer/accessories");
 
             skinTexture = LoadTexture(content, "Characters/Farmer/skinColors");
-            var shoeTexture = LoadTexture(content, "Characters/Farmer/shoeColors");
+            shoeTexture = LoadTexture(content, "Characters/Farmer/shoeColors");
             // Cada tom de pele ocupa 3 pixels (sombra, base, luz); usamos a base.
             skinColors = ReadPalette(skinTexture, 3, 1, 24, SkinFallback);
             shoeColors = ReadPalette(shoeTexture, 4, 0, 19, ShoeFallback);
@@ -609,19 +610,18 @@ namespace LumiaValley.Game.Screens
         }
 
         /// <summary>
-        /// FarmerRenderer.draw com o layerDepth 0.8 do CharacterCustomization:
-        /// 4 * 0.8 = 3.2 pixels de sprite por pixel virtual. O fazendeiro e
-        /// desenhado depois de todos os botoes, como no original.
+        /// FarmerRenderer.draw: o CharacterCustomization passa layerDepth=0.8
+        /// e scale=1, entao a escala final do sprite e 4. Os offsets de camisa,
+        /// cabelo e acessorio sao em pixels de sprite e NAO sao multiplicados.
+        /// O position (420,84) faz os pes do sprites cairem sobre a sombra do
+        /// daybg, exatamente como no preview da 1.5.6.
         /// </summary>
         private void DrawFarmer(SpriteBatch batch)
         {
-            // CharacterCustomization chama draw(..., layerDepth = 0.8f) e o
-            // FarmerRenderer multiplica por 4 internamente.
-            const float scale = 4f * 0.8f;
+            const float scale = 4f;
             var pos = new Vector2(PortraitRect.Center.X - 32, PortraitRect.Bottom - 160);
             var facing = Wrap(draft.Facing, 4);
             var body = GetRecoloredBase();
-            var skin = skinColors[draft.Skin % skinColors.Length];
 
             int bodyY = facing == 0 ? 32 : facing == 1 ? 16 : 0;
             int shirtOffsetY = facing == 0 ? 24 : facing == 1 ? 8 : facing == 3 ? 16 : 0;
@@ -631,15 +631,14 @@ namespace LumiaValley.Game.Screens
             var flipHair = facing == 3;
             var hairXSign = facing == 3 ? -1f : 1f;
 
-            // Corpo: o FarmerRenderer recolorreia os indices 260..262 do base.
+            // Corpo (pele ja recolorida nos indices 260..262 do base).
             if (body != null)
-            {
                 DrawSpriteScaled(batch, body, pos, new Rectangle(0, bodyY, 16, 32), Color.White, scale);
-            }
 
+            // Calca: mesmo calculo do FarmerRenderer, incluindo todos os estilos.
             if (pantsTexture != null)
             {
-                var style = draft.Pants % 20;
+                var style = Wrap(draft.Pants, 20);
                 var src = new Rectangle(
                     style % 10 * 192 + (draft.IsMale ? 0 : 96),
                     style / 10 * 688,
@@ -648,25 +647,24 @@ namespace LumiaValley.Game.Screens
                     PantsPalette[draft.PantsColor % PantsPalette.Length], scale);
             }
 
-            // Olhos: o preview usa currentEyes = 0 (sem olhos) quando virado
-            // para a camara; de lado usa a primeira linha de eyeColors.
+            // Olhos: o preview parado nao pisca e olha para a camara.
             if (body != null && facing != 2)
             {
                 var eyeX = 5 + (facing == 1 ? 12 : 4);
                 DrawSpriteScaled(batch, body,
-                    pos + new Vector2(eyeX * scale, (facing == 0 ? 44 : 40) * scale / 4f),
+                    pos + new Vector2(eyeX * 4f, (facing == 0 ? 44 : 40)),
                     new Rectangle(5, 16, 2, 2), Color.White, scale);
                 DrawSpriteScaled(batch, body,
-                    pos + new Vector2(eyeX * scale, (facing == 1 || facing == 3 ? 40 : 44) * scale / 4f),
+                    pos + new Vector2(eyeX * 4f, facing == 1 || facing == 3 ? 40 : 44),
                     new Rectangle(264 + (facing == 3 ? 4 : 0), 2, 2, 2), Color.White, scale);
             }
 
-            if (shirtTexture != null && draft.Shirt < 20)
+            // Camisa: ate o indice 111, como o ClampShirt do original.
+            if (shirtTexture != null && draft.Shirt >= 0 && draft.Shirt < 112)
             {
                 var shirtX = draft.Shirt * 8 % 128;
                 var shirtY = draft.Shirt * 8 / 128 * 32 + shirtOffsetY;
-                var shirtPos = pos + new Vector2(16f, 56f) * scale / 4f;
-                // Base branca da camisa e depois a copia colorida em X + 128.
+                var shirtPos = pos + new Vector2(16f, 56f);
                 DrawSpriteScaled(batch, shirtTexture, shirtPos,
                     new Rectangle(shirtX, shirtY, 8, 8), Color.White, scale);
                 DrawSpriteScaled(batch, shirtTexture, shirtPos,
@@ -674,11 +672,12 @@ namespace LumiaValley.Game.Screens
                     ShirtPalette[draft.ShirtColor % ShirtPalette.Length], scale);
             }
 
-            if (accessoryTexture != null && draft.Accessory >= 0 && facing != 0)
+            // Acessorio (sempre desenhado quando >= 0, inclusive de frente).
+            if (accessoryTexture != null && draft.Accessory >= 0)
             {
-                var acc = draft.Accessory % 20;
+                var acc = Wrap(draft.Accessory, 20);
                 var src = new Rectangle(acc * 16 % 128, acc * 16 / 128 * 32 + accessoryOffsetY, 16, 16);
-                var accPos = pos + new Vector2(0f, 4f) * scale / 4f;
+                var accPos = pos + new Vector2(0f, facing == 2 ? 4f : 4f);
                 var accColor = draft.Accessory < 6
                     ? HairPalette[draft.HairColor % HairPalette.Length]
                     : Color.White;
@@ -704,18 +703,18 @@ namespace LumiaValley.Game.Screens
 
             if (hair != null)
             {
-                var hairPos = pos + new Vector2(0f, hairDrawY) * scale / 4f;
+                var hairPos = pos + new Vector2(0f, hairDrawY);
                 var hairXOffset = draft.IsMale && draft.Hair >= 16 ? -4f
                     : !draft.IsMale && draft.Hair < 16 ? 4f : 0f;
-                hairPos.X += hairXSign * hairXOffset * scale / 4f;
+                hairPos.X += hairXSign * hairXOffset;
                 DrawSpriteScaled(batch, hair, hairPos, hairSrc,
                     HairPalette[draft.HairColor % HairPalette.Length], scale,
                     flipHair ? SpriteEffects.FlipHorizontally : SpriteEffects.None);
             }
 
-            // Braco direito do sheet base, desenhado por cima do cabelo.
+            // Braco direito do sheet base, por cima do cabelo.
             if (body != null)
-                DrawSpriteScaled(batch, body, pos, new Rectangle(96, 0, 16, 32), Color.White, scale);
+                DrawSpriteScaled(batch, body, pos, new Rectangle(96, bodyY, 16, 32), Color.White, scale);
         }
 
         private Texture2D GetRecoloredBase()
@@ -729,6 +728,8 @@ namespace LumiaValley.Game.Screens
 
             var data = new Color[source.Width * source.Height];
             source.GetData(data);
+
+            // Pele: trios sombra/base/luz do skinColors, como o ApplySkinColor.
             if (skinTexture != null && skinTexture.Width == 3)
             {
                 var palette = new Color[skinTexture.Width * skinTexture.Height];
@@ -737,6 +738,18 @@ namespace LumiaValley.Game.Screens
                 _SwapColor(data, 260, palette[which * 3]);
                 _SwapColor(data, 261, palette[which * 3 + 1]);
                 _SwapColor(data, 262, palette[which * 3 + 2]);
+            }
+
+            // Sapato: o ApplyShoeColor troca os indices 268..271 do base,
+            // usando quatro cores por linha do shoeColors. Sem isso os pes
+            // aparecem com a cor errada (ou parecem faltar).
+            if (shoeTexture != null && shoeTexture.Width == 4)
+            {
+                var palette = new Color[shoeTexture.Width * shoeTexture.Height];
+                shoeTexture.GetData(palette);
+                var which = Wrap(draft.Shoes, shoeTexture.Height);
+                for (var i = 0; i < 4; i++)
+                    _SwapColor(data, 268 + i, palette[which * 4 + i]);
             }
 
             recoloredBase = new Texture2D(source.GraphicsDevice, source.Width, source.Height);
