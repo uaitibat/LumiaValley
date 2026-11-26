@@ -260,11 +260,6 @@ namespace LumiaValley.Game.Screens
             if (warningMs > 0)
                 warningMs -= (int)Math.Min(gameTime.ElapsedGameTime.TotalMilliseconds, 50);
 
-            // Enquanto o teclado nativo estiver aberto, o Windows captura os
-            // toques e o jogo nao deve processar cliques.
-            if (NativeTextInput.IsOpen)
-                return this;
-
             if (!tap.HasValue)
                 return this;
 
@@ -303,9 +298,9 @@ namespace LumiaValley.Game.Screens
                 return this;
             }
 
-            if (Contains(NameRect, point)) { OpenNativeInput(1); return this; }
-            if (Contains(FarmNameRect, point)) { OpenNativeInput(2); return this; }
-            if (Contains(FavoriteRect, point)) { OpenNativeInput(3); return this; }
+            if (Contains(NameRect, point)) { activeField = 1; keyboard.Show(); return this; }
+            if (Contains(FarmNameRect, point)) { activeField = 2; keyboard.Show(); return this; }
+            if (Contains(FavoriteRect, point)) { activeField = 3; keyboard.Show(); return this; }
 
             if (Contains(MaleRect, point)) { draft.IsMale = true; return this; }
             if (Contains(FemaleRect, point)) { draft.IsMale = false; return this; }
@@ -354,39 +349,6 @@ namespace LumiaValley.Game.Screens
             }
 
             return this;
-        }
-
-        /// <summary>
-        /// Abre o Popup com teclado nativo do Windows. Se falhar, usa o
-        /// teclado desenhado pelo jogo como fallback.
-        /// </summary>
-        private void OpenNativeInput(int field)
-        {
-            activeField = field;
-
-            if (!NativeTextInput.Available)
-            {
-                keyboard.Show();
-                return;
-            }
-
-            var current = field == 1 ? draft.FarmerName
-                : field == 2 ? draft.FarmName
-                : draft.FavoriteThing;
-
-            var opened = NativeTextInput.Show(current,
-                text =>
-                {
-                    if (text == null)
-                        return;
-                    if (field == 1) draft.FarmerName = text;
-                    else if (field == 2) draft.FarmName = text;
-                    else draft.FavoriteThing = text;
-                },
-                () => { activeField = 0; });
-
-            if (!opened)
-                keyboard.Show();
         }
 
         private static Rectangle FarmButtonRect(int index)

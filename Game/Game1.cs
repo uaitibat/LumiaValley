@@ -71,11 +71,14 @@ namespace LumiaValley.Game
                 if (gesture.GestureType != GestureType.Tap)
                     continue;
 
+                // Usa o PRIMEIro toque valido da fila. O codigo anterior
+                // sobrescrevia `tap` a cada gesto e terminava usando um toque
+                // antigo/phantom, o que fazia teclas erradas responderem.
                 var position = gesture.Position;
-
                 var vp = GraphicsDevice.Viewport;
                 var virtualPoint = ViewportConfig.ToVirtual(position, vp.Width, vp.Height);
                 tap = current != null ? current.FromVirtual(virtualPoint) : virtualPoint;
+                break;
             }
 
             if (current != null)
@@ -88,14 +91,8 @@ namespace LumiaValley.Game
             base.Update(gameTime);
         }
 
-        /// <summary>Pausa a renderizacao enquanto a pagina de texto XAML esta aberta.</summary>
-        public static bool InputModal;
-
         protected override void Draw(GameTime gameTime)
         {
-            if (InputModal)
-                return;
-
             EnsureSceneTarget();
 
             // 1. Cena em resolucao configurada (640x360 por padrao).
