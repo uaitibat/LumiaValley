@@ -7,22 +7,33 @@
         <SwapChainPanel x:Name="SwapPanel" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 
         <!--
-            Caixa de texto invisivel usada apenas para abrir o teclado nativo
-            do Windows. Focada via Focus(FocusState.Programmatic), o SIP sobe
-            e o texto digitado volta para o jogo pelo evento TextChanged.
+            Campo invisivel usado somente para abrir o teclado nativo do
+            Windows. Precisa ter um tamanho normal: com 1x1 o SIP abre
+            comprimido e as teclas saem desalinhadas (A vira C, etc).
+            IsHitTestVisible=False evita que ele roube toques do jogo;
+            o foco e feito programaticamente.
         -->
         <TextBox x:Name="NativeInput"
-                 Width="1" Height="1"
-                 MinWidth="1" MinHeight="1"
+                 Width="420" Height="48"
+                 MinWidth="420" MinHeight="48"
                  Opacity="0"
                  BorderThickness="0"
                  Background="Transparent"
                  Padding="0"
-                 Margin="0"
-                 HorizontalAlignment="Left"
-                 VerticalAlignment="Top"
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Bottom"
+                 Margin="0,0,0,72"
+                 IsHitTestVisible="False"
                  IsTabStop="True"
                  TabIndex="0"
-                 MaxLength="24" />
+                 MaxLength="24">
+            <TextBox.InputScope>
+                <InputScope>
+                    <InputScope.Names>
+                        <InputScopeName NameValue="Text" />
+                    </InputScope.Names>
+                </InputScope>
+            </TextBox.InputScope>
+        </TextBox>
     </Grid>
 </Page>
