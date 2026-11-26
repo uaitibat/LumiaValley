@@ -92,7 +92,7 @@ namespace LumiaValley.Game
         public void Reset()
         {
             // O jogo comeca com o fazendeiro acordando na cama do FarmHouse.
-            player = new Vector2(8 * 64f, 5 * 64f);
+            player = new Vector2(6 * 64f, 3 * 64f);
             target = player;
             hasTarget = false;
             direction = Vector2.Zero;
@@ -158,10 +158,16 @@ namespace LumiaValley.Game
         {
             var worldWidth = map != null ? map.Width * 64 : ViewportConfig.VirtualWidth;
             var worldHeight = map != null ? map.Height * 64 : ViewportConfig.VirtualHeight;
-            camera.X = MathHelper.Clamp(player.X - ViewportConfig.VirtualWidth / 2f,
-                0f, Math.Max(0f, worldWidth - ViewportConfig.VirtualWidth));
-            camera.Y = MathHelper.Clamp(player.Y - ViewportConfig.VirtualHeight / 2f,
-                0f, Math.Max(0f, worldHeight - ViewportConfig.VirtualHeight));
+
+            // Mapas menores que a viewport ficam centralizados, como no original.
+            camera.X = worldWidth <= ViewportConfig.VirtualWidth
+                ? -(ViewportConfig.VirtualWidth - worldWidth) / 2f
+                : MathHelper.Clamp(player.X - ViewportConfig.VirtualWidth / 2f,
+                    0f, worldWidth - ViewportConfig.VirtualWidth);
+            camera.Y = worldHeight <= ViewportConfig.VirtualHeight
+                ? -(ViewportConfig.VirtualHeight - worldHeight) / 2f
+                : MathHelper.Clamp(player.Y - ViewportConfig.VirtualHeight / 2f,
+                    0f, worldHeight - ViewportConfig.VirtualHeight);
         }
 
         public void Draw(SpriteBatch spriteBatch)
