@@ -340,6 +340,11 @@ namespace LumiaValley.Game
 
             batch.DrawString(font, "L0:" + drawnPerLayer[0] + " L1:" + drawnPerLayer[1] +
                 " L2:" + drawnPerLayer[2], new Vector2(24 + ox, 110 + oy), new Color(255, 90, 90));
+
+            Texture2D indoor;
+            if (sheets.TryGetValue("indoor", out indoor) && indoor != null)
+                batch.Draw(indoor, new Rectangle(24 + ox, 132 + oy, 64, 64),
+                    new Rectangle(0, 176, 16, 16), Color.White);
         }
 
     }
