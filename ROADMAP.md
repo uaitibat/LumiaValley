@@ -62,5 +62,6 @@
 - `Steamworks`, `GalaxyCSharp`, `Lidgren.Network`, `SkiaSharp`, `Reflection.Emit` — remover ou substituir.
 - `System.IO` de disco → `ApplicationData.Current.LocalFolder`.
 - .NET Native nao suporta geracao de codigo dinamica.
-- Formato de save: decidir entre compativel com PC ou formato proprio do port.
+- Formato de save: **decidido — formato proprio simples** (JSON/binario no `LocalFolder`).
+  Nao ha compatibilidade com saves do PC; isso simplifica a escrita no ARM.
 - XACT e o maior peso do pacote; audio fica por ultimo.

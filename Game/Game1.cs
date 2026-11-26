@@ -35,8 +35,9 @@ namespace LumiaValley.Game
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
-            graphics.PreferredBackBufferWidth = ViewportConfig.PreferredBackBufferWidth;
-            graphics.PreferredBackBufferHeight = ViewportConfig.PreferredBackBufferHeight;
+            // Nao impor PreferredBackBuffer: no UWP o MonoGame dimensiona a swap
+            // chain pelo SwapChainPanel. Forcar 640x360 faz o Viewport reportar
+            // 640x360 enquanto a superficie real e 1280x720 (canto superior esquerdo).
             graphics.SupportedOrientations =
                 DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
             Content.RootDirectory = "Content";
@@ -196,6 +197,7 @@ namespace LumiaValley.Game
             // 2. Um unico blit escalado para o backbuffer real do SwapChainPanel.
             var vp = GraphicsDevice.Viewport;
             GraphicsDevice.SetRenderTarget(null);
+            GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin();
             spriteBatch.Draw(
                 sceneTarget,
