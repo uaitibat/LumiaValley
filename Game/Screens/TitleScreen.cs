@@ -335,6 +335,18 @@ namespace LumiaValley.Game.Screens
 
             DrawClouds(batch, py);
             DrawBirds(batch);
+
+            // Primeiro plano de selva: aparece com a camera em 0 e desaparece
+            // para baixo enquanto a camera sobe (parallax 2x do original).
+            if (clouds != null)
+            {
+                SafeDraw(batch, clouds,
+                    new Rectangle(0, 720 - 426 - (int)(py * 2f), 495, 426),
+                    new Rectangle(0, 554, 165, 142), Color.White);
+                SafeDraw(batch, clouds,
+                    new Rectangle(1280 - 366, 720 - 459 - (int)(py * 2f), 366, 459),
+                    new Rectangle(390, 543, 122, 153), Color.White);
+            }
         }
 
         private void DrawClouds(SpriteBatch batch, float py)
@@ -373,17 +385,33 @@ namespace LumiaValley.Game.Screens
             if (buttons == null)
                 return;
 
-            var scale = 2f;
-            if (phase == Phase.LogoSwipe)
-            {
-                var t = (float)Math.Min(phaseMs / 1000.0, 1.0);
-                scale += (0.5f - Math.Abs(t - 0.5f)) * 0.1f;
-            }
-
-            var width = (int)(LogoSource.Width * scale);
-            var height = (int)(LogoSource.Height * scale);
+            // O logo nao aparece pronto: ele desce junto com a subida da camera.
+            // n = 2 em 720p (ShouldShrinkLogo), mesma formula do original:
+            // y = -300*n - (int)(viewportY/3f)*n  ->  -600 em py=0, 66 em py=-1000.
+            var logoY = -600 - (int)(viewportY / 3f) * 2;
             SafeDraw(batch, buttons,
-                new Rectangle(640 - width / 2, 66, width, height), LogoSource, Color.White);
+                new Rectangle(240, logoY, 800, 374), LogoSource, Color.White);
+
+            if (phase != Phase.LogoSwipe)
+                return;
+
+            // Swipe final: uma segunda copia com origem no centro e escala
+            // pulsante, como o logoSwipeTimer da 1.5.6.
+            var t = (float)Math.Min(phaseMs / 1000.0, 1.0);
+            var pulse = 2f + (0.5f - Math.Abs(t - 0.5f)) * 0.1f;
+            if (LogoSource.Right <= buttons.Width && LogoSource.Bottom <= buttons.Height)
+            {
+                batch.Draw(
+                    buttons,
+                    new Vector2(640, logoY + 93 * 2),
+                    LogoSource,
+                    Color.White,
+                    0f,
+                    new Vector2(200f, 93f),
+                    pulse,
+                    SpriteEffects.None,
+                    0f);
+            }
         }
 
         private void DrawButtons(SpriteBatch batch)
