@@ -23,6 +23,7 @@ namespace LumiaValley.Game
         private SpriteFont font;
         private TileMap map;
         private readonly Dictionary<string, Texture2D> sheets = new Dictionary<string, Texture2D>();
+        private readonly FurnitureRenderer furniture = new FurnitureRenderer();
 
         private Vector2 player;
         private Vector2 target;
@@ -47,6 +48,8 @@ namespace LumiaValley.Game
 
             try { font = content.Load<SpriteFont>("Fonts/SmallFont.pt-BR"); }
             catch { font = null; }
+            try { furniture.Load(content); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Furniture: " + ex.Message); }
 
             try
             {
@@ -229,42 +232,17 @@ namespace LumiaValley.Game
         /// </summary>
         private void DrawFurniture(SpriteBatch batch)
         {
-            Texture2D indoor;
-            if (!sheets.TryGetValue("indoor", out indoor) || indoor == null)
-                return;
-
-            // Cama: travesseiro (16) na fileira 2, colcha (352/353) na 3,
-            // rodape (336/337) na 4.
-            for (var x = 1; x <= 10; x++)
-            {
-                DrawFurnitureTile(batch, indoor, 16, x, 2);
-                DrawFurnitureTile(batch, indoor, x % 2 == 0 ? 352 : 353, x, 3);
-            }
-
-            // Faixas da frente (camada Front do xTile): rodape da cama,
-            // tapete e moveis. Indices do townInterior lidos do tBIN.
-            var front = new[]
-            {
-                160, 161, 162, -1, 163, 165, 165, 165, 165, 165, 166, 167,
-                96, 165, 130
-            };
-            for (var i = 0; i < front.Length; i++)
-            {
-                if (front[i] < 0)
-                    continue;
-                var x = i < 12 ? i : i - 12;
-                var y = i < 12 ? 10 : 11;
-                DrawFurnitureTile(batch, indoor, front[i], x, y);
-            }
-        }
-
-        private static void DrawFurnitureTile(SpriteBatch batch, Texture2D tex, int index, int tx, int ty)
-        {
-            const int sheetWidth = 32;
-            var src = new Rectangle(index % sheetWidth * 16, index / sheetWidth * 16, 16, 16);
-            if (src.Right > tex.Width || src.Bottom > tex.Height)
-                return;
-            batch.Draw(tex, new Rectangle(tx * 64, ty * 64, 64, 64), src, Color.White);
+            // FarmHouse.doAction / Game1.loadForNewGame: moveis iniciais do
+            // casal (whichFarm = 0), exatamente como no original.
+            furniture.Draw(batch, 1120, 5, 4); // mesa de carvalho
+            furniture.Draw(batch, 1364, 5, 4); // tigela decorativa (em cima da mesa)
+            furniture.Draw(batch, 1376, 1, 10); // planta
+            furniture.Draw(batch, 0, 4, 4);     // cadeira
+            furniture.Draw(batch, 1466, 1, 4);  // TV
+            furniture.Draw(batch, 1614, 3, 1);  // janela
+            furniture.Draw(batch, 1618, 6, 8);  // tapete
+            furniture.Draw(batch, 1602, 5, 1);  // quadro
+            furniture.Draw(batch, 1792, 0, 0);  // lareira
         }
 
         /// <summary>Mesmas camadas do preview da criacao: corpo, calca, camisa,
