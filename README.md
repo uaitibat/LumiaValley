@@ -6,7 +6,8 @@ Port experimental de **Stardew Valley 1.5.6** para **Lumia 640 / Windows 10 Mobi
 
 - Pipeline UWP ARM validado no Lumia: touch por tap e escala pelo `SwapChainPanel` funcionando.
 - XNB v5 da 1.5.6 lido direto do appx no Lumia (validado com `LooseSprites/daybg`).
-- Home da Fase 1: splash, fade, câmera, logo e botões com sprites reais da 1.5.6.
+- Home da Fase 1 validada: splash clicável, fade, câmera, logo e botões com sprites reais.
+- Fase 2: New/Load/Co-op/Exit, saves próprios no `LocalFolder`, Sobre e opções básicas.
 - Protótipo de fazenda com o sprite do farmer e movimento por toque (será substituído na Fase 4).
 - Host de telas `IScreen`, com transições isoladas por fase.
 - Esqueleto UWP ARM com MonoGame 3.8.0.1641 e build via GitHub Actions.
@@ -21,7 +22,7 @@ O app é **paisagem-only** (o Stardew não tem layout vertical). O manifest e o 
 |---|---|---|
 | Tela física do Lumia 640 | 1280x720 | saída final |
 | Coordenadas virtuais do jogo | 1280x720 | todo o código portado desenha aqui |
-| Cena renderizada | 640x360 | `RenderTarget2D`, por performance na Adreno 305 |
+| Cena renderizada | 640x360 | `RenderTarget2D` (alternável para 1280x720 nas opções) |
 
 `Game/ViewportConfig.cs` centraliza esses valores. Cada tela desenha em 1280x720 com
 `Matrix.CreateScale(0.5f)` dentro do `RenderTarget`, e um único blit escalado leva o

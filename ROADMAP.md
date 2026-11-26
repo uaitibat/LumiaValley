@@ -21,23 +21,25 @@
   fazendeiro andando por toque (run #23).
 - [x] Host de telas `IScreen` para transicoes limpas entre fases.
 
-## Fase 1 — Boot ate a home (em andamento)
+## Fase 1 — Boot ate a home (concluida)
 
-- [x] Splash/intro da ConcernedApe + fade branco + subida da camera (toque pula).
-- [x] Home com ceu, montanhas, nuvens, passaros e logo (`TitleButtons`, `Clouds`, `Cursors`).
-- [x] Botoes **New / Load / Co-op / Exit** com sprite normal/hover e selecao por toque.
-- [x] Rodape Voltar/Sobre/Idioma/Mudo/Janela + strings de `StringsFromCSFiles.pt-BR`.
-- [x] Transicoes entre telas sem travar o backbuffer (`IScreen`).
-- [ ] **Validar no Lumia**: sprites/posicoes corretos, toque pulando a intro e
-  selecao dos botoes respondendo. Ajustar o que estiver diferente.
+- [x] Splash clicavel da ConcernedApe com animacao de surpresa.
+- [x] Fade branco, pausa com paisagem/passaros e subida da camera.
+- [x] Logo descendo de cima para baixo (`TitleButtons`) com swipe final.
+- [x] Passaros em Y fixo na subida e nova passada quando a camera assenta.
+- [x] Home com ceu, montanhas, nuvens, primeiro plano e botoes normal/hover.
+- [x] Removidos o botao Voltar e o quadrado de janela do PC.
+- [x] **Validado no Lumia 640**: usuario optou por deixar a intro como esta.
 
-## Fase 2 — Funcoes da home
+## Fase 2 — Funcoes da home (em andamento)
 
-- [ ] **New** → fluxo de criacao de save.
-- [ ] **Load** → listagem de saves em `ApplicationData.Current.LocalFolder`.
-- [ ] **Co-op** → comportamento honesto (sem rede no escopo do port).
-- [ ] **Exit** → suspender/fechar o app.
-- [ ] Menu de opcoes basico (volume, escala, idioma).
+- [x] **New** → tela de confirmacao, cria save proprio e entra na fazenda.
+- [x] **Load** → listagem de saves em `ApplicationData.Current.LocalFolder`.
+- [x] **Co-op** → mensagem honesta (sem rede no escopo do port).
+- [x] **Exit** → confirmacao e `Application.Current.Exit()`.
+- [x] Sobre e opcoes basicas (som e resolucao da cena) pelo rodape.
+- [x] Volta dos menus para a home sem repetir a intro.
+- [ ] **Validar no Lumia**: criar save, carregar, co-op, sair e opcoes.
 
 ## Fase 3 — Customizacao de personagem e fazenda
 

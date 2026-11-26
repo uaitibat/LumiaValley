@@ -50,9 +50,22 @@ namespace LumiaValley.Game.Screens
         private float viewportY;
         private int buttonsShown;
         private int hovered = -1;
-        private bool muted;
         private double surprisedMs;
         private bool homeBirdsStarted;
+        private readonly bool skipIntro;
+
+        public TitleScreen() : this(false)
+        {
+        }
+
+        /// <summary>
+        /// Usado ao voltar dos menus: monta a home ja assentada, sem repetir
+        /// a abertura completa.
+        /// </summary>
+        public TitleScreen(bool skipIntro)
+        {
+            this.skipIntro = skipIntro;
+        }
 
         private readonly float[] smallCloudX = new float[16];
         private float bigCloudX = 960f;
@@ -74,13 +87,27 @@ namespace LumiaValley.Game.Screens
             for (var i = 0; i < smallCloudX.Length; i++)
                 smallCloudX[i] = 80f + i * 96f;
 
-            phase = Phase.Ape;
-            phaseMs = 0;
             totalMs = 0;
-            viewportY = 0;
-            buttonsShown = 0;
             surprisedMs = 0;
-            homeBirdsStarted = false;
+
+            if (skipIntro)
+            {
+                phase = Phase.Ready;
+                phaseMs = 1000;
+                viewportY = -1000f;
+                buttonsShown = 4;
+                homeBirdsStarted = true;
+                birdAX = 1280f;
+                birdBX = 1360f;
+            }
+            else
+            {
+                phase = Phase.Ape;
+                phaseMs = 0;
+                viewportY = 0;
+                buttonsShown = 0;
+                homeBirdsStarted = false;
+            }
         }
 
         private static Texture2D LoadFirst(ContentManager content, params string[] assets)
@@ -225,8 +252,13 @@ namespace LumiaValley.Game.Screens
                 {
                     if (hovered == hit)
                     {
-                        if (hit == 0 || hit == 1)
-                            return new FarmScreen();
+                        switch (hit)
+                        {
+                            case 0: return new NewGameScreen();
+                            case 1: return new LoadGameScreen();
+                            case 2: return new CoopScreen();
+                            case 3: return new ConfirmExitScreen();
+                        }
                     }
                     else
                     {
@@ -235,7 +267,15 @@ namespace LumiaValley.Game.Screens
                 }
                 else if (Contains(new Rectangle(16, 16, 36, 36), tap.Value))
                 {
-                    muted = !muted;
+                    Settings.SoundEnabled = !Settings.SoundEnabled;
+                }
+                else if (Contains(new Rectangle(1166, 621, 66, 75), tap.Value))
+                {
+                    return new AboutScreen();
+                }
+                else if (Contains(new Rectangle(1166, 522, 81, 75), tap.Value))
+                {
+                    return new OptionsScreen();
                 }
             }
 
@@ -454,7 +494,7 @@ namespace LumiaValley.Game.Screens
             if (cursors != null)
             {
                 SafeDraw(batch, cursors, new Rectangle(16, 16, 36, 36),
-                    muted ? new Rectangle(137, 384, 9, 9) : new Rectangle(128, 384, 9, 9),
+                    !Settings.SoundEnabled ? new Rectangle(137, 384, 9, 9) : new Rectangle(128, 384, 9, 9),
                     Color.White);
             }
 

@@ -15,6 +15,8 @@ namespace LumiaValley.Game
         private readonly GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
         private RenderTarget2D sceneTarget;
+        private int sceneWidth;
+        private int sceneHeight;
         private IScreen current;
 
         public Game1()
@@ -32,15 +34,26 @@ namespace LumiaValley.Game
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            sceneTarget = new RenderTarget2D(
-                GraphicsDevice,
-                ViewportConfig.SceneWidth,
-                ViewportConfig.SceneHeight);
+            EnsureSceneTarget();
 
             Localization.Load(Content);
             ChangeScreen(new TitleScreen());
 
             base.LoadContent();
+        }
+
+        /// <summary>Recria a cena quando o usuario troca qualidade nas opcoes.</summary>
+        private void EnsureSceneTarget()
+        {
+            if (sceneTarget != null &&
+                sceneWidth == Settings.SceneWidth &&
+                sceneHeight == Settings.SceneHeight)
+                return;
+
+            sceneTarget?.Dispose();
+            sceneWidth = Settings.SceneWidth;
+            sceneHeight = Settings.SceneHeight;
+            sceneTarget = new RenderTarget2D(GraphicsDevice, sceneWidth, sceneHeight);
         }
 
         private void ChangeScreen(IScreen next)
@@ -74,13 +87,13 @@ namespace LumiaValley.Game
 
         protected override void Draw(GameTime gameTime)
         {
-            // 1. Cena em resolucao reduzida (640x360), independente do backbuffer.
+            EnsureSceneTarget();
+
+            // 1. Cena em resolucao configurada (640x360 por padrao).
             GraphicsDevice.SetRenderTarget(sceneTarget);
             GraphicsDevice.Clear(new Color(28, 64, 44));
 
-            var sceneScale = ViewportConfig.GetScale(
-                ViewportConfig.SceneWidth,
-                ViewportConfig.SceneHeight);
+            var sceneScale = ViewportConfig.GetScale(sceneWidth, sceneHeight);
 
             spriteBatch.Begin(transformMatrix: Matrix.CreateScale(sceneScale.X, sceneScale.Y, 1f));
             current?.Draw(spriteBatch);
