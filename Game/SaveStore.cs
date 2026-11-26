@@ -15,6 +15,31 @@ namespace LumiaValley.Game
         public string FarmerName { get; set; }
         public string FarmName { get; set; }
         public string Created { get; set; }
+
+        public bool IsMale { get; set; }
+        public int Skin { get; set; }
+        public int Hair { get; set; }
+        public int HairColor { get; set; }
+        public int Shirt { get; set; }
+        public int ShirtColor { get; set; }
+        public int Pants { get; set; }
+        public int PantsColor { get; set; }
+        public int Shoes { get; set; }
+        public int Accessory { get; set; }
+        public int Pet { get; set; }
+        public int FarmType { get; set; }
+        public string FavoriteThing { get; set; }
+        public bool SkipIntro { get; set; }
+
+        public SaveSlot()
+        {
+            FarmerName = "Fazendeiro";
+            FarmName = "Fazenda";
+            Created = string.Empty;
+            FavoriteThing = string.Empty;
+            IsMale = true;
+            SkipIntro = true;
+        }
     }
 
     public static class SaveStore
@@ -49,16 +74,34 @@ namespace LumiaValley.Game
             return result;
         }
 
-        public static void Create(string farmerName, string farmName)
+        /// <summary>Cria um save com os valores escolhidos na customizacao.</summary>
+        public static void Create(SaveSlot slot)
         {
+            if (slot == null)
+                return;
+
             try
             {
                 var name = "save" + DateTime.Now.Ticks + Extension;
                 var text =
-                    "version=1\n" +
-                    "farmer=" + Clean(farmerName) + "\n" +
-                    "farm=" + Clean(farmName) + "\n" +
-                    "created=" + DateTime.Now.ToString("yyyy-MM-dd HH:mm") + "\n";
+                    "version=2\n" +
+                    "farmer=" + Clean(slot.FarmerName) + "\n" +
+                    "farm=" + Clean(slot.FarmName) + "\n" +
+                    "created=" + DateTime.Now.ToString("yyyy-MM-dd HH:mm") + "\n" +
+                    "male=" + Flag(slot.IsMale) + "\n" +
+                    "skin=" + slot.Skin + "\n" +
+                    "hair=" + slot.Hair + "\n" +
+                    "haircolor=" + slot.HairColor + "\n" +
+                    "shirt=" + slot.Shirt + "\n" +
+                    "shirtcolor=" + slot.ShirtColor + "\n" +
+                    "pants=" + slot.Pants + "\n" +
+                    "pantscolor=" + slot.PantsColor + "\n" +
+                    "shoes=" + slot.Shoes + "\n" +
+                    "accessory=" + slot.Accessory + "\n" +
+                    "pet=" + slot.Pet + "\n" +
+                    "farmtype=" + slot.FarmType + "\n" +
+                    "favorite=" + Clean(slot.FavoriteThing) + "\n" +
+                    "skipintro=" + Flag(slot.SkipIntro) + "\n";
 
                 var file = Folder.CreateFileAsync(name, CreationCollisionOption.ReplaceExisting)
                     .AsTask().GetAwaiter().GetResult();
@@ -70,40 +113,89 @@ namespace LumiaValley.Game
             }
         }
 
+        /// <summary>Mantido para saves de teste criados antes da customizacao.</summary>
+        public static void Create(string farmerName, string farmName)
+        {
+            Create(new SaveSlot { FarmerName = farmerName, FarmName = farmName });
+        }
+
         private static SaveSlot Parse(string fileName, string text)
         {
             var slot = new SaveSlot
             {
-                FileName = fileName,
-                FarmerName = "Farmer",
-                FarmName = "Farm",
-                Created = string.Empty
+                FileName = fileName
             };
 
             if (string.IsNullOrEmpty(text))
                 return slot;
 
-            foreach (var line in text.Split('\n'))
+            foreach (var raw in text.Split('\n'))
             {
-                var trimmed = line.Trim();
-                var index = trimmed.IndexOf('=');
+                var line = raw.Trim();
+                var index = line.IndexOf('=');
                 if (index < 0)
                     continue;
 
-                var key = trimmed.Substring(0, index);
-                var value = trimmed.Substring(index + 1);
-                if (key == "farmer") slot.FarmerName = value;
-                else if (key == "farm") slot.FarmName = value;
-                else if (key == "created") slot.Created = value;
+                var key = line.Substring(0, index);
+                var value = line.Substring(index + 1);
+
+                switch (key)
+                {
+                    case "farmer": slot.FarmerName = value; break;
+                    case "farm": slot.FarmName = value; break;
+                    case "created": slot.Created = value; break;
+                    case "male": slot.IsMale = Bool(value, true); break;
+                    case "skin": slot.Skin = Int(value, 0, 0, 23); break;
+                    case "hair": slot.Hair = Int(value, 0, 0, 95); break;
+                    case "haircolor": slot.HairColor = Int(value, 0, 0, 11); break;
+                    case "shirt": slot.Shirt = Int(value, 0, 0, 199); break;
+                    case "shirtcolor": slot.ShirtColor = Int(value, 0, 0, 19); break;
+                    case "pants": slot.Pants = Int(value, 0, 0, 19); break;
+                    case "pantscolor": slot.PantsColor = Int(value, 0, 0, 19); break;
+                    case "shoes": slot.Shoes = Int(value, 0, 0, 18); break;
+                    case "accessory": slot.Accessory = Int(value, -1, -1, 19); break;
+                    case "pet": slot.Pet = Int(value, 0, 0, 2); break;
+                    case "farmtype": slot.FarmType = Int(value, 0, 0, FarmTypes.Count - 1); break;
+                    case "favorite": slot.FavoriteThing = value; break;
+                    case "skipintro": slot.SkipIntro = Bool(value, true); break;
+                }
             }
 
             return slot;
+        }
+
+        private static int Int(string value, int fallback, int min, int max)
+        {
+            int result;
+            if (!int.TryParse(value, out result))
+                return fallback;
+            if (result < min)
+                return min;
+            if (result > max)
+                return max;
+            return result;
+        }
+
+        private static bool Bool(string value, bool fallback)
+        {
+            if (value == "1")
+                return true;
+            if (value == "0")
+                return false;
+            return fallback;
+        }
+
+        private static string Flag(bool value)
+        {
+            return value ? "1" : "0";
         }
 
         private static string Clean(string value)
         {
             if (string.IsNullOrEmpty(value))
                 return string.Empty;
+            if (value.Length > 24)
+                value = value.Substring(0, 24);
             return value.Replace('\n', ' ').Replace('\r', ' ').Replace('=', '-');
         }
     }

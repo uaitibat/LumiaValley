@@ -4,8 +4,8 @@ using Microsoft.Xna.Framework.Graphics;
 namespace LumiaValley.Game.Screens
 {
     /// <summary>
-    /// Confirmacao do Novo Jogo. A customizacao de personagem/fazenda fica para
-    /// a Fase 3; aqui o save inicial ja e criado no formato proprio do port.
+    /// Entrada do Novo Jogo. A criacao do save agora passa pela tela de
+    /// customizacao de personagem e escolha de fazenda.
     /// </summary>
     public sealed class NewGameScreen : MenuScreen
     {
@@ -21,8 +21,7 @@ namespace LumiaValley.Game.Screens
 
             if (tap.HasValue && Contains(CreateRow, tap.Value))
             {
-                SaveStore.Create("Fazendeiro", "Fazenda");
-                return new FarmScreen();
+                return new CharacterCreationScreen();
             }
 
             return this;
@@ -33,13 +32,13 @@ namespace LumiaValley.Game.Screens
             DrawPanel(spriteBatch, Area, "Novo jogo");
             DrawRow(spriteBatch, FarmerRow, "Fazendeiro:  Fazendeiro", false);
             DrawRow(spriteBatch, FarmRow, "Fazenda:  Fazenda", false);
-            DrawRow(spriteBatch, CreateRow, "Criar save e entrar na fazenda", true);
+            DrawRow(spriteBatch, CreateRow, "Criar personagem e escolher fazenda", true);
             DrawBack(spriteBatch);
 
             if (font != null)
             {
                 spriteBatch.DrawString(font,
-                    "Personalizacao de personagem e fazenda: proxima fase.",
+                    "Nome, aparencia e tipo de fazenda antes de comecar.",
                     new Vector2(292, 492), Color.White * 0.8f);
             }
         }

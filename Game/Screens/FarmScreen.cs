@@ -48,7 +48,8 @@ namespace LumiaValley.Game.Screens
 
             var label = slot == null
                 ? "Fazenda de teste"
-                : slot.FarmerName + "  -  " + slot.FarmName;
+                : slot.FarmerName + "  -  " + slot.FarmName +
+                  "  [" + FarmTypes.Name(slot.FarmType) + "]";
 
             spriteBatch.DrawString(font, label, new Vector2(20, 16), Color.White);
         }

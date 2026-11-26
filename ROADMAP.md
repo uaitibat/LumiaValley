@@ -41,12 +41,15 @@
 - [x] Volta dos menus para a home sem repetir a intro.
 - [ ] **Validar no Lumia**: criar save, carregar, co-op, sair e opcoes.
 
-## Fase 3 — Customizacao de personagem e fazenda
+## Fase 3 — Customizacao de personagem e fazenda (em andamento)
 
-- [ ] Nome do fazendeiro e nome da fazenda (texto por toque).
-- [ ] Genero, cor de pele, cabelo, camisa, calcas, calcados.
-- [ ] Pet (cachorro/gato) e tipo de fazenda.
-- [ ] Criacao do save inicial.
+- [x] Nome do fazendeiro, nome da fazenda e coisa favorita (teclado touch proprio).
+- [x] Genero, cor de pele, cabelo/cor, camisa/cor, calcas/cor, calcados e acessorio.
+- [x] Pet (nenhum/cachorro/gato) e os sete tipos de fazenda com descricao.
+- [x] Preview do fazendeiro com sprites e paletas da 1.5.6.
+- [x] Botoes da home com um unico toque (run #33, `success`).
+- [x] Criacao do save inicial com todos os valores escolhidos.
+- [ ] **Validar no Lumia**: digitar nomes, trocar aparencia, escolher fazenda e entrar jogando.
 
 ## Fase 4 — UI / mapa / input
 
