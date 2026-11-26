@@ -195,8 +195,11 @@ namespace LumiaValley.Game
             spriteBatch.End();
 
             // 2. Um unico blit escalado para o backbuffer real do SwapChainPanel.
-            var vp = GraphicsDevice.Viewport;
+            // IMPORTANTE: ler o viewport DEPOIS de SetRenderTarget(null). Enquanto o
+            // RenderTarget esta bindado o viewport e 640x360; ler antes fazia o blit
+            // cobrir apenas o quarto superior esquerdo da tela.
             GraphicsDevice.SetRenderTarget(null);
+            var vp = GraphicsDevice.Viewport;
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin();
             spriteBatch.Draw(

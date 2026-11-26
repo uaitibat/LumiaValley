@@ -8,9 +8,9 @@ namespace LumiaValley.Game
     /// Lumia 640 em paisagem: 1280x720 pixels fisicos.
     /// Stardew Valley 1.5.6: logica em coordenadas virtuais 1280x720.
     ///
-    /// Pedimos um backbuffer de 640x360 por performance, mas o MonoGame UWP
-    /// pode redimensiona-lo para o SwapChainPanel. Por isso a escala e
-    /// calculada em tempo real a partir do viewport atual.
+    /// A cena e desenhada em 640x360 (SceneWidth/SceneHeight) e depois
+    /// escalada para o viewport real do SwapChainPanel. Nao impomos
+    /// PreferredBackBuffer: no UWP o MonoGame dimensiona a swap chain pelo painel.
     /// </summary>
     public static class ViewportConfig
     {
