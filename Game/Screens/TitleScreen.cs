@@ -238,29 +238,39 @@ namespace LumiaValley.Game.Screens
 
         private void DrawIntro(SpriteBatch batch)
         {
-            batch.Draw(pixel, new Rectangle(0, 0, 1280, 720), Color.Black);
+            // O splash do PC e branco, nao preto. O logo da ConcernedApe e
+            // montado de DOIS blocos: o "Ape" a direita do centro e o
+            // "Concerned" a esquerda. Desenhar só um bloco descentraliza tudo.
+            batch.Draw(pixel, new Rectangle(0, 0, 1280, 720), Color.White);
             if (buttons == null)
                 return;
 
-            var alpha = 1f;
-            if (phase == Phase.WhiteFade)
-                alpha = Math.Max(0f, 1f - (float)(phaseMs / 2000.0));
-            else if (phase == Phase.Ape)
+            if (phase == Phase.Ape)
             {
                 var fadeIn = Math.Min(1f, (float)(phaseMs / 500.0));
                 var fadeOut = Math.Min(1f, (float)((5000.0 - phaseMs) / 500.0));
-                alpha = Math.Min(fadeIn, fadeOut);
+                var alpha = Math.Max(0f, Math.Min(fadeIn, fadeOut));
+                var alternate = (int)(phaseMs / 100) % 2 == 0;
+
+                // Bloco direito ("Ape"): 111x60 a 3x, comecando em x=640.
+                SafeDraw(batch, buttons,
+                    new Rectangle(640, 270, 333, 180),
+                    alternate ? new Rectangle(171, 311, 111, 60)
+                              : new Rectangle(282, 311, 111, 60),
+                    Color.White * alpha);
+
+                // Bloco esquerdo ("Concerned"): 85x69 a 3x, em x=379.
+                SafeDraw(batch, buttons,
+                    new Rectangle(379, 258, 255, 207),
+                    alternate ? new Rectangle(0, 306, 85, 69)
+                              : new Rectangle(85, 306, 85, 69),
+                    Color.White * alpha);
             }
-
-            var frame = ((int)(phaseMs / 100) % 2 == 0)
-                ? new Rectangle(171, 311, 111, 60)
-                : new Rectangle(282, 311, 111, 60);
-            SafeDraw(batch, buttons, new Rectangle(640, 270, 333, 180), frame,
-                Color.White * alpha);
-
-            if (phase == Phase.WhiteFade)
-                batch.Draw(pixel, new Rectangle(0, 0, 1280, 720),
-                    Color.White * Math.Max(0f, 1f - (float)(phaseMs / 2000.0)));
+            else if (phase == Phase.WhiteFade)
+            {
+                var alpha = Math.Max(0f, Math.Min(1f, 1f - (float)(phaseMs / 2000.0)));
+                batch.Draw(pixel, new Rectangle(0, 0, 1280, 720), Color.White * alpha);
+            }
         }
 
         private void DrawSky(SpriteBatch batch)
@@ -354,9 +364,8 @@ namespace LumiaValley.Game.Screens
                 SafeDraw(batch, buttons, ButtonDest(i), src, Color.White);
             }
 
-            // Rodape: Voltar / Sobre / Idioma / Mudo / Janela.
-            SafeDraw(batch, buttons, new Rectangle(1034, 615, 198, 81),
-                new Rectangle(296, 252, 66, 27), Color.White);
+            // Rodape: Sobre / Idioma / Mudo. Botao de voltar e o quadrado de
+            // alternar janela do PC foram removidos de proposito no port.
             SafeDraw(batch, buttons, new Rectangle(1166, 621, 66, 75),
                 new Rectangle(8, 458, 22, 25), Color.White);
             SafeDraw(batch, buttons, new Rectangle(1166, 522, 81, 75),
@@ -367,16 +376,11 @@ namespace LumiaValley.Game.Screens
                 SafeDraw(batch, cursors, new Rectangle(16, 16, 36, 36),
                     muted ? new Rectangle(137, 384, 9, 9) : new Rectangle(128, 384, 9, 9),
                     Color.White);
-                SafeDraw(batch, cursors, new Rectangle(1228, 16, 36, 36),
-                    new Rectangle(146, 384, 9, 9), Color.White);
             }
 
             if (font == null)
                 return;
 
-            batch.DrawString(font,
-                Localization.CS("StringsFromCSFiles:TitleMenu.cs.11739", "Voltar"),
-                new Vector2(1046, 692), Color.White);
             batch.DrawString(font,
                 Localization.CS("StringsFromCSFiles:TitleMenu.cs.11740", "Sobre"),
                 new Vector2(1168, 696), Color.White);
@@ -387,7 +391,9 @@ namespace LumiaValley.Game.Screens
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            if (phase == Phase.Ape || phase == Phase.WhiteFade || phase == Phase.Pause)
+            // Na pausa antes da subida o jogo ja mostra o ceu com a camera
+            // na posicao inicial; o branco so vale para o splash e o fade.
+            if (phase == Phase.Ape || phase == Phase.WhiteFade)
             {
                 DrawIntro(spriteBatch);
                 return;
