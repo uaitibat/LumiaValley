@@ -196,38 +196,27 @@ namespace LumiaValley.Game
                 if (layer == null || !layer.Visible || layer.Tiles == null)
                     continue;
 
-                var tileW = layer.TileWidth;
-                var tileH = layer.TileHeight;
-                var startX = Math.Max(0, (int)(camera.X / tileW) - 1);
-                var startY = Math.Max(0, (int)(camera.Y / tileH) - 1);
-                var endX = Math.Min(layer.Width, (int)((camera.X + ViewportConfig.VirtualWidth) / tileW) + 2);
-                var endY = Math.Min(layer.Height, (int)((camera.Y + ViewportConfig.VirtualHeight) / tileH) + 2);
-
-                for (var y = startY; y < endY; y++)
+                for (var i = 0; i < layer.Tiles.Length; i++)
                 {
-                    for (var x = startX; x < endX; x++)
-                    {
-                        var tile = layer.Get(x, y);
-                        if (tile == null || tile.Sheet == null)
-                            continue;
-                        Texture2D texture;
-                        if (!sheets.TryGetValue(tile.Sheet.Id, out texture) || texture == null)
-                            continue;
+                    var tile = layer.Tiles[i];
+                    if (tile == null || tile.Sheet == null)
+                        continue;
+                    Texture2D texture;
+                    if (!sheets.TryGetValue(tile.Sheet.Id, out texture) || texture == null)
+                        continue;
 
-                        var col = tile.Index % tile.Sheet.SheetWidth;
-                        var row = tile.Index / tile.Sheet.SheetWidth;
-                        var src = new Rectangle(
-                            col * (tile.Sheet.TileWidth + tile.Sheet.SpacingX) + tile.Sheet.MarginX,
-                            row * (tile.Sheet.TileHeight + tile.Sheet.SpacingY) + tile.Sheet.MarginY,
-                            tile.Sheet.TileWidth, tile.Sheet.TileHeight);
-                        if (src.X < 0 || src.Y < 0 || src.Right > texture.Width || src.Bottom > texture.Height)
-                            continue;
+                    var col = tile.Index % tile.Sheet.SheetWidth;
+                    var row = tile.Index / tile.Sheet.SheetWidth;
+                    var src = new Rectangle(
+                        col * tile.Sheet.TileWidth + tile.Sheet.MarginX,
+                        row * tile.Sheet.TileHeight + tile.Sheet.MarginY,
+                        tile.Sheet.TileWidth, tile.Sheet.TileHeight);
+                    if (src.X < 0 || src.Y < 0 || src.Right > texture.Width || src.Bottom > texture.Height)
+                        continue;
 
-                        // Equivale ao XnaDisplayDevice.DrawTile original:
-                        // posicao em pixels + escala Layer.zoom (4).
-                        batch.Draw(texture, new Vector2(x * tileW, y * tileH), src,
-                            Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0f);
-                    }
+                    var x = i % layer.Width * 64;
+                    var y = i / layer.Width * 64;
+                    batch.Draw(texture, new Rectangle(x, y, 64, 64), src, Color.White);
                 }
             }
         }
