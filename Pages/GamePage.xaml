@@ -7,11 +7,10 @@
         <SwapChainPanel x:Name="SwapPanel" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 
         <!--
-            Campo invisivel usado somente para abrir o teclado nativo do
-            Windows. Precisa ter um tamanho normal: com 1x1 o SIP abre
-            comprimido e as teclas saem desalinhadas (A vira C, etc).
-            IsHitTestVisible=False evita que ele roube toques do jogo;
-            o foco e feito programaticamente.
+            Campo usado somente para abrir o teclado nativo do Windows.
+            Fica Collapsed quando nao esta em uso para nao capturar toques do
+            jogo. Durante a digitacao e mostrado e focado programaticamente,
+            e o InputPane.TryShow() forca o SIP a subir.
         -->
         <TextBox x:Name="NativeInput"
                  Width="420" Height="48"
@@ -23,7 +22,7 @@
                  HorizontalAlignment="Center"
                  VerticalAlignment="Bottom"
                  Margin="0,0,0,72"
-                 IsHitTestVisible="False"
+                 Visibility="Collapsed"
                  IsTabStop="True"
                  TabIndex="0"
                  MaxLength="24">

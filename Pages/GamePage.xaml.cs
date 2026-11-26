@@ -1,7 +1,7 @@
 using System;
 using Windows.Graphics.Display;
 using Windows.System;
-using Windows.UI.Core;
+using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using LumiaValley.Game;
@@ -58,14 +58,20 @@ namespace LumiaValley.Pages
                     _onTextChanged = changed;
                     _onClosed = closed;
                     NativeInput.Text = text ?? string.Empty;
+                    NativeInput.Visibility = Visibility.Visible;
                     NativeTextInput.IsOpen = true;
                     NativeInput.Focus(FocusState.Programmatic);
+
+                    // No Windows 10 Mobile o SIP asso nao sobe so com o foco
+                    // dentro de um SwapChainPanel: forcamos pelo InputPane.
+                    InputPane.GetForCurrentView().TryShow();
                     return true;
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine("NativeTextInput.Show: " + ex.Message);
                     NativeTextInput.IsOpen = false;
+                    NativeInput.Visibility = Visibility.Collapsed;
                     _onTextChanged = null;
                     _onClosed = null;
                     return false;
@@ -85,7 +91,11 @@ namespace LumiaValley.Pages
                 return;
 
             NativeTextInput.IsOpen = false;
-            NativeInput.Focus(FocusState.Unfocused);
+
+            try { InputPane.GetForCurrentView().TryHide(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("InputPane.TryHide: " + ex.Message); }
+
+            NativeInput.Visibility = Visibility.Collapsed;
 
             var changed = _onTextChanged;
             var closed = _onClosed;
