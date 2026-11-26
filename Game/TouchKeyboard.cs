@@ -39,7 +39,7 @@ namespace LumiaValley.Game
 
         public Rectangle Bounds
         {
-            get { return new Rectangle(340, 396, 600, 296); }
+            get { return new Rectangle(140, 316, 1000, 400); }
         }
 
         public TouchKeyboard()
@@ -49,29 +49,33 @@ namespace LumiaValley.Game
 
         private void Build()
         {
+            const int keyWidth = 88;
+            const int keyHeight = 64;
+            const int gap = 8;
+            const int header = 48;
+
             for (var row = 0; row < Rows.Length; row++)
             {
                 var text = Rows[row];
-                var width = 52;
-                var gap = 6;
-                var total = text.Length * width + (text.Length - 1) * gap;
+                var total = text.Length * keyWidth + (text.Length - 1) * gap;
                 var startX = Bounds.X + (Bounds.Width - total) / 2;
-                var y = Bounds.Y + 44 + row * 48;
+                var y = Bounds.Y + header + row * (keyHeight + gap);
 
                 for (var i = 0; i < text.Length; i++)
                 {
                     keys.Add(new Key
                     {
-                        Bounds = new Rectangle(startX + i * (width + gap), y, width, 44),
+                        Bounds = new Rectangle(startX + i * (keyWidth + gap), y, keyWidth, keyHeight),
                         Text = text.Substring(i, 1)
                     });
                 }
             }
 
-            shiftKey = new Rectangle(Bounds.X + 12, Bounds.Y + 248, 84, 40);
-            backKey = new Rectangle(Bounds.X + 104, Bounds.Y + 248, 104, 40);
-            spaceKey = new Rectangle(Bounds.X + 216, Bounds.Y + 248, 216, 40);
-            okKey = new Rectangle(Bounds.X + 440, Bounds.Y + 248, 148, 40);
+            var bottom = Bounds.Y + header + Rows.Length * (keyHeight + gap) - gap;
+            shiftKey = new Rectangle(Bounds.X + 16, bottom, 168, keyHeight);
+            backKey = new Rectangle(Bounds.X + 192, bottom, 168, keyHeight);
+            spaceKey = new Rectangle(Bounds.X + 368, bottom, 352, keyHeight);
+            okKey = new Rectangle(Bounds.X + 728, bottom, 256, keyHeight);
 
             keys.Add(new Key { Bounds = shiftKey, Text = "Shift" });
             keys.Add(new Key { Bounds = backKey, Text = "Back" });
@@ -156,8 +160,8 @@ namespace LumiaValley.Game
 
             if (font != null && !string.IsNullOrEmpty(hint))
             {
-                batch.DrawString(font, hint, new Vector2(Bounds.X + 14, Bounds.Y + 14),
-                    new Color(255, 236, 160));
+                batch.DrawString(font, hint, new Vector2(Bounds.X + 14, Bounds.Y + 12),
+                    new Color(255, 236, 160), 0f, Vector2.Zero, 1.3f, SpriteEffects.None, 0f);
             }
 
             for (var i = 0; i < keys.Count; i++)
@@ -173,10 +177,12 @@ namespace LumiaValley.Game
                     continue;
 
                 var label = key.Text == "Back" ? "<" : key.Text;
+                const float textScale = 1.6f;
                 var size = font.MeasureString(label);
-                var x = key.Bounds.X + (key.Bounds.Width - size.X) / 2f;
-                var y = key.Bounds.Y + (key.Bounds.Height - size.Y) / 2f;
-                batch.DrawString(font, label, new Vector2(x, y), Color.White);
+                var x = key.Bounds.X + (key.Bounds.Width - size.X * textScale) / 2f;
+                var y = key.Bounds.Y + (key.Bounds.Height - size.Y * textScale) / 2f;
+                batch.DrawString(font, label, new Vector2(x, y), Color.White,
+                    0f, Vector2.Zero, textScale, SpriteEffects.None, 0f);
             }
         }
     }
