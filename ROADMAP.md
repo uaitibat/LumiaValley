@@ -56,14 +56,18 @@
 - [x] Criacao do save inicial com todos os valores escolhidos.
 - [ ] **Validar no Lumia**: digitar nomes, trocar aparencia, escolher fazenda e entrar jogando.
 
-## Fase 4 — UI / mapa / input
+## Fase 4 — UI / mapa / input (em andamento)
 
-- [ ] Leitor de mapa xTile (`Maps/Farm.xnb`) com `ContentTypeReader` proprio.
-- [ ] Renderizador de camadas e tilesheets.
-- [ ] Camera seguindo o jogador e culling por viewport.
-- [ ] D-pad virtual + gestures (tap, hold, swipe).
-- [ ] HUD: energia, relogio, dinheiro, ferramenta selecionada.
-- [ ] Inventario basico.
+- [x] Leitor de mapa xTile (`Maps/Farm.xnb`) com `ContentTypeReader` propio
+  (formato tBIN10, registrado como `xTile.Pipeline.TideReader, xTile`).
+- [x] Renderizador das 5 camadas com as tilesheets `paths` e
+  `spring_outdoorsTileSheet`, com culling por viewport.
+- [x] Camera seguindo o jogador.
+- [x] D-pad virtual (toque) e toque no mundo para mover.
+- [x] HUD basico: energia, relogio e dinheiro.
+- [ ] Validar no Lumia: mapa carregando, camera, D-pad e HUD.
+- [ ] Hold no D-pad, gestures e swipe.
+- [ ] Ferramenta selecionada e inventario basico.
 
 ## Fase 5 — Mobs e eventos
 
