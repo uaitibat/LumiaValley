@@ -188,11 +188,12 @@ namespace LumiaValley.Game.Screens
 
             var skinTexture = LoadTexture(content, "Characters/Farmer/skinColors");
             var shoeTexture = LoadTexture(content, "Characters/Farmer/shoeColors");
-            skinColors = ReadPalette(skinTexture, 3, 24, SkinFallback);
-            shoeColors = ReadPalette(shoeTexture, 4, 19, ShoeFallback);
+            // Cada tom de pele ocupa 3 pixels (sombra, base, luz); usamos a base.
+            skinColors = ReadPalette(skinTexture, 3, 1, 24, SkinFallback);
+            shoeColors = ReadPalette(shoeTexture, 4, 0, 19, ShoeFallback);
         }
 
-        private static Color[] ReadPalette(Texture2D texture, int group, int count, Color[] fallback)
+        private static Color[] ReadPalette(Texture2D texture, int group, int offset, int count, Color[] fallback)
         {
             var result = new Color[count];
             if (texture == null)
@@ -207,7 +208,7 @@ namespace LumiaValley.Game.Screens
                 texture.GetData(data);
                 for (var i = 0; i < count; i++)
                 {
-                    var index = i * group;
+                    var index = i * group + offset;
                     result[i] = index < data.Length ? data[index] : fallback[i % fallback.Length];
                 }
             }
