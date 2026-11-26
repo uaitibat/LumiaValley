@@ -13,14 +13,13 @@ namespace LumiaValley.Game
     /// </summary>
     public sealed class FarmScene
     {
-        private static readonly Rectangle UpKey = new Rectangle(168, 484, 72, 72);
-        private static readonly Rectangle DownKey = new Rectangle(168, 628, 72, 72);
-        private static readonly Rectangle LeftKey = new Rectangle(96, 556, 72, 72);
-        private static readonly Rectangle RightKey = new Rectangle(240, 556, 72, 72);
-
         private Texture2D pixel;
-        private Texture2D farmer;
-        private Texture2D cursors;
+        private Texture2D farmerBase;
+        private Texture2D hairSheet;
+        private Texture2D shirtSheet;
+        private Texture2D pantSheet;
+        private Texture2D accessorySheet;
+        private Texture2D skinSheet;
         private SpriteFont font;
         private TileMap map;
         private readonly Dictionary<string, Texture2D> sheets = new Dictionary<string, Texture2D>();
@@ -46,16 +45,27 @@ namespace LumiaValley.Game
             pixel = new Texture2D(device, 1, 1);
             pixel.SetData(new[] { Color.White });
 
-            farmer = content.Load<Texture2D>("Characters/Farmer/farmer_base");
-            try { cursors = content.Load<Texture2D>("LooseSprites/Cursors.pt-BR"); }
-            catch { cursors = null; }
             try { font = content.Load<SpriteFont>("Fonts/SmallFont.pt-BR"); }
             catch { font = null; }
 
-            try { map = content.Load<TileMap>("Maps/Farm"); }
+            try
+            {
+                farmerBase = content.Load<Texture2D>("Characters/Farmer/farmer_base");
+                hairSheet = content.Load<Texture2D>("Characters/Farmer/hairstyles");
+                shirtSheet = content.Load<Texture2D>("Characters/Farmer/shirts");
+                pantSheet = content.Load<Texture2D>("Characters/Farmer/pants");
+                accessorySheet = content.Load<Texture2D>("Characters/Farmer/accessories");
+                skinSheet = content.Load<Texture2D>("Characters/Farmer/skinColors");
+            }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("Falha ao carregar Maps/Farm: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine("Sprites do fazendeiro: " + ex.Message);
+            }
+
+            try { map = content.Load<TileMap>("Maps/FarmHouse"); }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Falha ao carregar Maps/FarmHouse: " + ex.Message);
                 map = null;
             }
 
@@ -81,9 +91,8 @@ namespace LumiaValley.Game
 
         public void Reset()
         {
-            var worldWidth = map != null ? map.Width * 64 : ViewportConfig.VirtualWidth;
-            var worldHeight = map != null ? map.Height * 64 : ViewportConfig.VirtualHeight;
-            player = new Vector2(worldWidth / 2f, worldHeight / 2f);
+            // O jogo comeca com o fazendeiro acordando na cama do FarmHouse.
+            player = new Vector2(8 * 64f, 5 * 64f);
             target = player;
             hasTarget = false;
             direction = Vector2.Zero;
@@ -98,14 +107,9 @@ namespace LumiaValley.Game
 
         public void OnTap(Vector2 screenPoint)
         {
-            if (Contains(UpKey, screenPoint)) { direction = new Vector2(0, -1); hasTarget = false; return; }
-            if (Contains(DownKey, screenPoint)) { direction = new Vector2(0, 1); hasTarget = false; return; }
-            if (Contains(LeftKey, screenPoint)) { direction = new Vector2(-1, 0); hasTarget = false; return; }
-            if (Contains(RightKey, screenPoint)) { direction = new Vector2(1, 0); hasTarget = false; return; }
-
+            // Sem D-pad: apenas toque no mundo, como no original em desktop.
             target = screenPoint + camera;
             hasTarget = true;
-            direction = Vector2.Zero;
         }
 
         public void ReleaseDirection()
@@ -120,13 +124,7 @@ namespace LumiaValley.Game
             gameMinutes += (int)(dt * 12); // um dia de 20 minutos
 
             const float speed = 192f;
-            if (direction != Vector2.Zero)
-            {
-                var move = direction.Length() > 1f ? Vector2.Normalize(direction) : direction;
-                player += move * speed * dt;
-                hasTarget = false;
-            }
-            else if (hasTarget)
+            if (hasTarget)
             {
                 var delta = target - player;
                 var distance = delta.Length();
@@ -171,7 +169,6 @@ namespace LumiaValley.Game
             DrawMap(spriteBatch);
             DrawFarmer(spriteBatch);
             DrawHud(spriteBatch);
-            DrawDPad(spriteBatch);
         }
 
         private void DrawMap(SpriteBatch batch)
@@ -221,20 +218,74 @@ namespace LumiaValley.Game
             }
         }
 
+        /// <summary>Mesmas camadas do preview da criacao: corpo, calca, camisa,
+        /// cabelo, braco e acessorio. Escala 4 = 64x128 no espaco do mundo.
+        /// </summary>
         private void DrawFarmer(SpriteBatch batch)
         {
-            if (farmer == null)
+            if (farmerBase == null)
                 return;
-            // 16x32 * 4 = 64x128, com os pes no ponto do jogador.
-            batch.Draw(farmer,
-                new Rectangle((int)player.X - 32, (int)player.Y - 112, 64, 128),
-                new Rectangle(0, 0, 16, 32), Color.White);
+
+            var pos = new Vector2((float)Math.Floor(player.X - 32), (float)Math.Floor(player.Y - 112));
+            var skin = new Color(224, 172, 140);
+            if (skinSheet != null && slot != null)
+            {
+                var palette = new Color[skinSheet.Width * skinSheet.Height];
+                skinSheet.GetData(palette);
+                var which = slot.Skin % skinSheet.Height;
+                skin = palette[which * 3 + 1];
+            }
+
+            DrawLayer(batch, farmerBase, pos, new Rectangle(0, 0, 16, 32), skin);
+
+            if (pantSheet != null && slot != null)
+            {
+                var style = slot.Pants % 20;
+                DrawLayer(batch, pantSheet, pos,
+                    new Rectangle(style % 10 * 192 + (slot.IsMale ? 0 : 96), style / 10 * 688, 16, 32),
+                    Color.White);
+            }
+
+            if (shirtSheet != null && slot != null && slot.Shirt >= 0 && slot.Shirt < 112)
+            {
+                var sx = slot.Shirt * 8 % 128;
+                var sy = slot.Shirt * 8 / 128 * 32;
+                var sp = pos + new Vector2(16, 56);
+                DrawLayer(batch, shirtSheet, sp, new Rectangle(sx, sy, 8, 8), Color.White);
+                DrawLayer(batch, shirtSheet, sp, new Rectangle(sx + 128, sy, 8, 8), Color.White);
+            }
+
+            if (accessorySheet != null && slot != null && slot.Accessory >= 0)
+            {
+                var acc = slot.Accessory % 20;
+                DrawLayer(batch, accessorySheet, pos,
+                    new Rectangle(acc * 16 % 128, acc * 16 / 128 * 32, 16, 16), Color.White);
+            }
+
+            if (hairSheet != null && slot != null)
+            {
+                var hair = slot.Hair % 56;
+                DrawLayer(batch, hairSheet, pos,
+                    new Rectangle(hair % 8 * 16, hair / 8 * 96, 16, 32), new Color(110, 58, 30));
+            }
+
+            // Braco direito por cima do cabelo.
+            DrawLayer(batch, farmerBase, pos, new Rectangle(96, 0, 16, 32), skin);
+        }
+
+        private static void DrawLayer(SpriteBatch batch, Texture2D texture, Vector2 pos,
+            Rectangle source, Color color)
+        {
+            if (texture == null || source.X < 0 || source.Y < 0 ||
+                source.Right > texture.Width || source.Bottom > texture.Height)
+                return;
+            batch.Draw(texture, pos, source, color, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0f);
         }
 
         private void DrawHud(SpriteBatch batch)
         {
-            // HUD e D-pad usam coordenadas de tela: somamos a camera para
-            // compensar a transformacao do mundo aplicada pelo FarmScreen.
+            // HUD usa coordenadas de tela: somamos a camera para compensar
+            // a transformacao do mundo aplicada pelo FarmScreen.
             var ox = (int)camera.X;
             var oy = (int)camera.Y;
 
@@ -263,39 +314,5 @@ namespace LumiaValley.Game
                     new Vector2(24 + ox, 60 + oy), Color.White);
         }
 
-        private void DrawDPad(SpriteBatch batch)
-        {
-            var ox = (int)camera.X;
-            var oy = (int)camera.Y;
-            var keys = new[] { UpKey, DownKey, LeftKey, RightKey };
-            foreach (var key in keys)
-            {
-                var rect = new Rectangle(key.X + ox, key.Y + oy, key.Width, key.Height);
-                batch.Draw(pixel, rect, Color.Black * 0.55f);
-                batch.Draw(pixel, new Rectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, 2),
-                    new Color(126, 170, 92));
-            }
-            if (cursors == null)
-                return;
-
-            // Setas do Cursors: tile 44 (esquerda) e 33 (direita), giradas
-            // 90 graus para cima/baixo em torno do centro de cada tecla.
-            DrawArrow(batch, UpKey, ox, oy, (float)(-Math.PI / 2.0));
-            DrawArrow(batch, DownKey, ox, oy, (float)(Math.PI / 2.0));
-            DrawArrow(batch, LeftKey, ox, oy, 0f);
-            DrawArrow(batch, RightKey, ox, oy, (float)Math.PI);
-        }
-
-        private void DrawArrow(SpriteBatch batch, Rectangle key, int ox, int oy, float rotation)
-        {
-            var center = new Vector2(key.X + ox + key.Width / 2f, key.Y + oy + key.Height / 2f);
-            batch.Draw(cursors, center, new Rectangle(0, 256, 64, 64), Color.White,
-                rotation, new Vector2(32, 32), 1f, SpriteEffects.None, 0f);
-        }
-
-        private static bool Contains(Rectangle r, Vector2 p)
-        {
-            return r.Contains((int)p.X, (int)p.Y);
-        }
     }
 }
