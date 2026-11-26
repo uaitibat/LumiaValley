@@ -37,6 +37,7 @@ namespace LumiaValley.Game
                 ViewportConfig.SceneWidth,
                 ViewportConfig.SceneHeight);
 
+            Localization.Load(Content);
             ChangeScreen(new TitleScreen());
 
             base.LoadContent();
