@@ -195,10 +195,16 @@ namespace LumiaValley.Game.Screens
                 if (smallCloudX[i] < -447f) smallCloudX[i] = 1280f;
             }
 
-            birdAX -= 40f * (float)seconds;
-            birdBX -= 40f * (float)seconds;
-            if (birdAX < -80f) birdAX = 1280f;
-            if (birdBX < -80f) birdBX = 1280f;
+            // Os passaros ficam parados na tela enquanto a camera sobe: nao
+            // acompanham o parallax do ceu. Só comecam a cruzar da direita para
+            // a esquerda quando a camera chega na posicao final.
+            if (phase == Phase.LogoSwipe || phase == Phase.Ready)
+            {
+                birdAX -= 40f * (float)seconds;
+                birdBX -= 40f * (float)seconds;
+                if (birdAX < -80f) birdAX = 1280f;
+                if (birdBX < -80f) birdBX = 1280f;
+            }
 
             if (tap.HasValue && phase == Phase.Ready && buttonsShown == 4)
             {
