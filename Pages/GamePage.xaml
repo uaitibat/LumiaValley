@@ -3,36 +3,5 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Background="Black">
-    <Grid>
-        <SwapChainPanel x:Name="SwapPanel" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
-
-        <!--
-            Campo usado somente para abrir o teclado nativo do Windows.
-            Fica Collapsed quando nao esta em uso para nao capturar toques do
-            jogo. Durante a digitacao e mostrado e focado programaticamente,
-            e o InputPane.TryShow() forca o SIP a subir.
-        -->
-        <TextBox x:Name="NativeInput"
-                 Width="420" Height="48"
-                 MinWidth="420" MinHeight="48"
-                 Opacity="0"
-                 BorderThickness="0"
-                 Background="Transparent"
-                 Padding="0"
-                 HorizontalAlignment="Center"
-                 VerticalAlignment="Bottom"
-                 Margin="0,0,0,72"
-                 Visibility="Collapsed"
-                 IsTabStop="True"
-                 TabIndex="0"
-                 MaxLength="24">
-            <TextBox.InputScope>
-                <InputScope>
-                    <InputScope.Names>
-                        <InputScopeName NameValue="Text" />
-                    </InputScope.Names>
-                </InputScope>
-            </TextBox.InputScope>
-        </TextBox>
-    </Grid>
+    <SwapChainPanel x:Name="SwapPanel" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 </Page>
