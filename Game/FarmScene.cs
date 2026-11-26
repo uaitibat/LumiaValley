@@ -34,7 +34,6 @@ namespace LumiaValley.Game
         private double elapsedMs;
         private int gameMinutes = 360;
         private int energy = 100;
-        private int failedSheets;
 
         public FarmScene(SaveSlot slot = null)
         {
@@ -87,7 +86,6 @@ namespace LumiaValley.Game
                         catch (Exception ex)
                         {
                             System.Diagnostics.Debug.WriteLine("Tilesheet " + path + ": " + ex.Message);
-                            failedSheets++;
                         }
                     }
                 }
@@ -184,13 +182,8 @@ namespace LumiaValley.Game
             DrawHud(spriteBatch);
         }
 
-        private readonly int[] drawnPerLayer = new int[8];
-
         private void DrawMap(SpriteBatch batch)
         {
-            drawnPerLayer[0] = 0; drawnPerLayer[1] = 0;
-            drawnPerLayer[2] = 0; drawnPerLayer[3] = 0;
-
             if (map == null)
             {
                 batch.Draw(pixel, new Rectangle(0, 0, ViewportConfig.VirtualWidth,
@@ -198,7 +191,6 @@ namespace LumiaValley.Game
                 return;
             }
 
-            var layerIndex = 0;
             foreach (var layer in map.Layers)
             {
                 if (layer == null || !layer.Visible || layer.Tiles == null)
@@ -235,10 +227,8 @@ namespace LumiaValley.Game
                         // posicao em pixels + escala Layer.zoom (4).
                         batch.Draw(texture, new Vector2(x * tileW, y * tileH), src,
                             Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0f);
-                        drawnPerLayer[layerIndex]++;
                     }
                 }
-                layerIndex++;
             }
         }
 
@@ -251,23 +241,28 @@ namespace LumiaValley.Game
                 return;
 
             var pos = new Vector2((float)Math.Floor(player.X - 32), (float)Math.Floor(player.Y - 112));
+            var male = slot == null || slot.IsMale;
             var skin = new Color(224, 172, 140);
-            if (skinSheet != null && slot != null)
+            var hairColor = new Color(110, 58, 30);
+            var shirtColor = new Color(88, 110, 170);
+            var pantsColor = new Color(64, 86, 150);
+            if (skinSheet != null)
             {
                 var palette = new Color[skinSheet.Width * skinSheet.Height];
                 skinSheet.GetData(palette);
-                var which = slot.Skin % skinSheet.Height;
-                skin = palette[which * 3 + 1];
+                var s = slot == null ? 0 : slot.Skin % skinSheet.Height;
+                skin = palette[s * 3 + 1];
             }
 
+            // Corpo (facing 2 = olhando para a camara).
             DrawLayer(batch, farmerBase, pos, new Rectangle(0, 0, 16, 32), skin);
 
             if (pantSheet != null && slot != null)
             {
                 var style = slot.Pants % 20;
                 DrawLayer(batch, pantSheet, pos,
-                    new Rectangle(style % 10 * 192 + (slot.IsMale ? 0 : 96), style / 10 * 688, 16, 32),
-                    Color.White);
+                    new Rectangle(style % 10 * 192 + (male ? 0 : 96), style / 10 * 688, 16, 32),
+                    pantsColor);
             }
 
             if (shirtSheet != null && slot != null && slot.Shirt >= 0 && slot.Shirt < 112)
@@ -276,7 +271,7 @@ namespace LumiaValley.Game
                 var sy = slot.Shirt * 8 / 128 * 32;
                 var sp = pos + new Vector2(16, 56);
                 DrawLayer(batch, shirtSheet, sp, new Rectangle(sx, sy, 8, 8), Color.White);
-                DrawLayer(batch, shirtSheet, sp, new Rectangle(sx + 128, sy, 8, 8), Color.White);
+                DrawLayer(batch, shirtSheet, sp, new Rectangle(sx + 128, sy, 8, 8), shirtColor);
             }
 
             if (accessorySheet != null && slot != null && slot.Accessory >= 0)
@@ -290,7 +285,7 @@ namespace LumiaValley.Game
             {
                 var hair = slot.Hair % 56;
                 DrawLayer(batch, hairSheet, pos,
-                    new Rectangle(hair % 8 * 16, hair / 8 * 96, 16, 32), new Color(110, 58, 30));
+                    new Rectangle(hair % 8 * 16, hair / 8 * 96, 16, 32), hairColor);
             }
 
             // Braco direito por cima do cabelo.
@@ -337,17 +332,7 @@ namespace LumiaValley.Game
                 batch.DrawString(font, slot.FarmerName + " - " + slot.FarmName,
                     new Vector2(24 + ox, 60 + oy), Color.White);
 
-            if (failedSheets > 0)
-                batch.DrawString(font, "TS Falhas: " + failedSheets,
-                    new Vector2(24 + ox, 88 + oy), new Color(255, 90, 90));
 
-            batch.DrawString(font, "L0:" + drawnPerLayer[0] + " L1:" + drawnPerLayer[1] +
-                " L2:" + drawnPerLayer[2], new Vector2(24 + ox, 110 + oy), new Color(255, 90, 90));
-
-            Texture2D indoor;
-            if (sheets.TryGetValue("indoor", out indoor) && indoor != null)
-                batch.Draw(indoor, new Rectangle(24 + ox, 132 + oy, 64, 64),
-                    new Rectangle(0, 176, 16, 16), Color.White);
         }
 
     }
