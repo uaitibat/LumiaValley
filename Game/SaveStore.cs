@@ -33,6 +33,11 @@ namespace LumiaValley.Game
         public string FavoriteThing { get; set; }
         public bool SkipIntro { get; set; }
 
+        // Opcoes do painel Avancado (AdvancedGameOptions da 1.5.6).
+        public bool SpawnMonstersAtNight { get; set; }
+        public bool YearOneCompletable { get; set; }
+        public bool UseRandomSeed { get; set; }
+
         public SaveSlot()
         {
             FarmerName = "Fazendeiro";

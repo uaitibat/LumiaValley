@@ -109,7 +109,7 @@ namespace LumiaValley.Game.Screens
         private const int HairstylesPerSheet = 56;
         private const int HairstyleCount = HairstylesPerSheet * 2;
 
-        private readonly SaveSlot draft = new SaveSlot();
+        private readonly SaveSlot draft;
         private readonly TouchKeyboard keyboard = new TouchKeyboard();
         private readonly Random random = new Random();
         private new Texture2D menuTiles;
@@ -140,28 +140,36 @@ namespace LumiaValley.Game.Screens
         private double elapsedMs;
         private int farmHintMs;
 
-        public CharacterCreationScreen()
+        public CharacterCreationScreen() : this(null)
         {
-            // O original comeca com os tres campos vazios e o OK desabilitado.
-            draft.FarmerName = string.Empty;
-            draft.FarmName = string.Empty;
-            draft.FavoriteThing = string.Empty;
-            draft.IsMale = true;
-            draft.Skin = 0;
-            draft.Hair = 0;
-            draft.HairColor = 0;
-            draft.EyeColor = 0;
-            draft.Shirt = 0;
-            draft.ShirtColor = 0;
-            draft.Pants = 0;
-            draft.PantsColor = 0;
-            draft.Shoes = 2;
-            draft.Accessory = 2;
-            draft.EyeColor = 0;
-            draft.Pet = 1;
-            draft.Facing = 2;
-            draft.FarmType = 0;
-            draft.SkipIntro = false;
+        }
+
+        /// <summary>Usado ao voltar das opcoes avancadas, preservando o rascunho.</summary>
+        public CharacterCreationScreen(SaveSlot existing)
+        {
+            draft = existing ?? new SaveSlot();
+            if (existing == null)
+            {
+                // O original comeca com os tres campos vazios e o OK desabilitado.
+                draft.FarmerName = string.Empty;
+                draft.FarmName = string.Empty;
+                draft.FavoriteThing = string.Empty;
+                draft.IsMale = true;
+                draft.Skin = 0;
+                draft.Hair = 0;
+                draft.HairColor = 0;
+                draft.EyeColor = 0;
+                draft.Shirt = 0;
+                draft.ShirtColor = 0;
+                draft.Pants = 0;
+                draft.PantsColor = 0;
+                draft.Shoes = 2;
+                draft.Accessory = 2;
+                draft.Pet = 1;
+                draft.Facing = 2;
+                draft.FarmType = 0;
+                draft.SkipIntro = false;
+            }
             SyncPickers();
         }
 
@@ -277,6 +285,9 @@ namespace LumiaValley.Game.Screens
             if (Contains(BackButtonRect, point))
                 return Home();
 
+            if (Contains(AdvancedRect, point))
+                return new AdvancedOptionsScreen(draft);
+
             if (Contains(RandomRect, point))
             {
                 Randomize();
@@ -340,19 +351,26 @@ namespace LumiaValley.Game.Screens
 
         private void Randomize()
         {
+            // Mesmos intervalos do CharacterCustomization.randomButton da 1.5.6.
+            // O facing NAO e sorteado: o preview permanece olhando para a
+            // camera, apoiado na sombra do daybg.
             draft.IsMale = random.Next(2) == 0;
-            draft.Skin = random.Next(skinColors.Length);
-            draft.Hair = random.Next(HairstyleCount);
+            draft.Skin = random.NextDouble() < 0.25 ? random.Next(24) : random.Next(6);
+            // Masculino: 0..15; feminino: 16..31 (os unicos cabelos seguros
+            // do sheet basico, evitando os indices especiais 56..111).
+            draft.Hair = draft.IsMale ? random.Next(16) : random.Next(16, 32);
             draft.HairColor = random.Next(HairPalette.Length);
             draft.EyeColor = random.Next(EyePalette.Length);
-            draft.Shirt = random.Next(20);
+            draft.Shirt = random.Next(112);
             draft.ShirtColor = random.Next(ShirtPalette.Length);
             draft.Pants = random.Next(20);
             draft.PantsColor = random.Next(PantsPalette.Length);
             draft.Shoes = random.Next(shoeColors.Length);
-            draft.Accessory = random.Next(1, 20);
+            draft.Accessory = random.NextDouble() < 0.33
+                ? (draft.IsMale ? random.Next(19) : random.Next(6, 19))
+                : -1;
             draft.Pet = random.Next(1, 3);
-            draft.Facing = random.Next(4);
+            draft.Facing = 2;
             SyncPickers();
         }
 
@@ -361,7 +379,7 @@ namespace LumiaValley.Game.Screens
             switch (row)
             {
                 case 0: draft.Skin = Wrap(draft.Skin + delta, skinColors.Length); break;
-                case 1: draft.Hair = Wrap(draft.Hair + delta, HairstyleCount); break;
+                case 1: draft.Hair = Wrap(draft.Hair + delta, 32); break;
                 case 2: draft.Shirt = Wrap(draft.Shirt + delta, 20); break;
                 case 3: draft.Pants = Wrap(draft.Pants + delta, 20); break;
                 case 4:
@@ -669,26 +687,28 @@ namespace LumiaValley.Game.Screens
             }
 
             Texture2D hair;
-            int hairIndex;
+            Rectangle hairSrc;
             if (draft.Hair < HairstylesPerSheet || hairTexture2 == null)
             {
+                // hairstyles.xnb: 8 colunas x 7 fileiras de 16x32.
                 hair = hairTexture;
-                hairIndex = draft.Hair % HairstylesPerSheet;
+                hairSrc = new Rectangle(draft.Hair % 8 * 16, draft.Hair / 8 * 96 + hairOffsetY, 16, 32);
             }
             else
             {
+                // HairData mapeia 100..111 para hairstyles2.xnb: duas fileiras.
+                var index = Wrap(draft.Hair - 100, 12);
                 hair = hairTexture2;
-                hairIndex = (draft.Hair - HairstylesPerSheet) % HairstylesPerSheet;
+                hairSrc = new Rectangle(index % 8 * 16, index / 8 * 128 + hairOffsetY, 16, 32);
             }
 
             if (hair != null)
             {
-                var src = new Rectangle(hairIndex * 16 % 128, hairIndex * 16 / 128 * 96 + hairOffsetY, 16, 32);
                 var hairPos = pos + new Vector2(0f, hairDrawY) * scale / 4f;
                 var hairXOffset = draft.IsMale && draft.Hair >= 16 ? -4f
                     : !draft.IsMale && draft.Hair < 16 ? 4f : 0f;
                 hairPos.X += hairXSign * hairXOffset * scale / 4f;
-                DrawSpriteScaled(batch, hair, hairPos, src,
+                DrawSpriteScaled(batch, hair, hairPos, hairSrc,
                     HairPalette[draft.HairColor % HairPalette.Length], scale,
                     flipHair ? SpriteEffects.FlipHorizontally : SpriteEffects.None);
             }
@@ -1034,14 +1054,12 @@ namespace LumiaValley.Game.Screens
         {
             if (cursors != null)
             {
-                // Tile 46 do sheet 16x16: o botao e 16x16 desenhado em 64x64.
-                batch.Draw(cursors, OkRect, new Rectangle(32, 16, 16, 16), Color.White);
+                // getSourceRectForStandardTileSheet(mouseCursors, 46) com o
+                // tile padrao de 64px: (46*64 % 704, 46*64 / 704 * 64, 64, 64).
+                batch.Draw(cursors, OkRect, new Rectangle(128, 256, 64, 64), Color.White);
             }
             else
                 batch.Draw(pixel, OkRect, new Color(96, 142, 72));
-
-            if (!CanStart)
-                batch.Draw(pixel, OkRect, Color.Black * 0.5f);
         }
 
         private void DrawAdvancedButton(SpriteBatch batch)
