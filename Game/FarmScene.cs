@@ -138,19 +138,8 @@ namespace LumiaValley.Game
                 }
             }
 
-            // Piso: o original faz value*2 + value/(sheetWidth/2)*sheetWidth
-            // e soma GetFirstFlooringTile() (0 para o padrao).
-            for (var y = 0; y < back.Height; y++)
-            {
-                for (var x = 0; x < back.Width; x++)
-                {
-                    var tile = back.Get(x, y);
-                    if (tile == null || !tile.Properties.ContainsKey("FloorID"))
-                        continue;
-                    var value = 2; // primeiro padrao de piso
-                    tile.Index = value * 2 + value / (sheetWidth / 2) * sheetWidth;
-                }
-            }
+            // O original nao troca o piso da casa inicial (whichFarm=0 nao
+            // chama setFloor), entao mantemos os indices do mapa.
         }
 
         public void Reset()
