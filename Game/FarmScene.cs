@@ -314,8 +314,9 @@ namespace LumiaValley.Game
                 // O original usa o tile do cabelo doindice escolhido e tinta
                 // com a cor do HairData/picker. Hair 0 = cabelo curto.
                 var hair = Wrap(hairIndex, 56);
+                // FarmerRenderer.case 2: sourceRect 16x15 (nao 16x32).
                 DrawLayer(batch, hairSheet, pos,
-                    new Rectangle(hair % 8 * 16, hair / 8 * 96, 16, 32), hairColor);
+                    new Rectangle(hair % 8 * 16, hair / 8 * 96, 16, 15), hairColor);
             }
 
             // Braco direito por cima do cabelo.
