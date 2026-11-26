@@ -38,6 +38,11 @@ namespace LumiaValley.Game.Screens
         private static readonly Rectangle FarmPageLeftRect = new Rectangle(960, 336, 64, 64);
         private static readonly Rectangle FarmPageRightRect = new Rectangle(1080, 336, 64, 64);
 
+        // Cores do original 1.5.6 (Game1.textColor e Utility.drawTextWithShadow).
+        private static readonly Color TextColor = new Color(34, 17, 34);
+        private static readonly Color TextShadowColor = new Color(221, 148, 84);
+        private static readonly Color SkyColor = new Color(64, 136, 248);
+
         private static readonly Color[] HairPalette =
         {
             new Color(110, 58, 30), new Color(129, 66, 36), new Color(155, 79, 43),
@@ -111,6 +116,7 @@ namespace LumiaValley.Game.Screens
         private Texture2D cursors;
         private Texture2D cursors2;
         private Texture2D titleButtons;
+        private Texture2D clouds;
         private Texture2D dayBackground;
         private Texture2D maleBase;
         private Texture2D femaleBase;
@@ -121,6 +127,10 @@ namespace LumiaValley.Game.Screens
         private Texture2D accessoryTexture;
         private Color[] skinColors;
         private Color[] shoeColors;
+        private Texture2D skinTexture;
+        private Texture2D recoloredBase;
+        private int recoloredSkin = -1;
+        private bool recoloredMale;
 
         // Os ColorPicker do original guardam tres barras com valores 0..100.
         // 0 = olhos, 1 = cabelo, 2 = calca; cada bloco tem hue, saturacao e valor.
@@ -177,6 +187,7 @@ namespace LumiaValley.Game.Screens
             cursors = LoadTexture(content, "LooseSprites/Cursors.pt-BR", "LooseSprites/Cursors");
             cursors2 = LoadTexture(content, "LooseSprites/Cursors2");
             titleButtons = LoadTexture(content, "Minigames/TitleButtons.pt-BR", "Minigames/TitleButtons");
+            clouds = LoadTexture(content, "Minigames/Clouds");
             dayBackground = LoadTexture(content, "LooseSprites/daybg");
             maleBase = LoadTexture(content, "Characters/Farmer/farmer_base");
             femaleBase = LoadTexture(content, "Characters/Farmer/farmer_girl_base");
@@ -186,7 +197,7 @@ namespace LumiaValley.Game.Screens
             pantsTexture = LoadTexture(content, "Characters/Farmer/pants");
             accessoryTexture = LoadTexture(content, "Characters/Farmer/accessories");
 
-            var skinTexture = LoadTexture(content, "Characters/Farmer/skinColors");
+            skinTexture = LoadTexture(content, "Characters/Farmer/skinColors");
             var shoeTexture = LoadTexture(content, "Characters/Farmer/shoeColors");
             // Cada tom de pele ocupa 3 pixels (sombra, base, luz); usamos a base.
             skinColors = ReadPalette(skinTexture, 3, 1, 24, SkinFallback);
@@ -398,7 +409,8 @@ namespace LumiaValley.Game.Screens
             RgbToHsv(color, out h, out s, out v);
             pickerValues[kind * 3] = (int)(h / 360f * 100f);
             pickerValues[kind * 3 + 1] = (int)(s * 100f);
-            pickerValues[kind * 3 + 2] = (int)(v / 255f * 100f);
+            // RgbToHsv devolve v em 0..1 (o ColorPicker original usa 0..255).
+            pickerValues[kind * 3 + 2] = (int)(v * 100f);
         }
 
         private void ApplyPicker(int kind)
@@ -439,8 +451,8 @@ namespace LumiaValley.Game.Screens
 
         public override void Draw(SpriteBatch spriteBatch)
         {
-            // Fundo proprio: a home NAO deve continuar aparecendo atras.
-            FillBackground(spriteBatch);
+            // Fundo proprio: ceu/montanhas/nuvens da home, sem logo nem botoes.
+            DrawBackground(spriteBatch);
 
             DrawMenuBox(spriteBatch, MenuRect);
             DrawBackButton(spriteBatch);
@@ -462,11 +474,55 @@ namespace LumiaValley.Game.Screens
                 : activeField == 3 ? "Coisa favorita" : "Nome do fazendeiro");
         }
 
-        private void FillBackground(SpriteBatch batch)
+        /// <summary>
+        /// TitleMenu.draw com subMenu aberto: azul de base, coluna de ceu,
+        /// montanhas e nuvens com a camera assentada (viewportY = -1000),
+        /// sem logo e sem os botoes da home. Os retangulos sao maiores que o
+        /// virtual 1280x720 porque a transformacao da tela de criacao
+        /// (UiScale) deixa as bordas do alvo 640x360 descobertas.
+        /// </summary>
+        private void DrawBackground(SpriteBatch batch)
         {
-            // Retangulo maior que o virtual compensa a transformacao da tela.
-            // Azul do ceu da home, sem desenhar a home em si.
-            batch.Draw(pixel, new Rectangle(-100, -100, 1480, 920), new Color(64, 136, 248));
+            batch.Draw(pixel, new Rectangle(-400, -400, 2400, 1600), SkyColor);
+
+            if (cursors != null)
+            {
+                SafeDraw(batch, cursors, new Rectangle(-400, -240, 1840, 1260),
+                    new Rectangle(703, 1912, 1, 264), Color.White);
+                SafeDraw(batch, cursors, new Rectangle(-400, -420, 2552, 780),
+                    new Rectangle(0, 1453, 638, 195), Color.White * 0.85f);
+            }
+
+            if (clouds == null)
+                return;
+
+            SafeDraw(batch, clouds, new Rectangle(-100, 470, 1536, 1011),
+                new Rectangle(0, 0, 512, 337), Color.White * 0.95f);
+            SafeDraw(batch, clouds, new Rectangle(1000, 470, 1536, 1011),
+                new Rectangle(0, 0, 512, 337), Color.White * 0.95f);
+
+            Rectangle[] smallClouds =
+            {
+                new Rectangle(152, 447, 123, 55),
+                new Rectangle(0, 471, 149, 66),
+                new Rectangle(410, 467, 63, 37)
+            };
+            for (var i = 0; i < 16; i++)
+            {
+                var src = smallClouds[i % smallClouds.Length];
+                SafeDraw(batch, clouds,
+                    new Rectangle(80 + i * 96, 320 - i * 36, src.Width * 3, src.Height * 3),
+                    src, Color.White * 0.9f);
+            }
+        }
+
+        private static void SafeDraw(SpriteBatch batch, Texture2D texture, Rectangle dest,
+            Rectangle source, Color color)
+        {
+            if (texture == null || source.X < 0 || source.Y < 0 ||
+                source.Right > texture.Width || source.Bottom > texture.Height)
+                return;
+            batch.Draw(texture, dest, source, color);
         }
 
         /// <summary>9-slice de 64px usado por Game1.drawDialogueBox.</summary>
@@ -543,50 +599,33 @@ namespace LumiaValley.Game.Screens
         }
 
         /// <summary>
-        /// FarmerRenderer.draw com escala 0.8 (4 * 0.8 = 3.2 por pixel de sprite).
-        /// O fazendeiro e desenhado apos todos os botoes, como no original.
+        /// FarmerRenderer.draw com o layerDepth 0.8 do CharacterCustomization:
+        /// 4 * 0.8 = 3.2 pixels de sprite por pixel virtual. O fazendeiro e
+        /// desenhado depois de todos os botoes, como no original.
         /// </summary>
         private void DrawFarmer(SpriteBatch batch)
         {
-            const float scale = 3.2f;
+            // CharacterCustomization chama draw(..., layerDepth = 0.8f) e o
+            // FarmerRenderer multiplica por 4 internamente.
+            const float scale = 4f * 0.8f;
             var pos = new Vector2(PortraitRect.Center.X - 32, PortraitRect.Bottom - 160);
             var facing = Wrap(draft.Facing, 4);
-            var body = draft.IsMale ? maleBase : femaleBase;
+            var body = GetRecoloredBase();
             var skin = skinColors[draft.Skin % skinColors.Length];
 
-            int shirtOffsetY = 0;
-            int hairOffsetY = 0;
-            int accessoryOffsetY = 0;
-            int hairDrawY = 0;
-            int accessoryDrawY = 4;
-            var flipHair = false;
-            var flipAccessory = false;
-            var hairXSign = 1f;
+            int bodyY = facing == 0 ? 32 : facing == 1 ? 16 : 0;
+            int shirtOffsetY = facing == 0 ? 24 : facing == 1 ? 8 : facing == 3 ? 16 : 0;
+            int hairOffsetY = facing == 0 ? 64 : facing == 1 || facing == 3 ? 32 : 0;
+            int accessoryOffsetY = facing == 1 || facing == 3 ? 16 : 0;
+            int hairDrawY = facing == 0 ? 4 : 0;
+            var flipHair = facing == 3;
+            var hairXSign = facing == 3 ? -1f : 1f;
 
-            if (facing == 0)
-            {
-                shirtOffsetY = 24;
-                hairOffsetY = 64;
-                hairDrawY = 4;
-            }
-            else if (facing == 1)
-            {
-                shirtOffsetY = 8;
-                hairOffsetY = 32;
-                accessoryOffsetY = 16;
-            }
-            else if (facing == 3)
-            {
-                shirtOffsetY = 16;
-                hairOffsetY = 32;
-                accessoryOffsetY = 16;
-                flipHair = true;
-                flipAccessory = true;
-                hairXSign = -1f;
-            }
-
+            // Corpo: o FarmerRenderer recolorreia os indices 260..262 do base.
             if (body != null)
-                DrawSprite(batch, body, pos, new Rectangle(0, 0, 16, 32), skin, scale);
+            {
+                DrawSpriteScaled(batch, body, pos, new Rectangle(0, bodyY, 16, 32), Color.White, scale);
+            }
 
             if (pantsTexture != null)
             {
@@ -595,18 +634,33 @@ namespace LumiaValley.Game.Screens
                     style % 10 * 192 + (draft.IsMale ? 0 : 96),
                     style / 10 * 688,
                     16, 32);
-                DrawSprite(batch, pantsTexture, pos, src,
+                DrawSpriteScaled(batch, pantsTexture, pos, src,
                     PantsPalette[draft.PantsColor % PantsPalette.Length], scale);
+            }
+
+            // Olhos: o preview usa currentEyes = 0 (sem olhos) quando virado
+            // para a camara; de lado usa a primeira linha de eyeColors.
+            if (body != null && facing != 2)
+            {
+                var eyeX = 5 + (facing == 1 ? 12 : 4);
+                DrawSpriteScaled(batch, body,
+                    pos + new Vector2(eyeX * scale, (facing == 0 ? 44 : 40) * scale / 4f),
+                    new Rectangle(5, 16, 2, 2), Color.White, scale);
+                DrawSpriteScaled(batch, body,
+                    pos + new Vector2(eyeX * scale, (facing == 1 || facing == 3 ? 40 : 44) * scale / 4f),
+                    new Rectangle(264 + (facing == 3 ? 4 : 0), 2, 2, 2), Color.White, scale);
             }
 
             if (shirtTexture != null && draft.Shirt < 20)
             {
                 var shirtX = draft.Shirt * 8 % 128;
                 var shirtY = draft.Shirt * 8 / 128 * 32 + shirtOffsetY;
-                var shirtPos = pos + new Vector2(16f * 0.8f, 56f * 0.8f);
-                // Base branca da camisa e depois a cor, na mesma posicao.
-                DrawSprite(batch, shirtTexture, shirtPos, new Rectangle(shirtX, shirtY, 8, 8), Color.White, scale);
-                DrawSprite(batch, shirtTexture, shirtPos, new Rectangle(shirtX + 128, shirtY, 8, 8),
+                var shirtPos = pos + new Vector2(16f, 56f) * scale / 4f;
+                // Base branca da camisa e depois a copia colorida em X + 128.
+                DrawSpriteScaled(batch, shirtTexture, shirtPos,
+                    new Rectangle(shirtX, shirtY, 8, 8), Color.White, scale);
+                DrawSpriteScaled(batch, shirtTexture, shirtPos,
+                    new Rectangle(shirtX + 128, shirtY, 8, 8),
                     ShirtPalette[draft.ShirtColor % ShirtPalette.Length], scale);
             }
 
@@ -614,12 +668,12 @@ namespace LumiaValley.Game.Screens
             {
                 var acc = draft.Accessory % 20;
                 var src = new Rectangle(acc * 16 % 128, acc * 16 / 128 * 32 + accessoryOffsetY, 16, 16);
-                var accPos = pos + new Vector2(0f, accessoryDrawY);
+                var accPos = pos + new Vector2(0f, 4f) * scale / 4f;
                 var accColor = draft.Accessory < 6
                     ? HairPalette[draft.HairColor % HairPalette.Length]
                     : Color.White;
-                DrawSprite(batch, accessoryTexture, accPos, src, accColor, scale,
-                    flipAccessory ? SpriteEffects.FlipHorizontally : SpriteEffects.None);
+                DrawSpriteScaled(batch, accessoryTexture, accPos, src, accColor, scale,
+                    flipHair ? SpriteEffects.FlipHorizontally : SpriteEffects.None);
             }
 
             Texture2D hair;
@@ -638,20 +692,61 @@ namespace LumiaValley.Game.Screens
             if (hair != null)
             {
                 var src = new Rectangle(hairIndex * 16 % 128, hairIndex * 16 / 128 * 96 + hairOffsetY, 16, 32);
-                var hairPos = pos + new Vector2(0f, hairDrawY);
+                var hairPos = pos + new Vector2(0f, hairDrawY) * scale / 4f;
                 var hairXOffset = draft.IsMale && draft.Hair >= 16 ? -4f
                     : !draft.IsMale && draft.Hair < 16 ? 4f : 0f;
-                hairPos.X += hairXSign * hairXOffset;
-                DrawSprite(batch, hair, hairPos, src, HairPalette[draft.HairColor % HairPalette.Length],
-                    scale, flipHair ? SpriteEffects.FlipHorizontally : SpriteEffects.None);
+                hairPos.X += hairXSign * hairXOffset * scale / 4f;
+                DrawSpriteScaled(batch, hair, hairPos, src,
+                    HairPalette[draft.HairColor % HairPalette.Length], scale,
+                    flipHair ? SpriteEffects.FlipHorizontally : SpriteEffects.None);
             }
 
             // Braco direito do sheet base, desenhado por cima do cabelo.
             if (body != null)
-                DrawSprite(batch, body, pos, new Rectangle(96, 0, 16, 32), Color.White, scale);
+                DrawSpriteScaled(batch, body, pos, new Rectangle(96, 0, 16, 32), Color.White, scale);
         }
 
-        private static void DrawSprite(SpriteBatch batch, Texture2D texture, Vector2 position,
+        private Texture2D GetRecoloredBase()
+        {
+            var male = draft.IsMale;
+            var source = male ? maleBase : femaleBase;
+            if (source == null)
+                return null;
+            if (recoloredBase != null && recoloredSkin == draft.Skin && recoloredMale == male)
+                return recoloredBase;
+
+            var data = new Color[source.Width * source.Height];
+            source.GetData(data);
+            if (skinTexture != null && skinTexture.Width == 3)
+            {
+                var palette = new Color[skinTexture.Width * skinTexture.Height];
+                skinTexture.GetData(palette);
+                var which = Wrap(draft.Skin, skinTexture.Height);
+                _SwapColor(data, 260, palette[which * 3]);
+                _SwapColor(data, 261, palette[which * 3 + 1]);
+                _SwapColor(data, 262, palette[which * 3 + 2]);
+            }
+
+            recoloredBase = new Texture2D(source.GraphicsDevice, source.Width, source.Height);
+            recoloredBase.SetData(data);
+            recoloredSkin = draft.Skin;
+            recoloredMale = male;
+            return recoloredBase;
+        }
+
+        private static void _SwapColor(Color[] pixels, int index, Color color)
+        {
+            if (index < 0 || index >= pixels.Length)
+                return;
+            for (var i = 0; i < pixels.Length; i++)
+            {
+                if (pixels[i].A == 0 || pixels[i].R != index || pixels[i].G != index || pixels[i].B != index)
+                    continue;
+                pixels[i] = color;
+            }
+        }
+
+        private static void DrawSpriteScaled(SpriteBatch batch, Texture2D texture, Vector2 position,
             Rectangle source, Color color, float scale, SpriteEffects effects = SpriteEffects.None)
         {
             if (texture == null)
@@ -694,7 +789,7 @@ namespace LumiaValley.Game.Screens
             }
 
             ShadowText(batch, Localization.UIString("Strings\\UI:Character_Animal", "Animal\nfavorito"),
-                540, 252, Color.White, 1f);
+                540, 252, TextColor, 1f);
         }
 
         private void DrawAppearance(SpriteBatch batch)
@@ -719,11 +814,11 @@ namespace LumiaValley.Game.Screens
             }
 
             ShadowText(batch, Localization.UIString("Strings\\UI:Character_EyeColor", "Cor dos\nolhos"),
-                556, 340, Color.White, 1f);
+                556, 340, TextColor, 1f);
             ShadowText(batch, Localization.UIString("Strings\\UI:Character_HairColor", "Cor de\ncabelo"),
-                556, 408, Color.White, 1f);
+                556, 408, TextColor, 1f);
             ShadowText(batch, Localization.UIString("Strings\\UI:Character_PantsColor", "Cor da\ncalça"),
-                556, 476, Color.White, 1f);
+                556, 476, TextColor, 1f);
         }
 
         private int GetAppearanceValue(int row)
@@ -743,7 +838,7 @@ namespace LumiaValley.Game.Screens
             if (font == null || string.IsNullOrEmpty(text))
                 return;
             var offset = 21f - font.MeasureString(text).X / 2f;
-            ShadowText(batch, text, x + offset, y, Color.White, 1f);
+            ShadowText(batch, text, x + offset, y, TextColor, 1f);
         }
 
         private void DrawCenteredValue(SpriteBatch batch, string text, int x, int y)
@@ -751,7 +846,7 @@ namespace LumiaValley.Game.Screens
             if (font == null || string.IsNullOrEmpty(text))
                 return;
             var px = x + 21f - font.MeasureString(text).X / 2f;
-            ShadowText(batch, text, px, y, Color.White, 1f);
+            ShadowText(batch, text, px, y, TextColor, 1f);
         }
 
         private static string AppearanceLabel(int row)
@@ -795,24 +890,26 @@ namespace LumiaValley.Game.Screens
             var saturation = pickerValues[kind * 3 + 1];
             var value = pickerValues[kind * 3 + 2];
 
+            // 24 fatias de 5px (+1 para nao abrir costuras apos a escala).
+            const int chunk = 128 / 24 + 1;
             for (var i = 0; i < 24; i++)
-                batch.Draw(pixel, new Rectangle(x + i * 128 / 24, y + 8, 128 / 24, 4),
+                batch.Draw(pixel, new Rectangle(x + i * 5, y + 8, chunk, 4),
                     HsvToRgb(i / 24f * 360f, 0.9f, 0.9f));
             DrawPickerCursor(batch, x + (int)(hue / 100f * 128f), y + 10);
 
             for (var i = 0; i < 24; i++)
-                batch.Draw(pixel, new Rectangle(x + i * 128 / 24, y + 28, 128 / 24, 4),
+                batch.Draw(pixel, new Rectangle(x + i * 5, y + 28, chunk, 4),
                     HsvToRgb(hue / 100f * 360f, i / 24f, value / 100f));
             DrawPickerCursor(batch, x + (int)(saturation / 100f * 128f), y + 30);
 
             for (var i = 0; i < 24; i++)
-                batch.Draw(pixel, new Rectangle(x + i * 128 / 24, y + 48, 128 / 24, 4),
+                batch.Draw(pixel, new Rectangle(x + i * 5, y + 48, chunk, 4),
                     HsvToRgb(hue / 100f * 360f, saturation / 100f, i / 24f));
             DrawPickerCursor(batch, x + (int)(value / 100f * 128f), y + 50);
 
-            ShadowText(batch, hue.ToString(), x + 136, y, Color.White, 1f);
-            ShadowText(batch, saturation.ToString(), x + 136, y + 20, Color.White, 1f);
-            ShadowText(batch, value.ToString(), x + 136, y + 40, Color.White, 1f);
+            ShadowText(batch, hue.ToString(), x + 136, y, TextColor, 0.85f);
+            ShadowText(batch, saturation.ToString(), x + 136, y + 20, TextColor, 0.85f);
+            ShadowText(batch, value.ToString(), x + 136, y + 40, TextColor, 0.85f);
         }
 
         private void DrawPickerCursor(SpriteBatch batch, float x, float y)
@@ -858,10 +955,10 @@ namespace LumiaValley.Game.Screens
             }
 
             if (font != null && !string.IsNullOrEmpty(value))
-                batch.DrawString(font, value, new Vector2(rect.X + 16, rect.Y + 12), Color.White);
+                batch.DrawString(font, value, new Vector2(rect.X + 16, rect.Y + 12), TextColor);
 
             var empty = string.IsNullOrWhiteSpace(value);
-            var labelColor = empty ? Color.Red : Color.White;
+            var labelColor = empty ? Color.Red : TextColor;
             ShadowText(batch, Localization.UIString(labelKey, labelFallback), labelX, labelY, labelColor, 1f);
         }
 
@@ -878,7 +975,7 @@ namespace LumiaValley.Game.Screens
             }
 
             ShadowText(batch, Localization.UIString("Strings\\UI:Character_SkipIntro", "Pular introducao"),
-                SkipIntroRect.Right + 8, SkipIntroRect.Y + 8, Color.White, 1f);
+                SkipIntroRect.Right + 8, SkipIntroRect.Y + 8, TextColor, 1f);
         }
 
         private void DrawRandomButton(SpriteBatch batch)
@@ -931,7 +1028,10 @@ namespace LumiaValley.Game.Screens
         private void DrawOk(SpriteBatch batch)
         {
             if (cursors != null)
-                batch.Draw(cursors, OkRect, new Rectangle(384, 256, 64, 64), Color.White);
+            {
+                // Tile 46 do sheet 16x16: o botao e 16x16 desenhado em 64x64.
+                batch.Draw(cursors, OkRect, new Rectangle(32, 16, 16, 16), Color.White);
+            }
             else
                 batch.Draw(pixel, OkRect, new Color(96, 142, 72));
 
@@ -970,6 +1070,10 @@ namespace LumiaValley.Game.Screens
             DrawWrapped(batch, description, area.X + 10, area.Y + 30, area.Width - 20, area.Height - 34);
         }
 
+        /// <summary>
+        /// Equivale a Utility.drawTextWithShadow com smallFont: duas copias da
+        /// sombra laranja em (-2,+2) e (0,+2) e o texto na cor padrao.
+        /// </summary>
         private void ShadowText(SpriteBatch batch, string text, float x, float y, Color color, float scale)
         {
             if (font == null || string.IsNullOrEmpty(text))
@@ -979,9 +1083,12 @@ namespace LumiaValley.Game.Screens
             var lineHeight = font.MeasureString("Ag").Y + 2f;
             for (var i = 0; i < lines.Length; i++)
             {
-                batch.DrawString(font, lines[i], new Vector2(x + 2, y + i * lineHeight + 2),
-                    Color.Black * 0.8f, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-                batch.DrawString(font, lines[i], new Vector2(x, y + i * lineHeight), color,
+                var lineY = y + i * lineHeight;
+                batch.DrawString(font, lines[i], new Vector2(x - 2f, lineY + 2f),
+                    TextShadowColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+                batch.DrawString(font, lines[i], new Vector2(x, lineY + 2f),
+                    TextShadowColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+                batch.DrawString(font, lines[i], new Vector2(x, lineY), color,
                     0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
             }
         }
@@ -1002,7 +1109,7 @@ namespace LumiaValley.Game.Screens
                 var candidate = line.Length == 0 ? words[i] : line + " " + words[i];
                 if (line.Length > 0 && font.MeasureString(candidate).X > width)
                 {
-                    ShadowText(batch, line, x, y + lines * lineHeight, Color.White, 1f);
+                    ShadowText(batch, line, x, y + lines * lineHeight, TextColor, 1f);
                     lines++;
                     line = words[i];
                 }
@@ -1013,7 +1120,7 @@ namespace LumiaValley.Game.Screens
             }
 
             if (lines < maxLines && line.Length > 0)
-                ShadowText(batch, line, x, y + lines * lineHeight, Color.White, 1f);
+                ShadowText(batch, line, x, y + lines * lineHeight, TextColor, 1f);
         }
 
         private static Color Mix(Color a, Color b, float amount)

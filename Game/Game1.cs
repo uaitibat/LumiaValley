@@ -99,7 +99,7 @@ namespace LumiaValley.Game
             var transform = screenTransform *
                 Matrix.CreateScale(sceneScale.X, sceneScale.Y, 1f);
 
-            spriteBatch.Begin(transformMatrix: transform);
+            spriteBatch.Begin(transformMatrix: transform, samplerState: SamplerState.PointClamp);
             current?.Draw(spriteBatch);
             spriteBatch.End();
 
@@ -108,7 +108,7 @@ namespace LumiaValley.Game
             GraphicsDevice.SetRenderTarget(null);
             var vp = GraphicsDevice.Viewport;
             GraphicsDevice.Clear(Color.Black);
-            spriteBatch.Begin();
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
             spriteBatch.Draw(
                 sceneTarget,
                 new Rectangle(0, 0, vp.Width, vp.Height),
