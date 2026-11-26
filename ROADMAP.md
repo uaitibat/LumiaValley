@@ -65,7 +65,10 @@
 - [x] Camera seguindo o jogador.
 - [x] D-pad virtual (toque) e toque no mundo para mover.
 - [x] HUD basico: energia, relogio e dinheiro.
-- [ ] Validar no Lumia: mapa carregando, camera, D-pad e HUD.
+- [x] Moveis sao ITENS (`Furniture.draw` portado): `Data/Furniture` +
+  `TileSheets/furniture`, lista inicial da casa (cama 2048, mesa 1120, TV 1466...).
+- [ ] Validar no Lumia: moveis, cama e paletas do jogador.
+- [ ] Catalogar todos os itens (hierarquia de classes, XNBs, Data, indices).
 - [ ] Hold no D-pad, gestures e swipe.
 - [ ] Ferramenta selecionada e inventario basico.
 
