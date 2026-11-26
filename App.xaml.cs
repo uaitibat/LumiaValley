@@ -1,6 +1,9 @@
 using System;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
+using Windows.Foundation.Metadata;
+using Windows.Graphics.Display;
+using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -17,6 +20,8 @@ namespace LumiaValley
 
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
+            ConfigureFullScreen();
+
             var rootFrame = Window.Current.Content as Frame;
             if (rootFrame == null)
             {
@@ -30,6 +35,38 @@ namespace LumiaValley
                 if (rootFrame.Content == null)
                     rootFrame.Navigate(typeof(Pages.GamePage), e.Arguments);
                 Window.Current.Activate();
+            }
+        }
+
+        /// <summary>
+        /// Trava a orientacao no nivel do sistema. O SupportedOrientations do
+        /// MonoGame nao controla a rotacao de uma pagina XAML com SwapChainPanel.
+        /// </summary>
+        internal static void ConfigureFullScreen()
+        {
+            DisplayInformation.AutoRotationPreferences =
+                DisplayOrientations.Landscape | DisplayOrientations.LandscapeFlipped;
+
+            var view = ApplicationView.GetForCurrentView();
+            view.SetDesiredBoundsMode(ApplicationViewBoundsMode.UseCoreWindow);
+            view.IsFullScreenMode = true;
+
+            if (ApiInformation.IsTypePresent("Windows.UI.ViewManagement.StatusBar"))
+            {
+                HideStatusBar();
+                Window.Current.SizeChanged += (sender, args) => HideStatusBar();
+            }
+        }
+
+        private static async void HideStatusBar()
+        {
+            try
+            {
+                await StatusBar.GetForCurrentView().HideAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("StatusBar.HideAsync falhou: " + ex.Message);
             }
         }
 
