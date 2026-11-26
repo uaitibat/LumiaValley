@@ -72,7 +72,8 @@ namespace LumiaValley.Game
                     continue;
 
                 var vp = GraphicsDevice.Viewport;
-                tap = ViewportConfig.ToVirtual(gesture.Position, vp.Width, vp.Height);
+                var virtualPoint = ViewportConfig.ToVirtual(gesture.Position, vp.Width, vp.Height);
+                tap = current != null ? current.FromVirtual(virtualPoint) : virtualPoint;
             }
 
             if (current != null)
@@ -94,8 +95,11 @@ namespace LumiaValley.Game
             GraphicsDevice.Clear(new Color(28, 64, 44));
 
             var sceneScale = ViewportConfig.GetScale(sceneWidth, sceneHeight);
+            var screenTransform = current != null ? current.Transform : Matrix.Identity;
+            var transform = screenTransform *
+                Matrix.CreateScale(sceneScale.X, sceneScale.Y, 1f);
 
-            spriteBatch.Begin(transformMatrix: Matrix.CreateScale(sceneScale.X, sceneScale.Y, 1f));
+            spriteBatch.Begin(transformMatrix: transform);
             current?.Draw(spriteBatch);
             spriteBatch.End();
 

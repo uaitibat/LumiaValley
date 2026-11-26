@@ -31,6 +31,16 @@ namespace LumiaValley.Game.Screens
 
         public abstract void Draw(SpriteBatch spriteBatch);
 
+        public virtual Matrix Transform
+        {
+            get { return Matrix.Identity; }
+        }
+
+        public virtual Vector2 FromVirtual(Vector2 point)
+        {
+            return point;
+        }
+
         protected static bool Contains(Rectangle r, Vector2 p)
         {
             return r.Contains((int)p.X, (int)p.Y);

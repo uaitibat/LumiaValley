@@ -12,6 +12,11 @@ namespace LumiaValley.Game.Screens
     /// </summary>
     public sealed class CharacterCreationScreen : MenuScreen
     {
+        // O menu original tem 792px de altura e comeca em y=-68. Escalamos
+        // todo o conteudo para caber nos 720px virtuais sem cortar bordas.
+        private const float UiScale = 0.8888889f;
+        private const float UiOffsetY = 68.444444f;
+
         private static readonly Rectangle MenuRect = new Rectangle(284, -68, 712, 792);
         private static readonly Rectangle PortraitRect = new Rectangle(388, 52, 128, 192);
         private static readonly Rectangle NameRect = new Rectangle(660, 52, 192, 48);
@@ -97,7 +102,6 @@ namespace LumiaValley.Game.Screens
         private readonly SaveSlot draft = new SaveSlot();
         private readonly TouchKeyboard keyboard = new TouchKeyboard();
         private readonly Random random = new Random();
-        private TitleScreen backdrop;
         private Texture2D menuTiles;
         private Texture2D cursors;
         private Texture2D cursors2;
@@ -140,14 +144,23 @@ namespace LumiaValley.Game.Screens
             draft.SkipIntro = false;
         }
 
+        public override Matrix Transform
+        {
+            get
+            {
+                return Matrix.CreateScale(UiScale) *
+                    Matrix.CreateTranslation(0f, UiOffsetY, 0f);
+            }
+        }
+
+        public override Vector2 FromVirtual(Vector2 point)
+        {
+            return new Vector2(point.X / UiScale, (point.Y - UiOffsetY) / UiScale);
+        }
+
         public override void Load(ContentManager content, GraphicsDevice device)
         {
             base.Load(content, device);
-
-            // A criacao e um subMenu sobre a home: reaproveitamos o ceu e o
-            // logo ja desenhados pelo proprio port.
-            backdrop = new TitleScreen(true);
-            backdrop.Load(content, device);
 
             menuTiles = LoadTexture(content, "Maps/MenuTiles");
             cursors = LoadTexture(content, "LooseSprites/Cursors.pt-BR", "LooseSprites/Cursors");
@@ -422,8 +435,8 @@ namespace LumiaValley.Game.Screens
 
         public override void Draw(SpriteBatch spriteBatch)
         {
-            if (backdrop != null)
-                backdrop.DrawBackdrop(spriteBatch);
+            // Fundo proprio: a home NAO deve continuar aparecendo atras.
+            FillBackground(spriteBatch);
 
             DrawMenuBox(spriteBatch, MenuRect);
             DrawPortrait(spriteBatch);
@@ -441,6 +454,12 @@ namespace LumiaValley.Game.Screens
             keyboard.Draw(spriteBatch, pixel, font, activeField == 2
                 ? "Nome da fazenda"
                 : activeField == 3 ? "Coisa favorita" : "Nome do fazendeiro");
+        }
+
+        private void FillBackground(SpriteBatch batch)
+        {
+            // Retangulo maior que o virtual compensa a transformacao da tela.
+            batch.Draw(pixel, new Rectangle(-100, -100, 1480, 920), new Color(18, 38, 28));
         }
 
         private void DrawMenuBox(SpriteBatch batch, Rectangle area)

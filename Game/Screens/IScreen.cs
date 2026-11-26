@@ -15,5 +15,11 @@ namespace LumiaValley.Game.Screens
         IScreen Update(GameTime gameTime, Vector2? tap);
 
         void Draw(SpriteBatch spriteBatch);
+
+        /// <summary>Transformacao aplicada pelo proprio screen no espaco virtual.</summary>
+        Matrix Transform { get; }
+
+        /// <summary>Converte um toque virtual para as coordenadas usadas no Draw.</summary>
+        Vector2 FromVirtual(Vector2 point);
     }
 }

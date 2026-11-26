@@ -281,6 +281,16 @@ namespace LumiaValley.Game.Screens
             return this;
         }
 
+        public Matrix Transform
+        {
+            get { return Matrix.Identity; }
+        }
+
+        public Vector2 FromVirtual(Vector2 point)
+        {
+            return point;
+        }
+
         private void Next(Phase next)
         {
             phase = next;

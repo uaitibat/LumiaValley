@@ -30,6 +30,16 @@ namespace LumiaValley.Game.Screens
             }
         }
 
+        public Matrix Transform
+        {
+            get { return Matrix.Identity; }
+        }
+
+        public Vector2 FromVirtual(Vector2 point)
+        {
+            return point;
+        }
+
         public IScreen Update(GameTime gameTime, Vector2? tap)
         {
             if (tap.HasValue)
