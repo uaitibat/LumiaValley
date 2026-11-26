@@ -88,8 +88,14 @@ namespace LumiaValley.Game
             base.Update(gameTime);
         }
 
+        /// <summary>Pausa a renderizacao enquanto a pagina de texto XAML esta aberta.</summary>
+        public static bool InputModal;
+
         protected override void Draw(GameTime gameTime)
         {
+            if (InputModal)
+                return;
+
             EnsureSceneTarget();
 
             // 1. Cena em resolucao configurada (640x360 por padrao).
