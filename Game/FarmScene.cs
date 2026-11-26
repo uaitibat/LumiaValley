@@ -274,8 +274,13 @@ namespace LumiaValley.Game
                 new Color(80, 44, 40), new Color(192, 148, 92), new Color(148, 106, 64),
                 new Color(96, 72, 48), new Color(212, 176, 92), new Color(164, 128, 64)
             };
-            var hairColor = hairPalette[(slot == null ? 0 : slot.HairColor) % hairPalette.Length];
-            var shirtColor = shirtPalette[(slot == null ? 1 : slot.ShirtColor) % shirtPalette.Length];
+            // Valores do slot: 0 e 1 sao os padroes da 1.5.6 (que o original
+            // usa quando o save nao traz cor/estilo explicito).
+            var hairIndex = slot == null ? 0 : slot.Hair;
+            var hairTone = slot == null ? 0 : slot.HairColor;
+            var shirtTone = slot == null ? 1 : slot.ShirtColor;
+            var hairColor = hairPalette[Wrap(hairTone, hairPalette.Length)];
+            var shirtColor = shirtPalette[Wrap(shirtTone, shirtPalette.Length)];
             var pantsColor = new Color(64, 86, 150);
             // Corpo (facing 2 = olhando para a camara).
             DrawLayer(batch, farmerBase, pos, new Rectangle(0, 0, 16, 32), skin);
@@ -304,15 +309,25 @@ namespace LumiaValley.Game
                     new Rectangle(acc * 16 % 128, acc * 16 / 128 * 32, 16, 16), Color.White);
             }
 
-            if (hairSheet != null && slot != null)
+            if (hairSheet != null)
             {
-                var hair = slot.Hair % 56;
+                // O original usa o tile do cabelo doindice escolhido e tinta
+                // com a cor do HairData/picker. Hair 0 = cabelo curto.
+                var hair = Wrap(hairIndex, 56);
                 DrawLayer(batch, hairSheet, pos,
                     new Rectangle(hair % 8 * 16, hair / 8 * 96, 16, 32), hairColor);
             }
 
             // Braco direito por cima do cabelo.
             DrawLayer(batch, farmerBase, pos, new Rectangle(96, 0, 16, 32), skin);
+        }
+
+        private static int Wrap(int value, int count)
+        {
+            if (count <= 0)
+                return 0;
+            value %= count;
+            return value < 0 ? value + count : value;
         }
 
         private static void DrawLayer(SpriteBatch batch, Texture2D texture, Vector2 pos,
