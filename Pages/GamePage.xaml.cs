@@ -1,3 +1,4 @@
+using System;
 using Windows.Graphics.Display;
 using Windows.System;
 using Windows.UI.Core;
