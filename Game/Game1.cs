@@ -23,6 +23,7 @@ namespace LumiaValley.Game
 
         private readonly GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
+        private RenderTarget2D sceneTarget;
         private Texture2D dayBg;
         private Texture2D titleButtons;
         private Texture2D pixel;
@@ -46,6 +47,11 @@ namespace LumiaValley.Game
 
             pixel = new Texture2D(GraphicsDevice, 1, 1);
             pixel.SetData(new[] { Color.White });
+
+            sceneTarget = new RenderTarget2D(
+                GraphicsDevice,
+                ViewportConfig.SceneWidth,
+                ViewportConfig.SceneHeight);
 
             try
             {
@@ -110,14 +116,15 @@ namespace LumiaValley.Game
 
         protected override void Draw(GameTime gameTime)
         {
+            // 1. Cena em resolucao reduzida (640x360), independente do backbuffer.
+            GraphicsDevice.SetRenderTarget(sceneTarget);
             GraphicsDevice.Clear(new Color(28, 64, 44));
 
-            // O MonoGame UWP pode redimensionar o backbuffer para o SwapChainPanel.
-            // Calcula a escala a partir do viewport real para sempre preencher a tela.
-            var vp = GraphicsDevice.Viewport;
-            var scale = ViewportConfig.GetScale(vp.Width, vp.Height);
+            var sceneScale = ViewportConfig.GetScale(
+                ViewportConfig.SceneWidth,
+                ViewportConfig.SceneHeight);
 
-            spriteBatch.Begin(transformMatrix: Matrix.CreateScale(scale.X, scale.Y, 1f));
+            spriteBatch.Begin(transformMatrix: Matrix.CreateScale(sceneScale.X, sceneScale.Y, 1f));
 
             if (xnbLoaded)
             {
@@ -149,6 +156,16 @@ namespace LumiaValley.Game
                     Color.Wheat);
             }
 
+            spriteBatch.End();
+
+            // 2. Um unico blit escalado para o backbuffer real do SwapChainPanel.
+            var vp = GraphicsDevice.Viewport;
+            GraphicsDevice.SetRenderTarget(null);
+            spriteBatch.Begin();
+            spriteBatch.Draw(
+                sceneTarget,
+                new Rectangle(0, 0, vp.Width, vp.Height),
+                Color.White);
             spriteBatch.End();
 
             base.Draw(gameTime);

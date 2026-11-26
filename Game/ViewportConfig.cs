@@ -20,6 +20,10 @@ namespace LumiaValley.Game
         public const int PreferredBackBufferWidth = 640;
         public const int PreferredBackBufferHeight = 360;
 
+        /// <summary>Resolucao da cena desenhada antes do blit final.</summary>
+        public const int SceneWidth = 640;
+        public const int SceneHeight = 360;
+
         /// <summary>Escala do espaco virtual para o backbuffer efetivo.</summary>
         public static Vector2 GetScale(int backBufferWidth, int backBufferHeight)
         {
