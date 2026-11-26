@@ -32,7 +32,7 @@ namespace LumiaValley.Game.Screens
 
         public Matrix Transform
         {
-            get { return Matrix.Identity; }
+            get { return scene.Transform; }
         }
 
         public Vector2 FromVirtual(Vector2 point)

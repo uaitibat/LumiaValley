@@ -1,7 +1,9 @@
 using System;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input.Touch;
+using LumiaValley.Game.Map;
 using LumiaValley.Game.Screens;
 
 namespace LumiaValley.Game
@@ -33,6 +35,10 @@ namespace LumiaValley.Game
         protected override void LoadContent()
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            // Leitor dos mapas xTile (formato tBIN10) usados pela 1.5.6.
+            ContentTypeReaderManager.AddTypeCreator(
+                "xTile.Pipeline.TideReader, xTile", () => new TideMapReader());
 
             EnsureSceneTarget();
 
