@@ -240,6 +240,22 @@ namespace LumiaValley.Game
                 DrawFurnitureTile(batch, indoor, 16, x, 2);
                 DrawFurnitureTile(batch, indoor, x % 2 == 0 ? 352 : 353, x, 3);
             }
+
+            // Faixas da frente (camada Front do xTile): rodape da cama,
+            // tapete e moveis. Indices do townInterior lidos do tBIN.
+            var front = new[]
+            {
+                160, 161, 162, -1, 163, 165, 165, 165, 165, 165, 166, 167,
+                96, 165, 130
+            };
+            for (var i = 0; i < front.Length; i++)
+            {
+                if (front[i] < 0)
+                    continue;
+                var x = i < 12 ? i : i - 12;
+                var y = i < 12 ? 10 : 11;
+                DrawFurnitureTile(batch, indoor, front[i], x, y);
+            }
         }
 
         private static void DrawFurnitureTile(SpriteBatch batch, Texture2D tex, int index, int tx, int ty)
