@@ -233,9 +233,14 @@ namespace LumiaValley.Game
 
         private void DrawHud(SpriteBatch batch)
         {
+            // HUD e D-pad usam coordenadas de tela: somamos a camera para
+            // compensar a transformacao do mundo aplicada pelo FarmScreen.
+            var ox = (int)camera.X;
+            var oy = (int)camera.Y;
+
             // Barra de energia.
-            batch.Draw(pixel, new Rectangle(24, 22, 208, 28), Color.Black * 0.6f);
-            batch.Draw(pixel, new Rectangle(28, 26, (int)(200 * energy / 100f), 20), new Color(104, 184, 72));
+            batch.Draw(pixel, new Rectangle(24 + ox, 22 + oy, 208, 28), Color.Black * 0.6f);
+            batch.Draw(pixel, new Rectangle(28 + ox, 26 + oy, (int)(200 * energy / 100f), 20), new Color(104, 184, 72));
 
             if (font == null)
                 return;
@@ -248,31 +253,39 @@ namespace LumiaValley.Game
             var timeText = h12 + ":" + minute.ToString("00") + " " + suffix;
             var timeSize = font.MeasureString(timeText);
             batch.DrawString(font, timeText,
-                new Vector2(ViewportConfig.VirtualWidth - 28 - timeSize.X, 24), Color.White);
+                new Vector2(ViewportConfig.VirtualWidth - 28 - timeSize.X + ox, 24 + oy), Color.White);
             batch.DrawString(font, "500g",
-                new Vector2(ViewportConfig.VirtualWidth - 28 - font.MeasureString("500g").X, 56),
+                new Vector2(ViewportConfig.VirtualWidth - 28 - font.MeasureString("500g").X + ox, 56 + oy),
                 new Color(255, 228, 120));
 
             if (slot != null && !string.IsNullOrEmpty(slot.FarmerName))
-                batch.DrawString(font, slot.FarmerName + " - " + slot.FarmName, new Vector2(24, 60), Color.White);
+                batch.DrawString(font, slot.FarmerName + " - " + slot.FarmName,
+                    new Vector2(24 + ox, 60 + oy), Color.White);
         }
 
         private void DrawDPad(SpriteBatch batch)
         {
+            var ox = (int)camera.X;
+            var oy = (int)camera.Y;
             var keys = new[] { UpKey, DownKey, LeftKey, RightKey };
             foreach (var key in keys)
             {
-                batch.Draw(pixel, key, Color.Black * 0.55f);
-                batch.Draw(pixel, new Rectangle(key.X + 2, key.Y + 2, key.Width - 4, 2),
+                var rect = new Rectangle(key.X + ox, key.Y + oy, key.Width, key.Height);
+                batch.Draw(pixel, rect, Color.Black * 0.55f);
+                batch.Draw(pixel, new Rectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, 2),
                     new Color(126, 170, 92));
             }
             if (cursors == null)
                 return;
 
-            batch.Draw(cursors, UpKey, new Rectangle(0, 320, 64, 64), Color.White);
-            batch.Draw(cursors, DownKey, new Rectangle(0, 192, 64, 64), Color.White);
-            batch.Draw(cursors, LeftKey, new Rectangle(0, 256, 64, 64), Color.White);
-            batch.Draw(cursors, RightKey, new Rectangle(64, 256, 64, 64), Color.White);
+            batch.Draw(cursors, new Rectangle(UpKey.X + ox, UpKey.Y + oy, UpKey.Width, UpKey.Height),
+                new Rectangle(0, 320, 64, 64), Color.White);
+            batch.Draw(cursors, new Rectangle(DownKey.X + ox, DownKey.Y + oy, DownKey.Width, DownKey.Height),
+                new Rectangle(0, 192, 64, 64), Color.White);
+            batch.Draw(cursors, new Rectangle(LeftKey.X + ox, LeftKey.Y + oy, LeftKey.Width, LeftKey.Height),
+                new Rectangle(0, 256, 64, 64), Color.White);
+            batch.Draw(cursors, new Rectangle(RightKey.X + ox, RightKey.Y + oy, RightKey.Width, RightKey.Height),
+                new Rectangle(64, 256, 64, 64), Color.White);
         }
 
         private static bool Contains(Rectangle r, Vector2 p)
