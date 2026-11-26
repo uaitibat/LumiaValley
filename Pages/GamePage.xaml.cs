@@ -27,30 +27,56 @@ namespace LumiaValley.Pages
 
             NativeInput.TextChanged += (sender, args) =>
             {
-                if (NativeTextInput.IsOpen && _onTextChanged != null)
-                    _onTextChanged(NativeInput.Text);
+                try
+                {
+                    if (NativeTextInput.IsOpen && _onTextChanged != null)
+                        _onTextChanged(NativeInput.Text);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("NativeInput.TextChanged: " + ex.Message);
+                }
             };
 
-            // Enter fecha o teclado e devolve o foco ao jogo.
             NativeInput.KeyDown += (sender, args) =>
             {
-                if (args.Key == VirtualKey.Enter)
-                    CloseInput();
+                try
+                {
+                    if (args.Key == VirtualKey.Enter)
+                        CloseInput();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("NativeInput.KeyDown: " + ex.Message);
+                }
             };
 
             NativeTextInput.Show = (text, changed, closed) =>
             {
-                _onTextChanged = changed;
-                _onClosed = closed;
-                NativeInput.Text = text ?? string.Empty;
-                NativeTextInput.IsOpen = true;
-                // Foco no proximo ciclo do dispatcher: o MonoGame pode estar
-                // processando o toque que abriu o campo neste exato instante.
-                NativeInput.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-                    () => NativeInput.Focus(FocusState.Programmatic));
+                try
+                {
+                    _onTextChanged = changed;
+                    _onClosed = closed;
+                    NativeInput.Text = text ?? string.Empty;
+                    NativeTextInput.IsOpen = true;
+                    NativeInput.Focus(FocusState.Programmatic);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("NativeTextInput.Show: " + ex.Message);
+                    NativeTextInput.IsOpen = false;
+                    _onTextChanged = null;
+                    _onClosed = null;
+                    return false;
+                }
             };
 
-            NativeTextInput.Hide = CloseInput;
+            NativeTextInput.Hide = () =>
+            {
+                try { CloseInput(); }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine("NativeTextInput.Hide: " + ex.Message); }
+            };
         }
 
         private void CloseInput()

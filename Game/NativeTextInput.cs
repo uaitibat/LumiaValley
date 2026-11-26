@@ -6,11 +6,12 @@ namespace LumiaValley.Game
     /// Ponte entre a logica do jogo (que nao referencia XAML) e o TextBox
     /// invisivel da GamePage. Focar esse TextBox faz o Windows 10 Mobile
     /// abrir o teclado virtual nativo (SIP).
+    /// Retorna false se a pagina nao conseguiu abrir a caixa, para que o
+    /// jogo use o teclado desenhado como fallback.
     /// </summary>
     public static class NativeTextInput
     {
-        /// <summary>Texto atual, callback a cada alteracao e ao fechar.</summary>
-        public static Action<string, Action<string>, Action> Show;
+        public static Func<string, Action<string>, Action, bool> Show;
 
         public static Action Hide;
 

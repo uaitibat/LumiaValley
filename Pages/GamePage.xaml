@@ -23,7 +23,6 @@
                  VerticalAlignment="Top"
                  IsTabStop="True"
                  TabIndex="0"
-                 MaxLength="24"
-                 InputScope="Text" />
+                 MaxLength="24" />
     </Grid>
 </Page>

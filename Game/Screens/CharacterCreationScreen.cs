@@ -370,7 +370,7 @@ namespace LumiaValley.Game.Screens
                 : field == 2 ? draft.FarmName
                 : draft.FavoriteThing;
 
-            NativeTextInput.Show(current,
+            var opened = NativeTextInput.Show(current,
                 text =>
                 {
                     if (text == null)
@@ -380,6 +380,9 @@ namespace LumiaValley.Game.Screens
                     else draft.FavoriteThing = text;
                 },
                 () => { activeField = 0; });
+
+            if (!opened)
+                keyboard.Show();
         }
 
         private static Rectangle FarmButtonRect(int index)
