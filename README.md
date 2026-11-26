@@ -6,7 +6,9 @@ Port experimental de **Stardew Valley 1.5.6** para **Lumia 640 / Windows 10 Mobi
 
 - Pipeline UWP ARM validado no Lumia: touch por tap e escala pelo `SwapChainPanel` funcionando.
 - XNB v5 da 1.5.6 lido direto do appx no Lumia (validado com `LooseSprites/daybg`).
-- Tela de título mínima com sprites reais (`Minigames/TitleButtons`) e seleção por toque.
+- Home da Fase 1: splash, fade, câmera, logo e botões com sprites reais da 1.5.6.
+- Protótipo de fazenda com o sprite do farmer e movimento por toque (será substituído na Fase 4).
+- Host de telas `IScreen`, com transições isoladas por fase.
 - Esqueleto UWP ARM com MonoGame 3.8.0.1641 e build via GitHub Actions.
 - Código descompilado com ILSpy 9.0 fica **somente local** em `reference/` (753 arquivos C# + dependências).
 
@@ -19,11 +21,13 @@ O app é **paisagem-only** (o Stardew não tem layout vertical). O manifest e o 
 |---|---|---|
 | Tela física do Lumia 640 | 1280x720 | saída final |
 | Coordenadas virtuais do jogo | 1280x720 | todo o código portado desenha aqui |
-| Backbuffer renderizado | 640x360 | escala 2x na saída, por performance |
+| Cena renderizada | 640x360 | `RenderTarget2D`, por performance na Adreno 305 |
 
-`Game/ViewportConfig.cs` centraliza esses valores. O `SpriteBatch.Begin` aplica
-`Matrix.CreateScale(0.5f)` e o touch é convertido com `ToVirtual()` antes do uso.
-Assim as coordenadas do `Game1` descompilado (1280x720) continuam válidas sem reescrita.
+`Game/ViewportConfig.cs` centraliza esses valores. Cada tela desenha em 1280x720 com
+`Matrix.CreateScale(0.5f)` dentro do `RenderTarget`, e um único blit escalado leva o
+resultado ao backbuffer real do `SwapChainPanel`. O touch é convertido com `ToVirtual()`.
+O viewport do blit é lido **depois** de `SetRenderTarget(null)` — ler antes fazia o
+conteúdo aparecer apenas no canto superior esquerdo.
 
 ## Arquitetura do build (repo público + cofre privado)
 
@@ -67,8 +71,9 @@ Abra **Actions → build-appx → Run workflow** no repo `LumiaValley`. O `.appx
 
 ## Próximos passos
 
-1. Evoluir a tela de título para iniciar um save de teste com o `Game1` real.
-2. Trocar filesystem por `ApplicationData.Current.LocalFolder` e mapear touch para o input do jogo.
-3. Remover Steam/Galaxy/Skia/Lidgren/Reflection.Emit.
-4. Reduzir XACT e incluir áudio essencial.
-5. Ajustar o fator de escala em `ViewportConfig` conforme FPS medido no dispositivo.
+1. Fase 1: validar a home no aparelho e acertar sprites/posições/strings.
+2. Fase 2: funções de New/Load/Co-op/Exit + saves próprios no `LocalFolder`.
+3. Fase 3: customização de personagem e fazenda.
+4. Fase 4: mapa xTile real, HUD, inventário e input por toque.
+5. Fase 5: NPCs, mobs, eventos e áudio essencial (XACT convertido).
+6. Remover Steam/Galaxy/Skia/Lidgren/Reflection.Emit do caminho de build.
