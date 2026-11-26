@@ -29,6 +29,8 @@ namespace LumiaValley.Game
         private Texture2D pixel;
         private int selected = -1;
         private bool xnbLoaded;
+        private FarmScene farm;
+        private bool inFarm;
 
         public Game1()
         {
@@ -65,6 +67,17 @@ namespace LumiaValley.Game
                 xnbLoaded = false;
             }
 
+            try
+            {
+                farm = new FarmScene();
+                farm.Load(Content, GraphicsDevice);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Falha ao carregar cena da fazenda: " + ex);
+                farm = null;
+            }
+
             base.LoadContent();
         }
 
@@ -89,18 +102,36 @@ namespace LumiaValley.Game
 
                 var vp = GraphicsDevice.Viewport;
                 var p = ViewportConfig.ToVirtual(gesture.Position, vp.Width, vp.Height);
-                var x = (int)p.X;
-                var y = (int)p.Y;
 
-                for (var i = 0; i < ButtonSources.Length; i++)
+                if (inFarm)
                 {
-                    if (ButtonDest(i).Contains(x, y))
+                    if (farm != null)
+                        farm.OnTap(p);
+                }
+                else
+                {
+                    var x = (int)p.X;
+                    var y = (int)p.Y;
+
+                    for (var i = 0; i < ButtonSources.Length; i++)
                     {
+                        if (!ButtonDest(i).Contains(x, y))
+                            continue;
+
                         selected = i;
+                        // "New" (ou "Load") entra na cena jogavel.
+                        if ((i == 0 || i == 1) && farm != null)
+                        {
+                            farm.Reset();
+                            inFarm = true;
+                        }
                         break;
                     }
                 }
             }
+
+            if (inFarm && farm != null)
+                farm.Update(gameTime);
 
             base.Update(gameTime);
         }
@@ -126,7 +157,11 @@ namespace LumiaValley.Game
 
             spriteBatch.Begin(transformMatrix: Matrix.CreateScale(sceneScale.X, sceneScale.Y, 1f));
 
-            if (xnbLoaded)
+            if (inFarm && farm != null)
+            {
+                farm.Draw(spriteBatch);
+            }
+            else if (xnbLoaded)
             {
                 spriteBatch.Draw(
                     dayBg,
