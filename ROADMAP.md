@@ -43,10 +43,15 @@
 
 ## Fase 3 — Customizacao de personagem e fazenda (em andamento)
 
+- [x] `New` abre direto a criacao, sem tela de confirmacao intermedia.
+- [x] Layout refeito com as coordenadas da 1.5.6: menu, caixas de texto,
+  retrato, setas, pickers de cor, OK, Voltar e painel dos tipos de fazenda.
 - [x] Nome do fazendeiro, nome da fazenda e coisa favorita (teclado touch proprio).
-- [x] Genero, cor de pele, cabelo/cor, camisa/cor, calcas/cor, calcados e acessorio.
-- [x] Pet (nenhum/cachorro/gato) e os sete tipos de fazenda com descricao.
+- [x] Genero, direcao, pet, cor de pele, cabelo/cor, olhos, camisa/cor,
+  calcas/cor, calcados e acessorio.
+- [x] Botao Aleatorio e os sete tipos de fazenda com descricao ao selecionar.
 - [x] Preview do fazendeiro com sprites e paletas da 1.5.6.
+- [x] OK so habilita com os tres campos preenchidos, como no original.
 - [x] Botoes da home com um unico toque (run #33, `success`).
 - [x] Criacao do save inicial com todos os valores escolhidos.
 - [ ] **Validar no Lumia**: digitar nomes, trocar aparencia, escolher fazenda e entrar jogando.

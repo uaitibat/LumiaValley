@@ -237,7 +237,7 @@ namespace LumiaValley.Game.Screens
 
             if (tap.HasValue && phase == Phase.Ready && buttonsShown == 4)
             {
-                // Seleciona no primeiro toque e executa no segundo.
+                // Cada botao executa no primeiro toque.
                 var hit = -1;
                 for (var i = 0; i < 4; i++)
                 {
@@ -253,7 +253,7 @@ namespace LumiaValley.Game.Screens
                     // Um unico toque ja executa o botao (sem selecao em duas etapas).
                     switch (hit)
                     {
-                        case 0: return new NewGameScreen();
+                        case 0: return new CharacterCreationScreen();
                         case 1: return new LoadGameScreen();
                         case 2: return new CoopScreen();
                         case 3: return new ConfirmExitScreen();
@@ -506,6 +506,13 @@ namespace LumiaValley.Game.Screens
             batch.DrawString(font,
                 Localization.CS("StringsFromCSFiles:TitleMenu.cs.11740", "Idioma"),
                 new Vector2(1168, 597), Color.White);
+        }
+
+        /// <summary>Ceu e logo usados como fundo da criacao de personagem.</summary>
+        public void DrawBackdrop(SpriteBatch spriteBatch)
+        {
+            DrawSky(spriteBatch);
+            DrawLogo(spriteBatch);
         }
 
         public void Draw(SpriteBatch spriteBatch)

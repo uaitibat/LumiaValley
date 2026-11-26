@@ -26,6 +26,8 @@ namespace LumiaValley.Game
         public int PantsColor { get; set; }
         public int Shoes { get; set; }
         public int Accessory { get; set; }
+        public int EyeColor { get; set; }
+        public int Facing { get; set; }
         public int Pet { get; set; }
         public int FarmType { get; set; }
         public string FavoriteThing { get; set; }
@@ -38,7 +40,7 @@ namespace LumiaValley.Game
             Created = string.Empty;
             FavoriteThing = string.Empty;
             IsMale = true;
-            SkipIntro = true;
+            SkipIntro = false;
         }
     }
 
@@ -98,6 +100,8 @@ namespace LumiaValley.Game
                     "pantscolor=" + slot.PantsColor + "\n" +
                     "shoes=" + slot.Shoes + "\n" +
                     "accessory=" + slot.Accessory + "\n" +
+                    "eyecolor=" + slot.EyeColor + "\n" +
+                    "facing=" + slot.Facing + "\n" +
                     "pet=" + slot.Pet + "\n" +
                     "farmtype=" + slot.FarmType + "\n" +
                     "favorite=" + Clean(slot.FavoriteThing) + "\n" +
@@ -154,6 +158,8 @@ namespace LumiaValley.Game
                     case "pantscolor": slot.PantsColor = Int(value, 0, 0, 19); break;
                     case "shoes": slot.Shoes = Int(value, 0, 0, 18); break;
                     case "accessory": slot.Accessory = Int(value, -1, -1, 19); break;
+                    case "eyecolor": slot.EyeColor = Int(value, 0, 0, 11); break;
+                    case "facing": slot.Facing = Int(value, 0, 0, 3); break;
                     case "pet": slot.Pet = Int(value, 0, 0, 2); break;
                     case "farmtype": slot.FarmType = Int(value, 0, 0, FarmTypes.Count - 1); break;
                     case "favorite": slot.FavoriteThing = value; break;
