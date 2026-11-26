@@ -345,6 +345,10 @@ namespace LumiaValley.Game
                 batch.DrawString(font, slot.FarmerName + " - " + slot.FarmName,
                     new Vector2(24 + ox, 60 + oy), Color.White);
 
+            // Identificacao do build, para validacao no aparelho.
+            batch.DrawString(font, "build " + BuildInfo.Hash,
+                new Vector2(24 + ox, 84 + oy), new Color(180, 180, 180));
+
 
         }
 

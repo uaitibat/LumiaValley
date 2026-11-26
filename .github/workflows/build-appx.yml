@@ -60,6 +60,10 @@ jobs:
       - name: Compilar Release ARM
         shell: pwsh
         run: |
+          $sha = (git rev-parse --short HEAD).Trim()
+          (Get-Content Game\BuildInfo.cs -Raw) -replace '@BUILD_SHA@', $sha |
+            Set-Content Game\BuildInfo.cs -Encoding UTF8
+
           msbuild LumiaValley.sln /restore /m `
             /p:Configuration=Release `
             /p:Platform=ARM `
@@ -131,10 +135,18 @@ jobs:
             "X-GitHub-Api-Version" = "2022-11-28"
           }
 
+          $sha = (git rev-parse --short HEAD).Trim()
+
           try {
             $release = Invoke-RestMethod -Headers $headers `
               -Uri "$api/releases/tags/latest"
             Write-Host "Release existente reaproveitada"
+
+            # Atualiza o corpo da release para mostrar o build atual.
+            $patchBody = @{ body = "Build automatico: $sha" } | ConvertTo-Json
+            $release = Invoke-RestMethod -Method Patch -Headers $headers `
+              -Uri "$api/releases/$($release.id)" -Body $patchBody
+            Write-Host "Corpo da release atualizado: $sha"
 
             foreach ($old in $release.assets) {
               Invoke-RestMethod -Method Delete -Headers $headers `
@@ -144,7 +156,6 @@ jobs:
           } catch {
             Write-Host "Criando release latest"
 
-            $sha = (git rev-parse --short HEAD).Trim()
             $body = @{
               tag_name = "latest"
               name = "LumiaValley ARM (latest)"
