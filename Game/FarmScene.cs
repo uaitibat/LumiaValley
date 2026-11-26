@@ -184,8 +184,13 @@ namespace LumiaValley.Game
             DrawHud(spriteBatch);
         }
 
+        private readonly int[] drawnPerLayer = new int[8];
+
         private void DrawMap(SpriteBatch batch)
         {
+            drawnPerLayer[0] = 0; drawnPerLayer[1] = 0;
+            drawnPerLayer[2] = 0; drawnPerLayer[3] = 0;
+
             if (map == null)
             {
                 batch.Draw(pixel, new Rectangle(0, 0, ViewportConfig.VirtualWidth,
@@ -193,6 +198,7 @@ namespace LumiaValley.Game
                 return;
             }
 
+            var layerIndex = 0;
             foreach (var layer in map.Layers)
             {
                 if (layer == null || !layer.Visible || layer.Tiles == null)
@@ -226,8 +232,10 @@ namespace LumiaValley.Game
                             continue;
 
                         batch.Draw(texture, new Rectangle(x * tileW, y * tileH, tileW, tileH), src, Color.White);
+                        drawnPerLayer[layerIndex]++;
                     }
                 }
+                layerIndex++;
             }
         }
 
@@ -329,6 +337,9 @@ namespace LumiaValley.Game
             if (failedSheets > 0)
                 batch.DrawString(font, "TS Falhas: " + failedSheets,
                     new Vector2(24 + ox, 88 + oy), new Color(255, 90, 90));
+
+            batch.DrawString(font, "L0:" + drawnPerLayer[0] + " L1:" + drawnPerLayer[1] +
+                " L2:" + drawnPerLayer[2], new Vector2(24 + ox, 110 + oy), new Color(255, 90, 90));
         }
 
     }
