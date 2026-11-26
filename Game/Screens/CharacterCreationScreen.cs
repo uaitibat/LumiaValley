@@ -33,13 +33,13 @@ namespace LumiaValley.Game.Screens
         private static readonly Rectangle SkipIntroRect = new Rectangle(612, 540, 36, 36);
         private static readonly Rectangle OkRect = new Rectangle(876, 604, 64, 64);
         private static readonly Rectangle AdvancedRect = new Rectangle(204, 628, 80, 80);
-        private static readonly Rectangle BackButtonRect = new Rectangle(1034, 615, 198, 81);
+        // Deslocado para a direita porque a transformacao de UiScale reduz
+        // everything em 0.8889: em coordenadas fisicas fica perto do canto.
+        private static readonly Rectangle BackButtonRect = new Rectangle(1216, 620, 200, 82);
         private static readonly Rectangle FarmPanelRect = new Rectangle(992, 40, 120, 652);
-        private static readonly Rectangle FarmPageLeftRect = new Rectangle(960, 336, 64, 64);
-        private static readonly Rectangle FarmPageRightRect = new Rectangle(1080, 336, 64, 64);
 
         // Cores do original 1.5.6 (Game1.textColor e Utility.drawTextWithShadow).
-        private static readonly Color TextColor = new Color(34, 17, 34);
+        private new static readonly Color TextColor = new Color(34, 17, 34);
         private static readonly Color TextShadowColor = new Color(221, 148, 84);
         private static readonly Color SkyColor = new Color(64, 136, 248);
 
@@ -112,7 +112,7 @@ namespace LumiaValley.Game.Screens
         private readonly SaveSlot draft = new SaveSlot();
         private readonly TouchKeyboard keyboard = new TouchKeyboard();
         private readonly Random random = new Random();
-        private Texture2D menuTiles;
+        private new Texture2D menuTiles;
         private Texture2D cursors;
         private Texture2D cursors2;
         private Texture2D titleButtons;
@@ -316,19 +316,6 @@ namespace LumiaValley.Game.Screens
                 return this;
             }
 
-            if (Contains(FarmPageLeftRect, point))
-            {
-                draft.FarmType = Wrap(draft.FarmType - 1, FarmTypes.Count);
-                farmHintMs = 2600;
-                return this;
-            }
-            if (Contains(FarmPageRightRect, point))
-            {
-                draft.FarmType = Wrap(draft.FarmType + 1, FarmTypes.Count);
-                farmHintMs = 2600;
-                return this;
-            }
-
             if (Contains(OkRect, point) && CanStart)
             {
                 draft.FarmerName = draft.FarmerName.Trim();
@@ -525,7 +512,11 @@ namespace LumiaValley.Game.Screens
             batch.Draw(texture, dest, source, color);
         }
 
-        /// <summary>9-slice de 64px usado por Game1.drawDialogueBox.</summary>
+        /// <summary>
+        /// Equivale a Game1.DrawBox: o miolo comeca 28px dentro e as bordas
+        /// usam um offset de -32 para alinhar com o canto do MenuTiles. Assim
+        /// nao aparece céu entre a moldura e o quadrado bege.
+        /// </summary>
         private void DrawMenuBox(SpriteBatch batch, Rectangle area)
         {
             if (menuTiles == null || menuTiles.Width < 256 || menuTiles.Height < 256)
@@ -534,16 +525,17 @@ namespace LumiaValley.Game.Screens
                 return;
             }
 
-            const int b = 64;
-            batch.Draw(menuTiles, new Rectangle(area.X, area.Y, b, b), new Rectangle(0, 0, b, b), Color.White);
-            batch.Draw(menuTiles, new Rectangle(area.X + b, area.Y, area.Width - b * 2, b), new Rectangle(128, 0, b, b), Color.White);
-            batch.Draw(menuTiles, new Rectangle(area.Right - b, area.Y, b, b), new Rectangle(192, 0, b, b), Color.White);
-            batch.Draw(menuTiles, new Rectangle(area.X, area.Y + b, b, area.Height - b * 2), new Rectangle(0, 128, b, b), Color.White);
-            batch.Draw(menuTiles, new Rectangle(area.X + b, area.Y + b, area.Width - b * 2, area.Height - b * 2), new Rectangle(64, 128, b, b), Color.White);
-            batch.Draw(menuTiles, new Rectangle(area.Right - b, area.Y + b, b, area.Height - b * 2), new Rectangle(192, 128, b, b), Color.White);
-            batch.Draw(menuTiles, new Rectangle(area.X, area.Bottom - b, b, b), new Rectangle(0, 192, b, b), Color.White);
-            batch.Draw(menuTiles, new Rectangle(area.X + b, area.Bottom - b, area.Width - b * 2, b), new Rectangle(128, 192, b, b), Color.White);
-            batch.Draw(menuTiles, new Rectangle(area.Right - b, area.Bottom - b, b, b), new Rectangle(192, 192, b, b), Color.White);
+            var t = menuTiles;
+            batch.Draw(t, new Rectangle(area.X + 28, area.Y + 28, area.Width - 64, area.Height - 64),
+                new Rectangle(64, 128, 64, 64), Color.White);
+            batch.Draw(t, new Vector2(area.X - 32, area.Y - 32), new Rectangle(0, 0, 64, 64), Color.White);
+            batch.Draw(t, new Vector2(area.Right - 32, area.Y - 32), new Rectangle(192, 0, 64, 64), Color.White);
+            batch.Draw(t, new Vector2(area.Right - 32, area.Bottom - 32), new Rectangle(192, 192, 64, 64), Color.White);
+            batch.Draw(t, new Vector2(area.X - 32, area.Bottom - 32), new Rectangle(0, 192, 64, 64), Color.White);
+            batch.Draw(t, new Rectangle(area.X + 32, area.Y - 32, area.Width - 64, 64), new Rectangle(128, 0, 64, 64), Color.White);
+            batch.Draw(t, new Rectangle(area.X + 32, area.Bottom - 32, area.Width - 64, 64), new Rectangle(128, 192, 64, 64), Color.White);
+            batch.Draw(t, new Rectangle(area.X - 32, area.Y + 32, 64, area.Height - 64), new Rectangle(0, 128, 64, 64), Color.White);
+            batch.Draw(t, new Rectangle(area.Right - 32, area.Y + 32, 64, area.Height - 64), new Rectangle(192, 128, 64, 64), Color.White);
         }
 
         /// <summary>IClickableMenu.drawTextureBox: canto de 20px e sombra opcional.</summary>
@@ -1005,9 +997,6 @@ namespace LumiaValley.Game.Screens
                 if (i == draft.FarmType)
                     DrawSelectionFrame(batch, new Rectangle(rect.X, rect.Y - 4, rect.Width, rect.Height + 8));
             }
-
-            DrawArrow(batch, FarmPageLeftRect, true);
-            DrawArrow(batch, FarmPageRightRect, false);
         }
 
         private void DrawSelectionFrame(SpriteBatch batch, Rectangle area)
@@ -1021,8 +1010,9 @@ namespace LumiaValley.Game.Screens
                 return;
             }
 
+            // drawTextureBox com scale 4: num = 3/3 = 1, logo a borda e 4px.
             var src = new Rectangle(375, 357, 3, 3);
-            DrawBox9(batch, cursors, area, src, 12, Color.White);
+            DrawBox9(batch, cursors, area, src, 4, Color.White);
         }
 
         private void DrawOk(SpriteBatch batch)

@@ -17,15 +17,12 @@ namespace LumiaValley.Game.Screens
         public override void Draw(SpriteBatch spriteBatch)
         {
             DrawPanel(spriteBatch, Area, "Co-op");
-            if (font != null)
-            {
-                spriteBatch.DrawString(font, "Modo cooperativo indisponivel neste port.",
-                    new Vector2(340, 272), Color.White);
-                spriteBatch.DrawString(font, "Nao ha conexao de rede no escopo do LumiaValley.",
-                    new Vector2(340, 320), Color.White * 0.85f);
-                spriteBatch.DrawString(font, "Use Novo Jogo para comecar uma fazenda local.",
-                    new Vector2(340, 360), Color.White * 0.85f);
-            }
+            DrawShadowText(spriteBatch, "Modo cooperativo indisponivel neste port.", font,
+                new Vector2(340, 272), TextColor, 1.2f);
+            DrawShadowText(spriteBatch, "Nao ha conexao de rede no escopo do LumiaValley.", font,
+                new Vector2(340, 320), TextColor, 1.2f);
+            DrawShadowText(spriteBatch, "Use Novo Jogo para comecar uma fazenda local.", font,
+                new Vector2(340, 368), TextColor, 1.2f);
             DrawBack(spriteBatch);
         }
     }
@@ -77,17 +74,14 @@ namespace LumiaValley.Game.Screens
         public override void Draw(SpriteBatch spriteBatch)
         {
             DrawPanel(spriteBatch, Area, "Sobre");
-            if (font != null)
-            {
-                spriteBatch.DrawString(font, "LumiaValley 0.1 - port nao oficial",
-                    new Vector2(320, 232), Color.White);
-                spriteBatch.DrawString(font, "Base: Stardew Valley 1.5.6 (Windows)",
-                    new Vector2(320, 280), Color.White * 0.9f);
-                spriteBatch.DrawString(font, "Feito para Lumia 640 / Windows 10 Mobile.",
-                    new Vector2(320, 328), Color.White * 0.9f);
-                spriteBatch.DrawString(font, "Saves proprios, sem compatibilidade com o PC.",
-                    new Vector2(320, 376), Color.White * 0.9f);
-            }
+            DrawShadowText(spriteBatch, "LumiaValley 0.1 - port nao oficial", font,
+                new Vector2(320, 240), TextColor, 1.25f);
+            DrawShadowText(spriteBatch, "Base: Stardew Valley 1.5.6 (Windows)", font,
+                new Vector2(320, 296), TextColor, 1.25f);
+            DrawShadowText(spriteBatch, "Feito para Lumia 640 / Windows 10 Mobile.", font,
+                new Vector2(320, 352), TextColor, 1.25f);
+            DrawShadowText(spriteBatch, "Saves proprios, sem compatibilidade com o PC.", font,
+                new Vector2(320, 408), TextColor, 1.25f);
             DrawBack(spriteBatch);
         }
     }

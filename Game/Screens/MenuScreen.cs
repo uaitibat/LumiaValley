@@ -13,18 +13,25 @@ namespace LumiaValley.Game.Screens
     {
         protected static readonly Rectangle BackRect = new Rectangle(40, 636, 220, 56);
 
+        // Cores do original 1.5.6: texto escuro e sombra laranja de
+        // Utility.drawTextWithShadow.
+        protected static readonly Color TextColor = new Color(34, 17, 34);
+        protected static readonly Color ShadowColor = new Color(221, 148, 84);
+
         protected Texture2D pixel;
-        protected Texture2D panel;
+        protected Texture2D menuTiles;
         protected Texture2D textBox;
         protected SpriteFont font;
+        protected SpriteFont dialogueFont;
 
         public virtual void Load(ContentManager content, GraphicsDevice device)
         {
             pixel = new Texture2D(device, 1, 1);
             pixel.SetData(new[] { Color.White });
-            panel = LoadTexture(content, "LooseSprites/DialogBoxGreen");
+            menuTiles = LoadTexture(content, "Maps/MenuTiles");
             textBox = LoadTexture(content, "LooseSprites/textBox");
             font = LoadFont(content, "Fonts/SmallFont.pt-BR", "Fonts/SmallFont");
+            dialogueFont = LoadFont(content, "Fonts/SpriteFont1.pt-BR", "Fonts/SpriteFont1");
         }
 
         public abstract IScreen Update(GameTime gameTime, Vector2? tap);
@@ -57,11 +64,16 @@ namespace LumiaValley.Game.Screens
             return new TitleScreen(true);
         }
 
+        /// <summary>
+        /// Equivale a Game1.DrawBox/drawDialogueBox: o miolo comeca 28px dentro
+        /// e as bordas usam um offset de -32 para alinhar com o canto transparente
+        /// do MenuTiles. Sem isso o fundo aparece entre a borda e o miolo bege.
+        /// </summary>
         protected void DrawPanel(SpriteBatch batch, Rectangle area, string title)
         {
             batch.Draw(pixel, new Rectangle(0, 0, 1280, 720), Color.Black * 0.78f);
 
-            if (panel == null || panel.Width < 32 || panel.Height < 32)
+            if (menuTiles == null || menuTiles.Width < 256 || menuTiles.Height < 256)
             {
                 batch.Draw(pixel, area, new Color(28, 58, 38));
                 batch.Draw(pixel, new Rectangle(area.X, area.Y, area.Width, 4), new Color(126, 170, 92));
@@ -69,42 +81,38 @@ namespace LumiaValley.Game.Screens
             }
             else
             {
-                const int b = 16;
-                DrawSlice(batch, area, b,
-                    new Rectangle(0, 0, b, b), new Rectangle(b, 0, panel.Width - b * 2, b),
-                    new Rectangle(panel.Width - b, 0, b, b),
-                    new Rectangle(0, b, b, panel.Height - b * 2),
-                    new Rectangle(b, b, panel.Width - b * 2, panel.Height - b * 2),
-                    new Rectangle(panel.Width - b, b, b, panel.Height - b * 2),
-                    new Rectangle(0, panel.Height - b, b, b),
-                    new Rectangle(b, panel.Height - b, panel.Width - b * 2, b),
-                    new Rectangle(panel.Width - b, panel.Height - b, b, b));
+                var t = menuTiles;
+                // Miolo: source (64,128) deslocado de 28px, exatamente como o original.
+                batch.Draw(t, new Rectangle(area.X + 28, area.Y + 28, area.Width - 64, area.Height - 64),
+                    new Rectangle(64, 128, 64, 64), Color.White);
+                // Cantos e bordas com offset de -32 (metade do tile de 64px).
+                batch.Draw(t, new Vector2(area.X - 32, area.Y - 32), new Rectangle(0, 0, 64, 64), Color.White);
+                batch.Draw(t, new Vector2(area.X + area.Width - 32, area.Y - 32), new Rectangle(192, 0, 64, 64), Color.White);
+                batch.Draw(t, new Vector2(area.X + area.Width - 32, area.Y + area.Height - 32), new Rectangle(192, 192, 64, 64), Color.White);
+                batch.Draw(t, new Vector2(area.X - 32, area.Y + area.Height - 32), new Rectangle(0, 192, 64, 64), Color.White);
+                batch.Draw(t, new Rectangle(area.X + 32, area.Y - 32, area.Width - 64, 64), new Rectangle(128, 0, 64, 64), Color.White);
+                batch.Draw(t, new Rectangle(area.X + 32, area.Y + area.Height - 32, area.Width - 64, 64), new Rectangle(128, 192, 64, 64), Color.White);
+                batch.Draw(t, new Rectangle(area.X - 32, area.Y + 32, 64, area.Height - 64), new Rectangle(0, 128, 64, 64), Color.White);
+                batch.Draw(t, new Rectangle(area.X + area.Width - 32, area.Y + 32, 64, area.Height - 64), new Rectangle(192, 128, 64, 64), Color.White);
             }
 
             if (font != null && !string.IsNullOrEmpty(title))
-            {
-                batch.DrawString(font, title, new Vector2(area.X + 32, area.Y + 22),
-                    new Color(255, 236, 160), 0f, Vector2.Zero, 1.6f, SpriteEffects.None, 0f);
-            }
+                DrawShadowText(batch, title, dialogueFont ?? font,
+                    new Vector2(area.X + 24, area.Y + 22), new Color(255, 236, 160), 1f);
         }
 
-        private void DrawSlice(
-            SpriteBatch batch, Rectangle area, int b,
-            Rectangle tl, Rectangle tc, Rectangle tr,
-            Rectangle ml, Rectangle mc, Rectangle mr,
-            Rectangle bl, Rectangle bc, Rectangle br)
+        /// <summary>Texto com a sombra laranja da 1.5.6.</summary>
+        protected void DrawShadowText(SpriteBatch batch, string text, SpriteFont usedFont,
+            Vector2 position, Color color, float scale)
         {
-            batch.Draw(panel, new Rectangle(area.X, area.Y, b, b), tl, Color.White);
-            batch.Draw(panel, new Rectangle(area.X + b, area.Y, area.Width - b * 2, b), tc, Color.White);
-            batch.Draw(panel, new Rectangle(area.Right - b, area.Y, b, b), tr, Color.White);
-
-            batch.Draw(panel, new Rectangle(area.X, area.Y + b, b, area.Height - b * 2), ml, Color.White);
-            batch.Draw(panel, new Rectangle(area.X + b, area.Y + b, area.Width - b * 2, area.Height - b * 2), mc, Color.White);
-            batch.Draw(panel, new Rectangle(area.Right - b, area.Y + b, b, area.Height - b * 2), mr, Color.White);
-
-            batch.Draw(panel, new Rectangle(area.X, area.Bottom - b, b, b), bl, Color.White);
-            batch.Draw(panel, new Rectangle(area.X + b, area.Bottom - b, area.Width - b * 2, b), bc, Color.White);
-            batch.Draw(panel, new Rectangle(area.Right - b, area.Bottom - b, b, b), br, Color.White);
+            if (usedFont == null || string.IsNullOrEmpty(text))
+                return;
+            batch.DrawString(usedFont, text, position + new Vector2(-2, 2), ShadowColor,
+                0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+            batch.DrawString(usedFont, text, position + new Vector2(0, 2), ShadowColor,
+                0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+            batch.DrawString(usedFont, text, position, color,
+                0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         }
 
         protected void DrawRow(SpriteBatch batch, Rectangle r, string text, bool selected)
@@ -120,9 +128,7 @@ namespace LumiaValley.Game.Screens
             }
 
             if (font != null && !string.IsNullOrEmpty(text))
-            {
-                batch.DrawString(font, text, new Vector2(r.X + 18, r.Y + 14), Color.White);
-            }
+                DrawShadowText(batch, text, font, new Vector2(r.X + 18, r.Y + 10), TextColor, 1f);
         }
 
         protected void DrawBack(SpriteBatch batch)
@@ -130,17 +136,22 @@ namespace LumiaValley.Game.Screens
             DrawRow(batch, BackRect, Localization.CS("StringsFromCSFiles:TitleMenu.cs.11739", "Voltar"), false);
         }
 
-        private static Texture2D LoadTexture(ContentManager content, string asset)
+        private static Texture2D LoadTexture(ContentManager content, params string[] assets)
         {
-            try
+            foreach (var asset in assets)
             {
-                return content.Load<Texture2D>(asset);
+                try
+                {
+                    var result = content.Load<Texture2D>(asset);
+                    if (result != null)
+                        return result;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Asset indisponivel " + asset + ": " + ex.Message);
+                }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Asset indisponivel " + asset + ": " + ex.Message);
-                return null;
-            }
+            return null;
         }
 
         private static SpriteFont LoadFont(ContentManager content, params string[] assets)
