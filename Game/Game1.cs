@@ -7,13 +7,11 @@ namespace LumiaValley.Game
 {
     /// <summary>
     /// Tela de titulo minima do port: sprites reais da 1.5.6 e selecao por toque.
+    /// Desenha em coordenadas virtuais 1280x720 (mesmo espaco do Stardew).
     /// Nao copia a logica do TitleMenu descompilado; apenas reusa as regioes dos sprites.
     /// </summary>
     public class Game1 : Microsoft.Xna.Framework.Game
     {
-        private const int ScreenW = 640;
-        private const int ScreenH = 360;
-
         private static readonly Rectangle LogoSource = new Rectangle(0, 0, 400, 187);
         private static readonly Rectangle[] ButtonSources =
         {
@@ -34,9 +32,10 @@ namespace LumiaValley.Game
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
-            graphics.PreferredBackBufferWidth = ScreenW;
-            graphics.PreferredBackBufferHeight = ScreenH;
-            graphics.SupportedOrientations = DisplayOrientation.Portrait;
+            graphics.PreferredBackBufferWidth = ViewportConfig.BackBufferWidth;
+            graphics.PreferredBackBufferHeight = ViewportConfig.BackBufferHeight;
+            graphics.SupportedOrientations =
+                DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
             Content.RootDirectory = "Content";
             TouchPanel.EnabledGestures = GestureType.Tap;
         }
@@ -63,9 +62,15 @@ namespace LumiaValley.Game
             base.LoadContent();
         }
 
+        // Botoes em coordenadas virtuais: 222x174 (mesma escala 3f do TitleMenu).
         private static Rectangle ButtonDest(int index)
         {
-            return new Rectangle(284, 124 + index * 60, 72, 56);
+            const int width = 222;
+            const int height = 174;
+            const int spacing = 20;
+            var total = ButtonSources.Length * width + (ButtonSources.Length - 1) * spacing;
+            var x = (ViewportConfig.VirtualWidth - total) / 2 + index * (width + spacing);
+            return new Rectangle(x, 470, width, height);
         }
 
         protected override void Update(GameTime gameTime)
@@ -76,8 +81,9 @@ namespace LumiaValley.Game
                 if (gesture.GestureType != GestureType.Tap)
                     continue;
 
-                var x = (int)gesture.Position.X;
-                var y = (int)gesture.Position.Y;
+                var p = ViewportConfig.ToVirtual(gesture.Position);
+                var x = (int)p.X;
+                var y = (int)p.Y;
 
                 for (var i = 0; i < ButtonSources.Length; i++)
                 {
@@ -94,22 +100,28 @@ namespace LumiaValley.Game
 
         private void DrawBorder(Rectangle r, Color color)
         {
-            spriteBatch.Draw(pixel, new Rectangle(r.X - 2, r.Y - 2, r.Width + 4, 2), color);
-            spriteBatch.Draw(pixel, new Rectangle(r.X - 2, r.Bottom, r.Width + 4, 2), color);
-            spriteBatch.Draw(pixel, new Rectangle(r.X - 2, r.Y, 2, r.Height), color);
-            spriteBatch.Draw(pixel, new Rectangle(r.Right, r.Y, 2, r.Height), color);
+            const int t = 3;
+            spriteBatch.Draw(pixel, new Rectangle(r.X - t, r.Y - t, r.Width + t * 2, t), color);
+            spriteBatch.Draw(pixel, new Rectangle(r.X - t, r.Bottom, r.Width + t * 2, t), color);
+            spriteBatch.Draw(pixel, new Rectangle(r.X - t, r.Y, t, r.Height), color);
+            spriteBatch.Draw(pixel, new Rectangle(r.Right, r.Y, t, r.Height), color);
         }
 
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(new Color(28, 64, 44));
 
-            spriteBatch.Begin();
+            // Desenha tudo em 1280x720; o transform reduz para o backbuffer 640x360.
+            spriteBatch.Begin(transformMatrix: Matrix.CreateScale(ViewportConfig.Scale));
 
             if (xnbLoaded)
             {
-                spriteBatch.Draw(dayBg, new Rectangle(0, 0, ScreenW, ScreenH), Color.White);
-                spriteBatch.Draw(titleButtons, new Rectangle(200, 8, 240, 112), LogoSource, Color.White);
+                spriteBatch.Draw(
+                    dayBg,
+                    new Rectangle(0, 0, ViewportConfig.VirtualWidth, ViewportConfig.VirtualHeight),
+                    Color.White);
+
+                spriteBatch.Draw(titleButtons, new Rectangle(240, 20, 800, 374), LogoSource, Color.White);
 
                 for (var i = 0; i < ButtonSources.Length; i++)
                 {
@@ -125,7 +137,10 @@ namespace LumiaValley.Game
             {
                 spriteBatch.Draw(
                     pixel,
-                    new Rectangle(ScreenW / 2 - 16, ScreenH / 2 - 16, 32, 32),
+                    new Rectangle(
+                        ViewportConfig.VirtualWidth / 2 - 32,
+                        ViewportConfig.VirtualHeight / 2 - 32,
+                        64, 64),
                     Color.Wheat);
             }
 

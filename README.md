@@ -4,10 +4,26 @@ Port experimental de **Stardew Valley 1.5.6** para **Lumia 640 / Windows 10 Mobi
 
 ## Estado atual
 
-- Pipeline UWP ARM validado no Lumia: backbuffer 640x360, touch por tap e escala pelo `SwapChainPanel` funcionando.
+- Pipeline UWP ARM validado no Lumia: touch por tap e escala pelo `SwapChainPanel` funcionando.
+- XNB v5 da 1.5.6 lido direto do appx no Lumia (validado com `LooseSprites/daybg`).
+- Tela de título mínima com sprites reais (`Minigames/TitleButtons`) e seleção por toque.
 - Esqueleto UWP ARM com MonoGame 3.8.0.1641 e build via GitHub Actions.
-- `Game/Game1.cs` ainda é o teste de pipeline (fundo verde + quadrado amarelo). O jogo real ainda não foi migrado.
 - Código descompilado com ILSpy 9.0 fica **somente local** em `reference/` (753 arquivos C# + dependências).
+
+## Resolução e orientação
+
+O app é **paisagem-only** (o Stardew não tem layout vertical). O manifest e o `Game1` forçam
+`landscape` / `landscapeFlipped`.
+
+| Espaço | Tamanho | Uso |
+|---|---|---|
+| Tela física do Lumia 640 | 1280x720 | saída final |
+| Coordenadas virtuais do jogo | 1280x720 | todo o código portado desenha aqui |
+| Backbuffer renderizado | 640x360 | escala 2x na saída, por performance |
+
+`Game/ViewportConfig.cs` centraliza esses valores. O `SpriteBatch.Begin` aplica
+`Matrix.CreateScale(0.5f)` e o touch é convertido com `ToVirtual()` antes do uso.
+Assim as coordenadas do `Game1` descompilado (1280x720) continuam válidas sem reescrita.
 
 ## Arquitetura do build (repo público + cofre privado)
 
@@ -51,7 +67,8 @@ Abra **Actions → build-appx → Run workflow** no repo `LumiaValley`. O `.appx
 
 ## Próximos passos
 
-1. Migrar a primeira fatia do `Game1` descompilado (init + leitura de um XNB), reescrevendo o código em vez de copiar.
+1. Evoluir a tela de título para iniciar um save de teste com o `Game1` real.
 2. Trocar filesystem por `ApplicationData.Current.LocalFolder` e mapear touch para o input do jogo.
 3. Remover Steam/Galaxy/Skia/Lidgren/Reflection.Emit.
 4. Reduzir XACT e incluir áudio essencial.
+5. Ajustar o fator de escala em `ViewportConfig` conforme FPS medido no dispositivo.
