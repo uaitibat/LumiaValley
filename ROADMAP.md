@@ -17,8 +17,11 @@
 - [x] Coordenadas virtuais 1280x720 + touch convertido.
 - [x] RenderTarget 640x360 com blit escalado (performance na Adreno 305).
 - [x] Tela de titulo minima + first slice de fazenda (prototipo, sera substituida).
+- [x] **Validado no Lumia 640**: fullscreen paisagem, titulo cobrindo a tela e
+  fazendeiro andando por toque (run #23).
+- [x] Host de telas `IScreen` para transicoes limpas entre fases.
 
-## Fase 1 — Boot ate a home
+## Fase 1 — Boot ate a home (em andamento)
 
 - [ ] Splash/intro com os logos do jogo (animacao leve).
 - [ ] TitleMenu fiel: fundo, ceu, passaros, botoes e/selecao.
