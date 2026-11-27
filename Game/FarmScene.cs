@@ -920,9 +920,9 @@ namespace LumiaValley.Game
             clock.Draw(batch, ViewportConfig.VirtualWidth, timeOfDay, 1,
                 "spring", 0, 500, (int)elapsedMs % 7000, ox, oy, worldW);
 
-            // Toolbar com os 5 itens iniciais de Farmer.initialTools().
-            toolbar.Draw(batch, ViewportConfig.VirtualWidth,
-                ViewportConfig.VirtualHeight, selectedSlot, ox, oy, worldCenter);
+            // Toolbar vertical (mobile) na esquerda da tela, como pedido.
+            toolbar.DrawVertical(batch, ViewportConfig.VirtualHeight,
+                selectedSlot, ox, oy);
 
             // drawWithBorder: a esquerda da barra, com Y = by + 64.
             var staminaText = energy + "/" + maxStamina;

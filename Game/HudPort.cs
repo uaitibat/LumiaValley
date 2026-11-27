@@ -215,5 +215,60 @@ namespace LumiaValley.Game
                 }
             }
         }
+
+        /// <summary>
+        /// Layout vertical para o Lumia (mobile), excecao deliberada ao layout
+        /// horizontal do desktop. Usa os MESMOS slots, sourceRects e ícones
+        /// 1:1 de Toolbar.draw; muda apenas a posicao dos 12 botoes.
+        /// 12 slots de 48px cabem em 720px de altura com margem.
+        /// </summary>
+        public void DrawVertical(SpriteBatch b, int viewportHeight, int selected,
+            int offsetX = 0, int offsetY = 0)
+        {
+            if (menu == null)
+                return;
+            const int slot = 48;
+            const int x = 8;
+            var total = slot * 12;
+            var startY = (viewportHeight - total) / 2;
+
+            var src = new Rectangle(0, 256, 60, 60);
+            var scale = 0.75f; // 64 -> 48
+            var n = 20;
+            b.Draw(menu, new Rectangle(x + 4, startY + 4, (int)(56 * scale), total - 8),
+                new Rectangle(src.X + n, src.Y + n, n, n), Color.White);
+            b.Draw(menu, new Rectangle(x, startY, (int)(56 * scale), 8),
+                new Rectangle(src.X + n, src.Y + n, n, n), Color.White);
+            b.Draw(menu, new Rectangle(x, startY + total - 8, (int)(56 * scale), 8),
+                new Rectangle(src.X + n, src.Y + n, n, n), Color.White);
+
+            for (var j = 0; j < 12; j++)
+            {
+                var sx = x + 4 + offsetX;
+                var sy = startY + j * slot + offsetY;
+                b.Draw(menu, new Vector2(sx, sy), StdRect(menu, selected == j ? 56 : 10, 16),
+                    Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+            }
+
+            for (var k = 0; k < ToolIcon.Length; k++)
+            {
+                var sx = x + 4 + offsetX;
+                var sy = startY + k * slot + offsetY;
+                var s = (selected == k ? 0.9f : 0.8f) * scale * 4f;
+                if (ToolIcon[k] < 0)
+                {
+                    if (weapons != null)
+                        b.Draw(weapons, new Vector2(sx + 24, sy + 24),
+                            StdRect(weapons, 47, 16), Color.White, 0f,
+                            new Vector2(8f, 8f), s, SpriteEffects.None, 0f);
+                }
+                else if (tools != null)
+                {
+                    b.Draw(tools, new Vector2(sx + 24, sy + 24),
+                        StdRect(tools, ToolIcon[k], 16), Color.White, 0f,
+                        new Vector2(8f, 8f), s, SpriteEffects.None, 0f);
+                }
+            }
+        }
     }
 }
