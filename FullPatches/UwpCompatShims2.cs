@@ -31,24 +31,11 @@ namespace System.Reflection
             return other.GetTypeInfo().IsAssignableFrom(type.GetTypeInfo());
         }
 
-        public static FieldInfo GetField(this Type type, string name)
-        {
-            return type.GetRuntimeField(name);
-        }
-
+        // UWP ja fornece GetField/GetSetMethod/GetGetMethod via
+        // TypeExtensions/PropertyInfoExtensions (nao redefinir: ambiguous CS0121).
         public static Assembly GetAssembly(this Type type)
         {
             return type.GetTypeInfo().Assembly;
-        }
-
-        public static MethodInfo GetGetMethod(this PropertyInfo property)
-        {
-            return property.GetMethod;
-        }
-
-        public static MethodInfo GetSetMethod(this PropertyInfo property)
-        {
-            return property.SetMethod;
         }
 
         public static object InvokeMember(this Type type, string name, BindingFlags invokeAttr, object binder,

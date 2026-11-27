@@ -188,7 +188,7 @@ namespace System.Diagnostics
         public int Id { get { return 0; } }
         public int ExitCode { get { return 0; } }
         public bool HasExited { get { return true; } }
-        public IO.StreamWriter StandardInput { get { return IO.Stream.Null; } }
+        public IO.StreamWriter StandardInput { get { return new IO.StreamWriter(IO.Stream.Null); } }
         public IO.StreamReader StandardOutput { get { return new IO.StreamReader(IO.Stream.Null); } }
         public void Kill() { }
         public void Close() { }

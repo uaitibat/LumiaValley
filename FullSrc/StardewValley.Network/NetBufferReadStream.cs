@@ -26,7 +26,7 @@ public class NetBufferReadStream : Stream
 		}
 		set
 		{
-			Buffer.Position = offset + value * 8;
+			Buffer.Position = (int)(offset + value * 8);
 		}
 	}
 
