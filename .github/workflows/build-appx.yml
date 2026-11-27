@@ -119,10 +119,7 @@ jobs:
           if ($deps) { Copy-Item $deps.FullName out/Dependencies -Recurse -Force }
           Get-ChildItem out -Recurse -File | ForEach-Object { Write-Host ("  " + $_.FullName) }
 
-      # EXPERIMENTO fullport: nao publicar na release latest (que contem o build
-      # funcional da main). O appx e salvo apenas como artifact deste run.
       - name: Publicar appx no cofre privado
-        if: false
         shell: pwsh
         env:
           ASSETS_TOKEN: ${{ secrets.ASSETS_TOKEN }}
@@ -141,9 +138,10 @@ jobs:
           $sha = (git rev-parse --short HEAD).Trim()
 
           try {
+            # fullport usa uma tag propria para nao sobrescrever o appx da main.
             $release = Invoke-RestMethod -Headers $headers `
-              -Uri "$api/releases/tags/latest"
-            Write-Host "Release existente reaproveitada"
+              -Uri "$api/releases/tags/fullport"
+            Write-Host "Release fullport existente reaproveitada"
 
             # Atualiza o corpo da release para mostrar o build atual.
             $patchBody = @{ body = "Build automatico: $sha" } | ConvertTo-Json
@@ -157,11 +155,11 @@ jobs:
               Write-Host "Asset antigo removido: $($old.name)"
             }
           } catch {
-            Write-Host "Criando release latest"
+            Write-Host "Criando release fullport"
 
             $body = @{
-              tag_name = "latest"
-              name = "LumiaValley ARM (latest)"
+              tag_name = "fullport"
+              name = "LumiaValley ARM (fullport - experimental)"
               body = "Build automatico: $sha"
               draft = $false
               prerelease = $false
@@ -192,12 +190,4 @@ jobs:
             Write-Host "Publicado: $($p.Name)"
           }
 
-          Write-Host "Appx publicado (privado): https://github.com/$assetsRepo/releases/tag/latest"
-
-      - name: Salvar appx do experimento como artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: fullport-appx
-          path: out/
-          if-no-files-found: warn
+          Write-Host "Appx publicado (privado): https://github.com/$assetsRepo/releases/tag/fullport"

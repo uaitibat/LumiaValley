@@ -52,6 +52,12 @@ namespace LumiaValley.Game
         private readonly Dictionary<string, Texture2D> sheets = new Dictionary<string, Texture2D>();
         private readonly FurnitureRenderer furniture = new FurnitureRenderer();
 
+        // Moveis iniciais (Game1.loadForNewGame). O indice 0=e' o da cadeira.
+        private static readonly int[] FurnitureIds =
+            { 2048, 1120, 1376, 0, 1466, 1614, 1618, 1602, 1792 };
+        private static readonly int[] FurnitureX = { 9, 5, 1, 4, 1, 3, 6, 5, 8 };
+        private static readonly int[] FurnitureY = { 8, 4, 10, 4, 4, 1, 8, 1, 4 };
+
         private Vector2 player;
         private Vector2 target;
         private bool hasTarget;
@@ -222,12 +228,12 @@ namespace LumiaValley.Game
                 var step = speed * dt;
                 if (distance <= step)
                 {
-                    player = target;
+                    MovePlayer(delta);
                     hasTarget = false;
                 }
                 else
                 {
-                    player += delta / distance * step;
+                    MovePlayer(delta / distance * step);
                     // Farmer.updateMovementAnimation: direcao pelo movimento.
                     facing = Math.Abs(delta.X) > Math.Abs(delta.Y)
                         ? (delta.X > 0 ? 1 : 3)
@@ -252,6 +258,75 @@ namespace LumiaValley.Game
 
             ClampPlayer();
             UpdateCamera();
+        }
+
+        /// <summary>
+        /// Caixa de colisao do Farmer (GetBoundingBox): 48x32 centrada no pe,
+        /// 8px para a direita como no original (posicao e o canto do sprite).
+        /// </summary>
+        private Rectangle PlayerBounds(Vector2 pos)
+        {
+            return new Rectangle((int)pos.X - 24, (int)pos.Y - 16, 48, 32);
+        }
+
+        /// <summary>
+        /// Porte de GameLocation.isPointPassable/isCollidingPosition:
+        /// - Back com propriedade "Passable" (os rodapes/paredes) bloqueia;
+        /// - Buildings com tile e sem "Shadow" bloqueia;
+        /// - moveis com boundingBox (exceto tapetes) bloqueiam.
+        /// </summary>
+        private bool IsBlocked(Vector2 pos)
+        {
+            if (map == null || map.Layers.Count == 0)
+                return false;
+            var box = PlayerBounds(pos);
+            var back = map.Layers[0];
+            var buildings = map.Layers.Count > 1 ? map.Layers[1] : null;
+
+            int[] xs = { box.Left, box.Right - 1, box.Center.X };
+            int[] ys = { box.Top, box.Bottom - 1 };
+            foreach (var x in xs)
+            {
+                foreach (var y in ys)
+                {
+                    var tx = x / 64;
+                    var ty = y / 64;
+                    var t = back.Get(tx, ty);
+                    if (t != null && t.Properties.ContainsKey("Passable"))
+                        return true;
+                    var b = buildings == null ? null : buildings.Get(tx, ty);
+                    if (b != null && !b.Properties.ContainsKey("Shadow")
+                        && !b.Properties.ContainsKey("Passable"))
+                        return true;
+                }
+            }
+
+            for (var i = 0; i < FurnitureIds.Length; i++)
+            {
+                if (furniture.IsPassable(FurnitureIds[i]))
+                    continue;
+                var fb = furniture.GetBoundingBox(FurnitureIds[i], FurnitureX[i], FurnitureY[i]);
+                if (fb == Rectangle.Empty || !fb.Intersects(box))
+                    continue;
+                // Original: se o jogador ja esta dentro do movel, ele nao
+                // bloqueia (isCollidingPosition: !item.IntersectsForCollision
+                // (Game1.player.GetBoundingBox())). Evita prender no spawn.
+                if (fb.Intersects(PlayerBounds(player)))
+                    continue;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>Movimento por eixos: se um eixo colide, mantem o outro.</summary>
+        private void MovePlayer(Vector2 delta)
+        {
+            var tryX = new Vector2(player.X + delta.X, player.Y);
+            if (!IsBlocked(tryX))
+                player = tryX;
+            var tryY = new Vector2(player.X, player.Y + delta.Y);
+            if (!IsBlocked(tryY))
+                player = tryY;
         }
 
         private void ClampPlayer()
@@ -370,15 +445,16 @@ namespace LumiaValley.Game
             // FarmHouse.doAction / Game1.loadForNewGame: moveis iniciais do
             // casal (whichFarm = 0), exatamente como no original.
             // Lista exata de Game1.loadForNewGame / FarmHouse (whichFarm=0).
+            var time = elapsedMs;
             furniture.Draw(batch, 2048, 9, 8);   // cama
-            furniture.Draw(batch, 1120, 5, 4);   // mesa de carvalho (+ tigela via heldObject)
+            furniture.Draw(batch, 1120, 5, 4, heldObject: 1364); // mesa + tigela
             furniture.Draw(batch, 1376, 1, 10);  // planta
             furniture.Draw(batch, 0, 4, 4);      // cadeira
             furniture.Draw(batch, 1466, 1, 4);   // TV
             furniture.Draw(batch, 1614, 3, 1);   // janela
             furniture.Draw(batch, 1618, 6, 8);   // tapete
             furniture.Draw(batch, 1602, 5, 1);   // quadro
-            furniture.Draw(batch, 1792, 8, 4);   // lareira (8,4 no original)
+            furniture.Draw(batch, 1792, 8, 4, isOn: true, timeMs: time); // lareira
             furniture.DrawGiftbox(batch, 3, 7);  // bau-presente com 15 parafusos
         }
 
