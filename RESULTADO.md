@@ -105,6 +105,13 @@ A segunda onda (360 erros) nao era logica do jogo: eram `Console`,
 stubs de SDK com assinaturas erradas. Tudo resolvido em `FullPatches/
 UwpCompatShims.cs`, `SdkShims.cs` e ajustes nos stubs existentes.
 
+O worktree `fullport` foi criado no commit `f5ca074`, **antes** dos 5 commits de
+fidelidade do jogador que entraram na `main` (`9069bb3`, `bcc2c03`, `08f5b17`,
+`eaffc46`, `3a59511`). Por isso o primeiro appx testado no Lumia mostrava o
+personagem sem roupa, fora da sombra e com animação antiga — nao era regressao
+do fullport, era o port incremental daquele commit antigo. O merge `4e178c2`
+traz esses 5 commits para o fullport antes de seguir com a troca 1:1.
+
 O build #112 (commit `6069700`) fechou a compilação: **0 erros**. O appx gerado
 (`LumiaValley_0.1.0.0_ARM.appx`, 21 MB / 46 MB com dependencias) contem
 1.213 arquivos XNB e 120 DLLs de runtime — a arvore inteira do Stardew 1.5.6
