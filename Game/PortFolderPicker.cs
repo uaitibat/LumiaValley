@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -8,21 +9,13 @@ using Windows.UI.Core;
 namespace LumiaValley.Game
 {
     /// <summary>
-    /// Abre o seletor e valida a pasta usando GetFileAsync direto em arquivos
-    /// conhecidos. CreateFileQueryWithOptions falha em cartoes SD removiveis;
-    /// GetFileAsync funciona com a permissao do FutureAccessList.
+    /// Abre o seletor, lista recursivamente os arquivos da pasta escolhida
+    /// (funciona em cartao SD, onde GetFileAsync com caminho relativo falha),
+    /// acha a raiz do Content e copia os XNB para o LocalFolder do app.
     /// </summary>
     public static class PortFolderPicker
     {
-        // Arquivos que SEMPRE existem no Content do Stardew 1.5.6.
-        private static readonly string[] ProbeFiles =
-        {
-            "Maps\\FarmHouse.xnb",
-            "Data\\Furniture.xnb",
-            "LooseSprites\\shadow.xnb",
-            "Fonts\\SmallFont.pt-BR.xnb",
-            "Characters\\Farmer\\farmer_base.xnb"
-        };
+        public static string LastDiagnostic { get; private set; } = "";
 
         public static async Task<bool> PickAsync()
         {
@@ -43,38 +36,73 @@ namespace LumiaValley.Game
             if (picked == null)
             {
                 PortContentManager.SetAssetCount(0);
+                LastDiagnostic = "Nenhuma pasta escolhida.";
                 return false;
             }
 
-            // Testa a propria pasta e, se falhar, a subpasta Content.
-            StorageFolder root = picked;
-            var found = await ProbeCount(root);
-            if (found == 0)
-            {
-                var sub = await TryFolder(picked, "Content");
-                if (sub != null)
-                {
-                    root = sub;
-                    found = await ProbeCount(root);
-                }
-            }
+            LastDiagnostic = "Pasta: " + picked.Name;
+            var files = new List<StorageFile>();
+            await ListRecursive(picked, files, 0);
 
-            if (found == 0)
+            // Acha a raiz do Content: onde existir Mapas/FarmHouse.xnb etc.
+            StorageFolder root = FindContentRoot(picked, files);
+            LastDiagnostic += " | " + files.Count + " arquivos listados";
+
+            if (root == null)
             {
                 PortContentManager.SetAssetCount(0);
+                LastDiagnostic += " | raiz do Content NAO encontrada";
                 return false;
             }
 
-            // Copia os XNB para o LocalFolder do app. Leitura em cartao SD
-            // removivel pode falhar mesmo com FutureAccessList; no LocalFolder
-            // o UWP SEMPRE consegue ler.
+            var xnb = 0;
+            foreach (var f in files)
+                if (f.Name.EndsWith(".xnb", StringComparison.OrdinalIgnoreCase))
+                    xnb++;
+            LastDiagnostic += " | " + xnb + " XNB";
+
             var copied = await CopyToLocalFolder(root);
             PortContentManager.SaveFolder(root);
-            PortContentManager.SetAssetCount(copied > 0 ? copied : found);
-            return copied > 0 || found > 0;
+            PortContentManager.SetAssetCount(copied > 0 ? copied : xnb);
+            LastDiagnostic += " | " + copied + " copiados";
+            return copied > 0 || xnb > 0;
         }
 
-        /// <summary>Copia a arvore de XNB para LocalFolder/Content do app.</summary>
+        private static async Task ListRecursive(StorageFolder folder, List<StorageFile> result, int depth)
+        {
+            if (depth > 4 || result.Count > 5000)
+                return;
+            try
+            {
+                foreach (var f in await folder.GetFilesAsync())
+                    result.Add(f);
+                foreach (var sub in await folder.GetFoldersAsync())
+                    await ListRecursive(sub, result, depth + 1);
+            }
+            catch (Exception ex)
+            {
+                LastDiagnostic += " | erro listar: " + ex.Message;
+            }
+        }
+
+        private static StorageFolder FindContentRoot(StorageFolder picked, List<StorageFile> files)
+        {
+            // Se a propria pasta tem Maps/Characters/Data, é a raiz.
+            foreach (var f in files)
+            {
+                if (f.Name.Equals("FarmHouse.xnb", StringComparison.OrdinalIgnoreCase))
+                    return picked;
+            }
+            // Senao tenta a subpasta Content.
+            try
+            {
+                var sub = picked.GetFolderAsync("Content").AsTask().GetAwaiter().GetResult();
+                if (sub != null) return sub;
+            }
+            catch (Exception) { }
+            return null;
+        }
+
         private static async Task<int> CopyToLocalFolder(StorageFolder source)
         {
             var count = 0;
@@ -83,24 +111,11 @@ namespace LumiaValley.Game
                 var local = Windows.Storage.ApplicationData.Current.LocalFolder;
                 var target = await local.CreateFolderAsync("Content",
                     CreationCollisionOption.OpenIfExists);
-
-                var files = await source.GetFilesAsync();
-                foreach (var file in files)
-                {
-                    if (!file.Name.EndsWith(".xnb", StringComparison.OrdinalIgnoreCase))
-                        continue;
-                    var copy = await file.CopyAsync(target, file.Name,
-                        NameCollisionOption.ReplaceExisting);
-                    if (copy != null) count++;
-                }
-
-                var subfolders = await source.GetFoldersAsync();
-                foreach (var sub in subfolders)
-                    count += await CopyFolderRecursive(sub, target);
+                count += await CopyFolderRecursive(source, target);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("Copiar XNB: " + ex.Message);
+                LastDiagnostic += " | erro copiar: " + ex.Message;
             }
             return count;
         }
@@ -116,8 +131,7 @@ namespace LumiaValley.Game
                 {
                     if (!file.Name.EndsWith(".xnb", StringComparison.OrdinalIgnoreCase))
                         continue;
-                    await file.CopyAsync(target, file.Name,
-                        NameCollisionOption.ReplaceExisting);
+                    await file.CopyAsync(target, file.Name, NameCollisionOption.ReplaceExisting);
                     count++;
                 }
                 foreach (var sub in await source.GetFoldersAsync())
@@ -125,32 +139,6 @@ namespace LumiaValley.Game
             }
             catch (Exception) { }
             return count;
-        }
-
-        private static async Task<int> ProbeCount(StorageFolder folder)
-        {
-            if (folder == null)
-                return 0;
-            var count = 0;
-            foreach (var relative in ProbeFiles)
-            {
-                var file = await TryFile(folder, relative);
-                if (file != null)
-                    count++;
-            }
-            return count;
-        }
-
-        private static async Task<StorageFile> TryFile(StorageFolder folder, string relative)
-        {
-            try { return await folder.GetFileAsync(relative); }
-            catch (Exception) { return null; }
-        }
-
-        private static async Task<StorageFolder> TryFolder(StorageFolder folder, string name)
-        {
-            try { return await folder.GetFolderAsync(name); }
-            catch (Exception) { return null; }
         }
     }
 }
