@@ -404,26 +404,37 @@ namespace LumiaValley.Game
             var ox = (int)camera.X;
             var oy = (int)camera.Y;
 
-            // Barra de energia vertical, canto inferior direito: sprites do
-            // Cursors (256,408 / 256,424 / 256,448), exatamente como o original.
-            var bx = ViewportConfig.VirtualWidth - 60 + ox;
-            var by = ViewportConfig.VirtualHeight - 224 + oy;
+            // Porte literal de Game1.drawHUD (linhas 18155-18175 da 1.5.6).
+            const float staminaScale = 0.625f;
+            const int maxStamina = 270;
+            var bx = ViewportConfig.VirtualWidth - 48 - 8 + ox;
+            var by = ViewportConfig.VirtualHeight - 224 - 16
+                - (int)((maxStamina - 270) * staminaScale) + oy;
+
             if (cursors != null)
             {
+                // Topo, meio e base da moldura (o meio ajusta a altura da viewport).
                 batch.Draw(cursors, new Vector2(bx, by), new Rectangle(256, 408, 12, 16),
-                    Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0f);
-                batch.Draw(cursors, new Rectangle((int)bx, (int)by + 64, 48, 160),
+                    Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 1f);
+                var middleHeight = ViewportConfig.VirtualHeight - 64 - 16 - (int)(by - oy + 64 - 8);
+                batch.Draw(cursors, new Rectangle((int)bx, (int)by + 64, 48, middleHeight),
                     new Rectangle(256, 424, 12, 16), Color.White);
-                batch.Draw(cursors, new Vector2(bx, by + 160), new Rectangle(256, 448, 12, 16),
-                    Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0f);
+                batch.Draw(cursors, new Vector2(bx, by + 224 - 64),
+                    new Rectangle(256, 448, 12, 16), Color.White, 0f, Vector2.Zero, 4f,
+                    SpriteEffects.None, 1f);
 
-                // Altura maxima da barra = 160px (de by+16 ate by+176).
-                const int maxFill = 160;
-                var ratio = MathHelper.Clamp(energy / 270f, 0f, 1f);
-                var fillHeight = (int)(maxFill * ratio);
-                batch.Draw(pixel, new Rectangle((int)bx + 12,
-                    (int)by + 16 + (maxFill - fillHeight), 24, fillHeight),
-                    new Color(104, 184, 72));
+                // Preenchimento: Y = by + 16 + 32 + (maxStamina - stamina)*0.625.
+                var fillY = by + 16 + 32 + (int)((maxStamina - energy) * staminaScale);
+                var fillHeight = (int)(energy * staminaScale);
+                var fillRect = new Rectangle((int)bx + 12, (int)fillY, 24, fillHeight);
+                var fillColor = new Color(104, 184, 72);
+                batch.Draw(pixel, fillRect, fillColor);
+
+                // Faixa escura de 4px no topo do preenchimento.
+                var dark = new Color(
+                    Math.Max(0, fillColor.R - 50),
+                    Math.Max(0, fillColor.G - 50), fillColor.B);
+                batch.Draw(pixel, new Rectangle(fillRect.X, fillRect.Y, 24, 4), dark);
             }
 
             if (font == null)
