@@ -417,8 +417,12 @@ namespace LumiaValley.Game
                 batch.Draw(cursors, new Vector2(bx, by + 160), new Rectangle(256, 448, 12, 16),
                     Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0f);
 
-                var fillHeight = (int)(270 * energy / 100f);
-                batch.Draw(pixel, new Rectangle((int)bx + 12, (int)by + 16 + (270 - fillHeight), 24, fillHeight),
+                // Altura maxima da barra = 160px (de by+16 ate by+176).
+                const int maxFill = 160;
+                var ratio = MathHelper.Clamp(energy / 270f, 0f, 1f);
+                var fillHeight = (int)(maxFill * ratio);
+                batch.Draw(pixel, new Rectangle((int)bx + 12,
+                    (int)by + 16 + (maxFill - fillHeight), 24, fillHeight),
                     new Color(104, 184, 72));
             }
 
