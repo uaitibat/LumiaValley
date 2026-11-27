@@ -33,13 +33,10 @@ namespace LumiaValley.Game
         {
             if (cursors == null)
                 return;
-            // DayTimeMoneyBox.updatePosition (linhas 436-445):
-            // position = viewport.Width - 300; se o mapa e menor que o
-            // viewport, limita ao canto direito do mapa.
-            var x = viewportWidth - 300;
-            if (worldWidth > 0 && worldWidth < viewportWidth)
-                x = Math.Min(x, (viewportWidth - worldWidth) / 2 + worldWidth - 300);
-            var position = new Vector2(x + offsetX, 8f + offsetY);
+            // DayTimeMoneyBox.updatePosition: position = viewport.Width - 300.
+            // No Lumia o HUD fica no canto direito DO VIEWPORT (fora da casa),
+            // para nao sobrepor a cena centralizada.
+            var position = new Vector2(viewportWidth - 300 + offsetX, 8f + offsetY);
             b.Draw(cursors, position, sourceRect, Color.White, 0f, Vector2.Zero, 4f,
                 SpriteEffects.None, 0.9f);
 
@@ -232,15 +229,10 @@ namespace LumiaValley.Game
             var total = slot * 12;
             var startY = (viewportHeight - total) / 2;
 
-            var src = new Rectangle(0, 256, 60, 60);
-            var scale = 0.75f; // 64 -> 48
-            var n = 20;
-            b.Draw(menu, new Rectangle(x + 4, startY + 4, (int)(56 * scale), total - 8),
-                new Rectangle(src.X + n, src.Y + n, n, n), Color.White);
-            b.Draw(menu, new Rectangle(x, startY, (int)(56 * scale), 8),
-                new Rectangle(src.X + n, src.Y + n, n, n), Color.White);
-            b.Draw(menu, new Rectangle(x, startY + total - 8, (int)(56 * scale), 8),
-                new Rectangle(src.X + n, src.Y + n, n, n), Color.White);
+            // Fundo simples translucido (sem o drawTextureBox, que com 12
+            // slots verticais virava uma barra grossa e bugada).
+            b.Draw(menu, new Rectangle(x, startY, 56, total),
+                new Rectangle(0, 256, 60, 60), Color.White * 0.55f);
 
             for (var j = 0; j < 12; j++)
             {
