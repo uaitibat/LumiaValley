@@ -44,6 +44,7 @@ namespace LumiaValley.Game.Map
                 return;
 
             var parts = row.Split('/');
+            var type = parts.Length > 1 ? TypeNumber(parts[1]) : 9;
             int width, height;
             if (parts.Length > 2 && parts[2] != "-1")
             {
@@ -53,25 +54,24 @@ namespace LumiaValley.Game.Map
             }
             else
             {
-                var type = parts.Length > 1 ? TypeNumber(parts[1]) : 9;
+                // getDefaultSourceRectForType da 1.5.6 (linhas 1191-1244).
                 switch (type)
                 {
-                    case 1:
-                    case 3:
-                    case 4:
-                    case 6: width = 2; height = 2; break;
-                    case 2:
-                    case 5:
-                    case 10:
-                    case 11: width = 3; height = 2; break;
+                    case 1: case 3: case 4: case 6: width = 2; height = 2; break;
+                    case 2: case 12: width = 3; height = 2; break;
+                    case 5: width = 5; height = 3; break;
+                    case 10: case 11: width = 2; height = 3; break;
                     case 7: width = 1; height = 3; break;
                     case 14: width = 2; height = 5; break;
                     default: width = 1; height = 2; break;
                 }
             }
 
+            // addLights: janelas (tipo 13) usam o frame 1 do sprite (acesso
+            // via sourceIndexOffset), que e onde aparece o brilho.
+            var offset = type == 13 ? 1 : 0;
             var src = new Rectangle(
-                which * 16 % texture.Width,
+                which * 16 % texture.Width + width * 16 * offset,
                 which * 16 / texture.Width * 16,
                 width * 16, height * 16);
             if (src.X < 0 || src.Y < 0 || src.Right > texture.Width || src.Bottom > texture.Height)
@@ -87,13 +87,14 @@ namespace LumiaValley.Game.Map
             }
             else
             {
-                var type = parts.Length > 1 ? TypeNumber(parts[1]) : 9;
                 switch (type)
                 {
                     case 1: case 3: case 4: case 10: case 14: boxW = 2; boxH = 1; break;
                     case 2: boxW = 3; boxH = 1; break;
                     case 5: boxW = 5; boxH = 2; break;
-                    case 6: case 11: case 12: boxW = 3; boxH = 2; break;
+                    case 6: boxW = 2; boxH = 2; break;
+                    case 11: boxW = 2; boxH = 2; break;
+                    case 12: boxW = 3; boxH = 2; break;
                     case 17: case 13: boxW = 1; boxH = 2; break;
                     default: boxW = 1; boxH = 1; break;
                 }
@@ -104,6 +105,33 @@ namespace LumiaValley.Game.Map
                 tileY * 64f - (src.Height * 4f - boxH * 64f));
             batch.Draw(texture, pos, src, Color.White, 0f, Vector2.Zero, 4f,
                 SpriteEffects.None, (tileY * 64f + boxH * 64f - 8f) / 10000f);
+
+            // heldObject (a tigela em cima da mesa): Furniture.draw linhas
+            // 1485-1495, centralizado no boundingBox da mesa.
+            if (which == 1120)
+                DrawHeld(batch, 1364, tileX, tileY, boxW, boxH);
+        }
+
+        private void DrawHeld(SpriteBatch batch, int which, int tileX, int tileY, int boxW, int boxH)
+        {
+            string row;
+            if (!data.TryGetValue(which, out row))
+                return;
+            var dims = row.Split('/')[2].Split(' ');
+            var w = int.Parse(dims[0]);
+            var h = int.Parse(dims[1]);
+            var src = new Rectangle(
+                which * 16 % texture.Width, which * 16 / texture.Width * 16,
+                w * 16, h * 16);
+            if (src.Right > texture.Width || src.Bottom > texture.Height)
+                return;
+
+            // boundingBox.Center - (32, src.Height*4 + 16)
+            var centerX = tileX * 64f + boxW * 32f;
+            var centerY = tileY * 64f + boxH * 32f;
+            var pos = new Vector2(centerX - 32f, centerY - src.Height * 4f - 16f);
+            batch.Draw(texture, pos, src, Color.White, 0f, Vector2.Zero, 4f,
+                SpriteEffects.None, (tileY * 64f + boxH * 64f - 7f) / 10000f);
         }
 
         private static int TypeNumber(string name)

@@ -294,8 +294,7 @@ namespace LumiaValley.Game
             // casal (whichFarm = 0), exatamente como no original.
             // Lista exata de Game1.loadForNewGame / FarmHouse (whichFarm=0).
             furniture.Draw(batch, 2048, 9, 8);   // cama
-            furniture.Draw(batch, 1120, 5, 4);   // mesa de carvalho
-            furniture.Draw(batch, 1364, 5, 4);   // tigela
+            furniture.Draw(batch, 1120, 5, 4);   // mesa de carvalho (+ tigela via heldObject)
             furniture.Draw(batch, 1376, 1, 10);  // planta
             furniture.Draw(batch, 0, 4, 4);      // cadeira
             furniture.Draw(batch, 1466, 1, 4);   // TV
