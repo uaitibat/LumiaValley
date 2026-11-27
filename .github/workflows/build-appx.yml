@@ -119,7 +119,10 @@ jobs:
           if ($deps) { Copy-Item $deps.FullName out/Dependencies -Recurse -Force }
           Get-ChildItem out -Recurse -File | ForEach-Object { Write-Host ("  " + $_.FullName) }
 
+      # EXPERIMENTO fullport: nao publicar na release latest (que contem o build
+      # funcional da main). O appx e salvo apenas como artifact deste run.
       - name: Publicar appx no cofre privado
+        if: false
         shell: pwsh
         env:
           ASSETS_TOKEN: ${{ secrets.ASSETS_TOKEN }}
@@ -190,3 +193,11 @@ jobs:
           }
 
           Write-Host "Appx publicado (privado): https://github.com/$assetsRepo/releases/tag/latest"
+
+      - name: Salvar appx do experimento como artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullport-appx
+          path: out/
+          if-no-files-found: warn
