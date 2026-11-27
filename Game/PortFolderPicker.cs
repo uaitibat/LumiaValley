@@ -63,7 +63,10 @@ namespace LumiaValley.Game
                 catch (Exception) { }
             }
 
-            var valid = count > 0 && await HasKeyAssets(root);
+            // Qualquer XNB na pasta ja basta para validar. O HasKeyAssets era
+            // rigoroso demais (nomes pt-BR/outros assets podem divergir) e
+            // fazia pastas corretas serem marcadas como invalidas.
+            var valid = count > 0;
             PortContentManager.SaveFolder(root); // guarda a RAIZ dos XNB
             PortContentManager.SetAssetCount(valid ? count : 0);
             return valid;

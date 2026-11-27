@@ -98,7 +98,7 @@ namespace LumiaValley.Game.Screens
             var count = PortContentManager.GetAssetCount();
             status = ok
                 ? "Pasta do jogo: " + count + " XNB carregados. Pode iniciar."
-                : "Pasta invalida. Escolha a pasta Content do Stardew.";
+                : "Pasta invalida: " + count + " XNB achados. Selecione a pasta Content.";
         }
 
         public void Draw(SpriteBatch batch)
