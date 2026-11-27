@@ -328,7 +328,8 @@ public class CrcCalculatorStream : Stream, IDisposable
 	/// <summary>
 	/// Closes the stream.
 	/// </summary>
-	public override void Close()
+	// UWP: Stream.Close() nao e virtual; "new" preserva o comportamento original.
+	public new void Close()
 	{
 		base.Close();
 		if (!_leaveOpen)

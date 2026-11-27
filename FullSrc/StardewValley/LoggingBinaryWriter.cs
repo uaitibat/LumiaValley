@@ -41,7 +41,8 @@ public class LoggingBinaryWriter : BinaryWriter, ILoggingWriter
 		Game1.multiplayer.logging.LogWrite(key, length);
 	}
 
-	public override void Close()
+	// UWP: BinaryWriter.Close() nao e virtual; "new" preserva o comportamento original.
+	public new void Close()
 	{
 		base.Close();
 		writer.Close();

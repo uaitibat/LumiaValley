@@ -283,7 +283,8 @@ internal class ZlibBaseStream : Stream
 		}
 	}
 
-	public override void Close()
+	// UWP: Stream.Close() nao e virtual; "new" preserva o comportamento original.
+	public new void Close()
 	{
 		if (_stream == null)
 		{

@@ -80,7 +80,7 @@
     <Compile Include="App.xaml.cs"><DependentUpon>App.xaml</DependentUpon></Compile>
     <Compile Include="Pages\GamePage.xaml.cs"><DependentUpon>GamePage.xaml</DependentUpon></Compile>
     <Compile Include="Game\**\*.cs" />
-    <Compile Include="FullSrc\**\*.cs" Exclude="FullSrc\**\Properties\AssemblyInfo.cs;FullSrc\**\app.manifest;FullSrc\**\StardewValley.Network\LidgrenClient.cs;FullSrc\**\StardewValley.Network\LidgrenServer.cs;FullSrc\**\StardewValley.Network\GameServer.cs;FullSrc\**\StardewValley.SDKs\**\*.cs;FullSrc\**\StardewValley.BellsAndWhistles\SpriteText.cs;FullSrc\**\StardewValley\LidgrenClient.cs;FullSrc\**\StardewValley\Network\Lidgren*.cs" />
+    <Compile Include="FullSrc\**\*.cs" Exclude="FullSrc\**\Properties\AssemblyInfo.cs;FullSrc\**\app.manifest;FullSrc\**\StardewValley.Network\LidgrenClient.cs;FullSrc\**\StardewValley.Network\LidgrenServer.cs;FullSrc\**\StardewValley.Network\GameServer.cs;FullSrc\**\StardewValley.SDKs\**\*.cs;FullSrc\**\StardewValley.BellsAndWhistles\SpriteText.cs;FullSrc\**\StardewValley\LidgrenClient.cs;FullSrc\**\StardewValley\Network\Lidgren*.cs;FullSrc\**\StardewValley\LocalMultiplayer.cs;FullSrc\**\StardewValley\Vector2Reader.cs;FullSrc\**\StardewValley\Vector2Writer.cs;FullSrc\**\StardewValley\Vector2Serializer.cs" />
     <Compile Include="FullDeps\xTile\**\*.cs" Exclude="FullDeps\**\Properties\AssemblyInfo.cs" />
     <Compile Include="FullDeps\StardewValley.GameData\**\*.cs" Exclude="FullDeps\**\Properties\AssemblyInfo.cs" />
     <Compile Include="FullPatches\**\*.cs" />

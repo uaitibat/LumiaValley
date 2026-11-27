@@ -1,6 +1,21 @@
 // Stubs minimos para SDKs incompativeis com UWP ARM (medicao de viabilidade).
 using System;
 
+// UWP nao expoe UnhandledExceptionEventArgs (usado por Program.handleException).
+namespace System
+{
+    public class UnhandledExceptionEventArgs : EventArgs
+    {
+        public object ExceptionObject { get; private set; }
+        public bool IsTerminating { get; private set; }
+        public UnhandledExceptionEventArgs(object exceptionObject, bool isTerminating)
+        {
+            ExceptionObject = exceptionObject;
+            IsTerminating = isTerminating;
+        }
+    }
+}
+
 namespace Galaxy.Api
 {
     public struct GalaxyID { public ulong Value; public GalaxyID(ulong v) { Value = v; } public GalaxyID(string v) { Value = 0; } public override string ToString() { return Value.ToString(); } }
