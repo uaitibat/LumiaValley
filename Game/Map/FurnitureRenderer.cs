@@ -305,10 +305,12 @@ namespace LumiaValley.Game.Map
             if (texture == null || def == null || def.Type != 15)
                 return;
             var src = SourceRect(which, def, 0);
-            var half = src.Width / 2;
-            var front = new Rectangle(src.X + half, src.Y, half, src.Height);
+            // BedFurniture.draw: value.X += value.Width (proximo frame na
+            // spritesheet), MESMA largura. Antes eu usava meta largura e a
+            // cama aparecia cortada ao meio verticalmente.
+            var front = new Rectangle(src.X + src.Width, src.Y, src.Width, src.Height);
             if (front.Right > texture.Width || front.Bottom > texture.Height)
-                return;
+                front = src;
             var box = GetBoundingBox(which, tileX, tileY);
             var pos = new Vector2(tileX * 64f, tileY * 64f - (src.Height * 4f - box.Height));
             batch.Draw(texture, pos, front, Color.White, 0f, Vector2.Zero, 4f,

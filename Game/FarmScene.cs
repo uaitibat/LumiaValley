@@ -445,32 +445,9 @@ namespace LumiaValley.Game
             var bounds = PlayerBounds(player);
             isInBed = furniture.IsInsidePassableBand(2048, 9, 8, bounds);
 
-            var bed = furniture.GetBoundingBox(2048, 9, 8);
-            var offset = player.X > bed.Center.X ? 0 : 1;
-            var tx = 9 + offset;
-            var ty = (int)((player.Y - 8f) / 64f);
-            if (tx == (int)(player.X / 64f) && ty == 9)
-            {
-                if (!bedPromptShown && !HasDialog)
-                {
-                    bedPromptShown = true;
-                    var dormir = Localization.Location("FarmHouse_Bed_GoToSleep", "Dormir agora?");
-                    ShowDialog(dormir, new[] { "Sim", "Nao" }, i =>
-                    {
-                        if (i != 0) return;
-                        gameMinutes = 360;
-                        energy = 270;
-                        hasTarget = false;
-                        player = new Vector2(9 * 64f, 9 * 64f + 32f);
-                        facing = 1;
-                        UpdateCamera();
-                    });
-                }
-            }
-            else
-            {
-                bedPromptShown = false;
-            }
+            // O prompt e aberto pelo TOQUE na cama (TryFurnitureAction), como
+            // no original desktop. Abrir automaticamente ao pisar cancelava
+            // hasTarget e travava o jogador dentro da cama.
         }
 
         /// <summary>
@@ -592,17 +569,10 @@ namespace LumiaValley.Game
             DrawLights(spriteBatch);
             // BedFurniture.draw desenha a frente do lençol com depth maior que
             // o do jogador: se ele esta na cama, a frente vai DEPOIS dele.
+            DrawFurniture(spriteBatch);
+            DrawFarmer(spriteBatch);
             if (isInBed)
-            {
-                DrawFurniture(spriteBatch, skipBed: true);
-                DrawFarmer(spriteBatch);
                 furniture.DrawBedFront(spriteBatch, 2048, 9, 8);
-            }
-            else
-            {
-                DrawFurniture(spriteBatch);
-                DrawFarmer(spriteBatch);
-            }
             DrawMap(spriteBatch, true);
             DrawHud(spriteBatch);
             DrawDialog(spriteBatch);
