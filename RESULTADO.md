@@ -62,3 +62,37 @@ Conclusao final: remover os 5 SDKs **nao da problema no codigo do jogo**.
 O que acontece e que os SISTEMAS que dependem deles deixam de existir:
 rede/co-op, audio, screenshot e texto bitmap — todos ja substituidos ou
 adiados no port atual.
+
+## Experimento 3 — compilacao real no UWP ARM (GitHub Actions)
+
+A medicao acima era com .NET 8 DesktopGL. Aqui as fontes entram no mesmo
+`.csproj` UWP ARM do app funcional (`windows-2022`, MSBuild 17.14, Roslyn
+`/langversion:latest`, .NET Native desligado).
+
+| Etapa | Erros CS |
+|---|---|
+| Build #102 (commit `069c7c0`) | 800 (dominante: `CS8370` file-scoped namespace — 798/807 arquivos) |
+| Build #103 (commit `fbf97a9`): `LangVersion` + `AllowUnsafeBlocks` no csproj | 16 |
+
+O `LangVersion` nao precisou converter 798 arquivos: o `.csproj` original das
+fontes declara `LangVersion 12.0` e `AllowUnsafeBlocks`, e o projeto UWP nao
+declarava nada — herdava C# 7.3. Alinhar os duas propriedades removeu os 784
+erros de sintaxe de uma vez.
+
+Os 16 restantes sao apenas diferencas de API .NET 5 -> UWP:
+
+- `Stream.Close()`/`BinaryWriter.Close()` nao sao virtuais no UWP (3 erros
+  `CS0115`): trocados por `new` em `CrcCalculatorStream`, `ZlibBaseStream` e
+  `LoggingBinaryWriter`, preservando o corpo original.
+- `System.UnhandledExceptionEventArgs` nao existe: stub em `FullPatches/Stubs.cs`.
+- `System.Reflection.Emit` nao existe: `LocalMultiplayer.cs` substituido por
+  `FullPatches/LocalMultiplayerCompat.cs` (mesma API publica, usando
+  `FieldInfo`; sem splitscreen no Lumia).
+- `XmlSerializationReader`/`Writer` nao existem: `Vector2Reader.cs`,
+  `Vector2Writer.cs` e `Vector2Serializer.cs` substituidos por
+  `FullPatches/Vector2SerializerCompat.cs`, com a mesma conversao XML
+  `<Vector2><X/><Y/></Vector2>` sobre a API publica do `XmlSerializer`.
+
+O build #105 (commit `b72e833`) valida esse lote. O appx do experimento **nao**
+publica na release `latest` (que pertence ao build funcional da `main`): o
+workflow do branch salva o pacote como artifact do proprio run.
