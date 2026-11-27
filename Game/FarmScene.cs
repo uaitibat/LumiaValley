@@ -494,10 +494,12 @@ namespace LumiaValley.Game
 
             if (shirtSheet != null && slot != null && slot.Shirt >= 0 && slot.Shirt < 112)
             {
+                // drawHairAndAccesories: shirtSourceRect.Offset(0, 24/8/0/16).
+                var shirtOffsetY = facing == 0 ? 24 : facing == 1 ? 8 : facing == 3 ? 16 : 0;
                 var sx = slot.Shirt * 8 % 128;
-                var sy = slot.Shirt * 8 / 128 * 32;
-                // FarmerRenderer: shirtYOffset=56 + fx/fy do frame.
-                var sp = pos + new Vector2(16f + fx * 4f, 56f + fy * 4f);
+                var sy = slot.Shirt * 8 / 128 * 32 + shirtOffsetY;
+                var shirtSign = facing == 3 ? -1f : 1f;
+                var sp = pos + new Vector2(16f + shirtSign * fx * 4f, 56f + fy * 4f);
                 DrawLayer(batch, shirtSheet, sp, new Rectangle(sx, sy, 8, 8), Color.White, flip);
                 DrawLayer(batch, shirtSheet, sp, new Rectangle(sx + 128, sy, 8, 8), shirtColor, flip);
             }
@@ -509,8 +511,9 @@ namespace LumiaValley.Game
                 var accSrc = new Rectangle(acc * 16 % 128,
                     acc * 16 / 128 * 32 + (facing == 1 || facing == 3 ? 16 : 0), 16, 16);
                 var accY = facing == 2 ? 8f : 4f;
+                var accSign = facing == 3 ? -1f : 1f;
                 DrawLayer(batch, accessorySheet,
-                    pos + new Vector2(fx * 4f, accY + fy * 4f - (facing == 2 ? 4f : 0f)),
+                    pos + new Vector2(accSign * fx * 4f, accY + fy * 4f - (facing == 2 ? 4f : 0f)),
                     accSrc, Color.White, flip);
             }
 
@@ -525,8 +528,9 @@ namespace LumiaValley.Game
                     : !male && hair < 16 ? 4f : 0f;
                 if (facing == 0)
                     genderOffset += 4f;
+                var hairSign = facing == 3 ? -1f : 1f;
                 DrawLayer(batch, hairSheet,
-                    pos + new Vector2(fx * 4f, fy * 4f + genderOffset),
+                    pos + new Vector2(hairSign * fx * 4f, fy * 4f + genderOffset),
                     hairSrc, hairColor, flip);
             }
 
