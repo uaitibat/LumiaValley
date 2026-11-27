@@ -1,5 +1,25 @@
 # Experimento: bulk port 1:1 do Stardew 1.5.6
 
+## REGRA DE OURO (usuario, 27/11/2026)
+
+**Sempre usar o codigo original 1:1 como escopo antes de qualquer alteracao.**
+Nao improvisar, nao "adaptar de cabeca", nao atalhar. Consultar o arquivo
+correspondente em `FullSrc/` (ou `FullDeps/`) e portar a logica, os offsets,
+as constantes e a ordem de chamada exatamente como estao la.
+
+Motivo do usuario: "querendo ou nao isso vai ajudar no tempo". A experiencia
+confirmou: cada vez que improvisamos (spawn, colisao da cama, lençol, prompt
+automatico) o resultado foi bug e tivemos que refazer. Quando seguimos a risca
+(`GameLocation.isCollidingPosition`, `BedFurniture.IntersectsForCollision`,
+`DecoratableLocation.UpdateFloor`, `FarmHouse` IDs/posicoes), o app ficou
+correto na primeira.
+
+Checklist antes de mexer:
+1. Localizar o metodo original e ler o trecho inteiro (nao so o nome).
+2. Verificar constantes/IDs/posicoes no codigo (ex: `FarmHouse.cs:538-554`).
+3. Portar a regra — inclusive casos de borda como `TemporaryPassableTiles`.
+4. So depois disso alterar `Game/`.
+
 ## Metodo
 Worktree separado (`fullport`). Copiados 748 arquivos .cs de `reference/StardewValley`
 (305.329 linhas) + 150 de `reference/Dependencies/xTile` e `StardewValley.GameData`.
