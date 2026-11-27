@@ -8,6 +8,14 @@
 - Base: **Stardew Valley 1.5.6 Windows** (XNB plataforma `w`, formato v5).
 - Espaco virtual **1280x720**, cena renderizada em **640x360**, paisagem travada.
 - Idiomas: base + pt-BR. Sem assets ou appx no repo publico.
+- **REGRA DE OURO**: antes de QUALQUER alteracao, consultar o projeto original em
+  `reference/StardewValley/` e `reference/Dependencies/xTile/`. Nunca inventar
+  geometria, indice de sprite, formula de sourceRect, cor ou comportamento.
+  Se o original fizer de um jeito, portar esse jeito. O catalogo de itens e
+  formulas esta em `docs/ITENS.md`.
+- **Dispositivo alvo**: Lumia 640, 1280x720 fisicos, escala 150%, resolucao
+  logica 720x1280 em retrato / 1280x720 no jogo. Toda coordenada do port e
+  validada nesse aparelho (run do Actions + install via Device Portal).
 
 ## Fase 0 — Infraestrutura (concluida)
 
