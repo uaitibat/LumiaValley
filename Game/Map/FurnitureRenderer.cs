@@ -67,11 +67,10 @@ namespace LumiaValley.Game.Map
                 }
             }
 
-            // addLights: janelas (tipo 13) usam o frame 1 do sprite (acesso
-            // via sourceIndexOffset), que e onde aparece o brilho.
-            var offset = type == 13 ? 1 : 0;
+            // Frame 0 da janela = clara (brilho). O frame 1 (sourceIndexOffset=1)
+            // e o escuro, usado apenas a noite. Durante o dia usamos o 0.
             var src = new Rectangle(
-                which * 16 % texture.Width + width * 16 * offset,
+                which * 16 % texture.Width,
                 which * 16 / texture.Width * 16,
                 width * 16, height * 16);
             if (src.X < 0 || src.Y < 0 || src.Right > texture.Width || src.Bottom > texture.Height)
