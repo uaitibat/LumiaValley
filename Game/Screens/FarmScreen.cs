@@ -8,13 +8,14 @@ namespace LumiaValley.Game.Screens
     /// <summary>Prototipo de fazenda da Fase 0, agora como tela jogavel.</summary>
     public sealed class FarmScreen : IScreen
     {
-        private readonly FarmScene scene = new FarmScene();
+        private readonly FarmScene scene;
         private readonly SaveSlot slot;
         private SpriteFont font;
 
         public FarmScreen(SaveSlot slot = null)
         {
             this.slot = slot;
+            scene = new FarmScene(slot);
         }
 
         public void Load(ContentManager content, GraphicsDevice device)

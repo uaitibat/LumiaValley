@@ -170,7 +170,7 @@ namespace LumiaValley.Game
             if (facing == 0)
                 DrawLayer(b, baseTexture, pos + off,
                     new Rectangle(96 + currentFrame % 6 * 16, currentFrame / 6 * 32, 16, 32),
-                    skin, effects, -0.0000001f);
+                    skin, effects, -0.0001f);
 
             // 1. Corpo
             var bodySrc = new Rectangle(currentFrame % 6 * 16, currentFrame / 6 * 32, 16, 32);
