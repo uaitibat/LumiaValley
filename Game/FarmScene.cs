@@ -74,7 +74,11 @@ namespace LumiaValley.Game
         private bool fireplaceOn; // FarmHouse.fireplaceOn (default false)
         private bool giftboxOpened;
         private bool isInBed;
-        private bool bedPromptShown;
+        // GameLocation.UpdateWhenCurrentLocation: lastTouchActionLocation e o
+        // "switch" que dispara o TouchAction uma vez por entrada no tile.
+        private Vector2 lastTouchActionLocation = new Vector2(-1, -1);
+        // Farmer.behaviorOnMovement: so dispara TouchAction se o jogador andou.
+        private bool playerHasMoved;
         // GameLocation.resetForPlayerEntry: TemporaryPassableTiles recebe a
         // bounding box da cama se o jogador comeca dentro dela.
         private Rectangle bedTemporaryPassable;
@@ -247,6 +251,8 @@ namespace LumiaValley.Game
             bedTemporaryPassable = bedBox.Intersects(PlayerBounds(player))
                 ? bedBox
                 : Rectangle.Empty;
+            lastTouchActionLocation = new Vector2(-1, -1);
+            playerHasMoved = false;
 
             UpdateCamera();
         }
@@ -462,6 +468,50 @@ namespace LumiaValley.Game
             var tx = (int)(player.X / 64f);
             var ty = (int)((player.Y - 8f) / 64f);
             isInBed = ty == 9 && (tx == 9 || tx == 10);
+
+            // GameLocation.cs:2818-2828 — o switch do TouchAction.
+            // BedFurniture.DoesTileHaveProperty: TouchAction="Sleep" no tile
+            // (bed.X + bedTileOffset, bed.Y+1). bedTileOffset = 0 se o jogador
+            // esta a direita do centro da cama, 1 se a esquerda.
+            var standing = new Vector2(tx, ty);
+            var bed = furniture.GetBoundingBox(2048, 9, 8);
+            var offset = player.X > bed.Center.X ? 0 : 1;
+            var touchTile = new Vector2(9 + offset, 9);
+
+            if (lastTouchActionLocation.Equals(new Vector2(-1, -1)) ||
+                lastTouchActionLocation.Equals(standing))
+            {
+                if (standing.Equals(touchTile) && playerHasMoved && !HasDialog)
+                {
+                    lastTouchActionLocation = standing;
+                    var dormir = Localization.Location("FarmHouse_Bed_GoToSleep", "Dormir agora?");
+                    ShowTouchDialog(dormir, new[] { "Sim", "Nao" }, i =>
+                    {
+                        if (i != 0) return;
+                        gameMinutes = 360;
+                        energy = 270;
+                        player = new Vector2(9 * 64f, 9 * 64f + 32f);
+                        facing = 1;
+                        UpdateCamera();
+                    });
+                }
+            }
+            else
+            {
+                lastTouchActionLocation = new Vector2(-1, -1);
+            }
+        }
+
+        /// <summary>
+        /// TouchAction nao interrompe o movimento (ao contrario de ShowDialog,
+        /// usado pelos cliques). Game1.player.Halt() so ocorre em respostas
+        /// especificas, nao no prompt de dormir.
+        /// </summary>
+        private void ShowTouchDialog(string text, string[] options, Action<int> action)
+        {
+            dialogText = text;
+            dialogOptions = options;
+            dialogAction = action;
         }
 
         /// <summary>
@@ -513,9 +563,11 @@ namespace LumiaValley.Game
                 // (Y+128) bloqueiam; o meio e livre. Ao entrar no save o
                 // jogador esta dentro da cama, entao o original adiciona a
                 // bounding box dela em TemporaryPassableTiles ate ele sair.
+                if (FurnitureIds[i] == 2048 && isInBed)
+                    continue; // TemporaryPassableTiles: livre para andar na cama
                 if (FurnitureIds[i] == 2048 && bedTemporaryPassable != Rectangle.Empty)
                 {
-                    if (!bedTemporaryPassable.Intersects(PlayerBounds(player)))
+                    if (!bedTemporaryPassable.Intersects(box))
                         bedTemporaryPassable = Rectangle.Empty; // saiu: volta a bloquear
                     else
                         continue;
@@ -558,6 +610,8 @@ namespace LumiaValley.Game
             var tryY = new Vector2(player.X, player.Y + delta.Y);
             if (!IsBlocked(tryY))
                 player = tryY;
+            if (player != before)
+                playerHasMoved = true; // Farmer.behaviorOnMovement()
             return player != before;
         }
 
