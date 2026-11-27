@@ -166,7 +166,7 @@ namespace LumiaValley.Game.Screens
                 draft.Pants = 0;
                 draft.PantsColor = 0;
                 draft.Shoes = 2;
-                draft.Accessory = 2;
+                draft.Accessory = -1;
                 draft.Pet = 1;
                 draft.Facing = 2;
                 draft.FarmType = 0;

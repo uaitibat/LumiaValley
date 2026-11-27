@@ -35,11 +35,7 @@ namespace LumiaValley.Game
         private readonly SaveSlot slot;
         private double elapsedMs;
         private int gameMinutes = 360;
-        private int energy = 100;
-
-        // Abertura: o jogador acorda na cama e levanta andando para a esquerda.
-        private double wakeMs;
-        private bool wakingUp = true;
+        private int energy = 270;
         private int facing = 2;
 
         public FarmScene(SaveSlot slot = null)
@@ -152,13 +148,10 @@ namespace LumiaValley.Game
 
         public void Reset()
         {
-            // O jogo comeca com o fazendeiro ao lado da cama (9,8), como no
-            // original: a cama ocupa 2x4 tiles e o jogador fica a esquerda.
+            // Save novo: o jogador nasce deitado na cama (9,8), parado.
             player = new Vector2(9 * 64f, 9 * 64f);
             target = player;
             hasTarget = false;
-            wakingUp = true;
-            wakeMs = 0;
             facing = 2;
             direction = Vector2.Zero;
             UpdateCamera();
@@ -172,9 +165,6 @@ namespace LumiaValley.Game
 
         public void OnTap(Vector2 screenPoint)
         {
-            if (wakingUp)
-                return;
-
             // Sem D-pad: apenas toque no mundo, como no original em desktop.
             target = screenPoint + camera;
             hasTarget = true;
@@ -190,26 +180,6 @@ namespace LumiaValley.Game
             var dt = (float)Math.Min(gameTime.ElapsedGameTime.TotalSeconds, 0.05);
             elapsedMs += dt * 1000;
             gameMinutes += (int)(dt * 12); // um dia de 20 minutos
-
-            if (wakingUp)
-            {
-                wakeMs += dt * 1000;
-                if (wakeMs < 1200)
-                {
-                    UpdateCamera();
-                    return;
-                }
-                // Levanta e sai da cama para a esquerda, virando de costas.
-                facing = 3;
-                player.X -= 96f * dt;
-                if (player.X <= 8 * 64f)
-                {
-                    player.X = 8 * 64f;
-                    wakingUp = false;
-                }
-                UpdateCamera();
-                return;
-            }
 
             const float speed = 192f;
             if (hasTarget)
