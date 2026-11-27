@@ -295,13 +295,23 @@ namespace LumiaValley.Game
         {
             if (windowLight == null)
                 return;
-            // Janela em (3,1), centro do tile. A textura e 493x638 e o original
-            // centraliza e escala pelo radius do LightSource.
+
+            // Game1.drawLighting usa BlendState.Additive para as luzes.
+            batch.End();
+            batch.Begin(blendState: BlendState.Additive,
+                samplerState: SamplerState.PointClamp,
+                transformMatrix: Game1.SceneTransform);
+
+            // Janela em (3,1): centro do tile, escala do radius do LightSource.
             var center = new Vector2(3 * 64f + 32f, 1 * 64f + 32f);
             batch.Draw(windowLight, center, windowLight.Bounds,
-                new Color(255, 244, 190) * 0.35f, 0f,
+                new Color(255, 244, 190) * 0.28f, 0f,
                 new Vector2(windowLight.Width / 2f, windowLight.Height / 2f),
                 1.1f, SpriteEffects.None, 0f);
+
+            batch.End();
+            batch.Begin(samplerState: SamplerState.PointClamp,
+                transformMatrix: Game1.SceneTransform);
         }
 
         /// <summary>

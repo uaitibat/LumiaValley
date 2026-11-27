@@ -97,6 +97,10 @@ namespace LumiaValley.Game
             base.Update(gameTime);
         }
 
+        /// <summary>Transform da cena em uso, para telas que precisam trocar
+        /// o blend state no meio do desenho (ex.: lightmap aditivo).</summary>
+        public static Matrix SceneTransform { get; private set; }
+
         protected override void Draw(GameTime gameTime)
         {
             EnsureSceneTarget();
@@ -109,6 +113,7 @@ namespace LumiaValley.Game
             var screenTransform = current != null ? current.Transform : Matrix.Identity;
             var transform = screenTransform *
                 Matrix.CreateScale(sceneScale.X, sceneScale.Y, 1f);
+            SceneTransform = transform;
 
             spriteBatch.Begin(transformMatrix: transform, samplerState: SamplerState.PointClamp);
             current?.Draw(spriteBatch);

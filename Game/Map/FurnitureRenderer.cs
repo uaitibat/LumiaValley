@@ -14,6 +14,7 @@ namespace LumiaValley.Game.Map
     {
         private Texture2D texture;
         private Texture2D giftbox;
+        private Texture2D shadow;
         private Dictionary<int, string> data;
 
         public void Load(ContentManager content)
@@ -22,6 +23,8 @@ namespace LumiaValley.Game.Map
             data = content.Load<Dictionary<int, string>>("Data/Furniture");
             try { giftbox = content.Load<Texture2D>("LooseSprites/Giftbox"); }
             catch { giftbox = null; }
+            try { shadow = content.Load<Texture2D>("LooseSprites/shadow"); }
+            catch { shadow = null; }
         }
 
         /// <summary>Chest giftbox: draw do original em LooseSprites/Giftbox.</summary>
@@ -29,6 +32,14 @@ namespace LumiaValley.Game.Map
         {
             if (giftbox == null)
                 return;
+
+            // Chest.draw: sombra em tile*64 + (16,53), origem no centro, escala 5.
+            if (shadow != null)
+                batch.Draw(shadow, new Vector2(tileX * 64f + 16f, tileY * 64f + 53f),
+                    shadow.Bounds, Color.White, 0f,
+                    new Vector2(shadow.Bounds.Center.X, shadow.Bounds.Center.Y),
+                    5f, SpriteEffects.None, 0.0000001f);
+
             batch.Draw(giftbox, new Vector2(tileX * 64f, tileY * 64f - 52f),
                 new Rectangle(0, 0, 16, 32), Color.White, 0f, Vector2.Zero, 4f,
                 SpriteEffects.None, (tileY * 64f) / 10000f);
