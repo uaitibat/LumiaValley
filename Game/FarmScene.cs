@@ -79,10 +79,6 @@ namespace LumiaValley.Game
         private Vector2 lastTouchActionLocation = new Vector2(-1, -1);
         // Farmer.behaviorOnMovement: so dispara TouchAction se o jogador andou.
         private bool playerHasMoved;
-        // GameLocation.resetForPlayerEntry: TemporaryPassableTiles recebe a
-        // bounding box da cama se o jogador comeca dentro dela.
-        private Rectangle bedTemporaryPassable;
-
         // Dialogo simples (prompt de cama / menu da TV / baú / porta).
         private string dialogText;
         private string[] dialogOptions;
@@ -245,12 +241,9 @@ namespace LumiaValley.Game
             facing = 1;
             direction = Vector2.Zero;
 
-            // GameLocation.resetForPlayerEntry: se a cama intersects o
-            // boundingBox do jogador, adiciona TemporaryPassableTiles.
-            var bedBox = furniture.GetBoundingBox(2048, 9, 8);
-            bedTemporaryPassable = bedBox.Intersects(PlayerBounds(player))
-                ? bedBox
-                : Rectangle.Empty;
+            // GameLocation.resetForPlayerEntry: o TemporaryPassableTiles da
+            // cama e equivalente a regra 1:1 usada em IsBlocked (se o jogador
+            // ja intersecta a cama, ela nao bloqueia). Nada a inicializar.
             lastTouchActionLocation = new Vector2(-1, -1);
             playerHasMoved = false;
 
@@ -567,15 +560,12 @@ namespace LumiaValley.Game
                 // (Y+128) bloqueiam; o meio e livre. Ao entrar no save o
                 // jogador esta dentro da cama, entao o original adiciona a
                 // bounding box dela em TemporaryPassableTiles ate ele sair.
-                if (FurnitureIds[i] == 2048 && isInBed)
-                    continue; // TemporaryPassableTiles: livre para andar na cama
-                if (FurnitureIds[i] == 2048 && bedTemporaryPassable != Rectangle.Empty)
-                {
-                    if (!bedTemporaryPassable.Intersects(box))
-                        bedTemporaryPassable = Rectangle.Empty; // saiu: volta a bloquear
-                    else
-                        continue;
-                }
+                // GameLocation.cs:1652-1657 (1:1): se o jogador JA intersecta
+                // a cama, ela nao bloqueia em nenhuma direcao. E isso que
+                // permite levantar e sair de dentro dela ao acordar.
+                if (FurnitureIds[i] == 2048 &&
+                    furniture.IntersectsForCollision(2048, 9, 8, PlayerBounds(player)))
+                    continue;
 
                 var fb = furniture.GetBoundingBox(FurnitureIds[i], FurnitureX[i], FurnitureY[i]);
                 if (fb == Rectangle.Empty ||
