@@ -75,6 +75,9 @@ namespace LumiaValley.Game
         private bool giftboxOpened;
         private bool isInBed;
         private bool bedPromptShown;
+        // GameLocation.resetForPlayerEntry: TemporaryPassableTiles recebe a
+        // bounding box da cama se o jogador comeca dentro dela.
+        private Rectangle bedTemporaryPassable;
 
         // Dialogo simples (prompt de cama / menu da TV / baú / porta).
         private string dialogText;
@@ -237,6 +240,14 @@ namespace LumiaValley.Game
             hasTarget = false;
             facing = 1;
             direction = Vector2.Zero;
+
+            // GameLocation.resetForPlayerEntry: se a cama intersects o
+            // boundingBox do jogador, adiciona TemporaryPassableTiles.
+            var bedBox = furniture.GetBoundingBox(2048, 9, 8);
+            bedTemporaryPassable = bedBox.Intersects(PlayerBounds(player))
+                ? bedBox
+                : Rectangle.Empty;
+
             UpdateCamera();
         }
 
@@ -498,12 +509,17 @@ namespace LumiaValley.Game
             {
                 if (furniture.IsPassable(FurnitureIds[i]))
                     continue;
-                // Cama: nunca deixar o jogador ANDAR para dentro do lençol.
-                // No original ele se deita via TouchAction (prompt), nao
-                // atravessando a colisao. O unico modo de entrar e o toque
-                // na cama (TryFurnitureAction).
-                if (FurnitureIds[i] == 2048)
-                    return true;
+                // BedFurniture.IntersectsForCollision: cabeca (64px) e pes
+                // (Y+128) bloqueiam; o meio e livre. Ao entrar no save o
+                // jogador esta dentro da cama, entao o original adiciona a
+                // bounding box dela em TemporaryPassableTiles ate ele sair.
+                if (FurnitureIds[i] == 2048 && bedTemporaryPassable != Rectangle.Empty)
+                {
+                    if (!bedTemporaryPassable.Intersects(PlayerBounds(player)))
+                        bedTemporaryPassable = Rectangle.Empty; // saiu: volta a bloquear
+                    else
+                        continue;
+                }
 
                 var fb = furniture.GetBoundingBox(FurnitureIds[i], FurnitureX[i], FurnitureY[i]);
                 if (fb == Rectangle.Empty ||
