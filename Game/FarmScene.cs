@@ -13,6 +13,29 @@ namespace LumiaValley.Game
     /// </summary>
     public sealed class FarmScene
     {
+        // FarmerRenderer.cs:41-73 — deslocamento de cada feature por frame.
+        private static readonly int[] FeatureY =
+        {
+            1, 2, 2, 0, 5, 6, 1, 2, 2, 1, 0, 2, 0, 1, 1, 0, 2, 2, 3, 3,
+            2, 2, 1, 1, 0, 0, 2, 2, 4, 4, 0, 0, 1, 2, 1, 1, 1, 1, 0, 0,
+            1, 1, 1, 0, 0, -2, -1, 1, 1, 0, -1, -2, -1, -1, 5, 4, 0, 0, 3, 2,
+            -1, 0, 4, 2, 0, 0, 2, 1, 0, -1, 1, -2, 0, 0, 1, 1, 1, 1, 1, 1,
+            0, 0, 0, 0, 1, -1, -1, -1, -1, 1, 1, 0, 0, 0, 0, 4, 1, 0, 1, 2,
+            1, 0, 1, 0, 1, 2, -3, -4, -1, 0, 0, 2, 1, -4, -1, 0, 0, -3, 0, 0,
+            -1, 0, 0, 2, 1, 1
+        };
+
+        private static readonly int[] FeatureX =
+        {
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 4, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0,
+            0, 0, 0, 0, 0, 0
+        };
+
         private Texture2D pixel;
         private Texture2D cursors;
         private Texture2D shadow;
@@ -442,15 +465,18 @@ namespace LumiaValley.Game
             var bodySrc = new Rectangle(bodyFrame % 6 * 16, bodyFrame / 6 * 32, 16, 32);
             DrawLayer(batch, farmerBase, pos, bodySrc, skin, flip);
 
+            var fx = FeatureX[Wrap(bodyFrame, FeatureX.Length)];
+            var fy = FeatureY[Wrap(bodyFrame, FeatureY.Length)];
+
             // Olhos (FarmerRenderer:764-781): branco em (5,16), irina em (264,2).
             if (facing != 0)
             {
-                var eyeX = facing == 1 ? 8 : facing == 3 ? 6 : 5;
-                DrawLayer(batch, farmerBase,
-                    pos + new Vector2(eyeX * 4f, facing == 2 ? 44f : 40f),
+                var eyeX = (5 + fx) * 4f;
+                var whiteY = fy * 4f + (male && facing != 2 ? 36f : 40f);
+                var irisY = fy * 4f + (facing == 1 || facing == 3 ? 40f : 44f);
+                DrawLayer(batch, farmerBase, pos + new Vector2(eyeX, whiteY),
                     new Rectangle(5, 16, facing == 2 ? 6 : 2, 2), skin, flip);
-                DrawLayer(batch, farmerBase,
-                    pos + new Vector2(eyeX * 4f, facing == 2 ? 44f : 40f),
+                DrawLayer(batch, farmerBase, pos + new Vector2(eyeX, irisY),
                     new Rectangle(264 + (facing == 3 ? 4 : 0), 2, facing == 2 ? 6 : 2, 2),
                     eyeColor, flip);
             }
@@ -467,7 +493,8 @@ namespace LumiaValley.Game
             {
                 var sx = slot.Shirt * 8 % 128;
                 var sy = slot.Shirt * 8 / 128 * 32;
-                var sp = pos + new Vector2(16, 56);
+                // FarmerRenderer: shirtYOffset=56 + fx/fy do frame.
+                var sp = pos + new Vector2(16f + fx * 4f, 56f + fy * 4f);
                 DrawLayer(batch, shirtSheet, sp, new Rectangle(sx, sy, 8, 8), Color.White, flip);
                 DrawLayer(batch, shirtSheet, sp, new Rectangle(sx + 128, sy, 8, 8), shirtColor, flip);
             }
@@ -475,16 +502,28 @@ namespace LumiaValley.Game
             if (accessorySheet != null && slot != null && slot.Accessory >= 0)
             {
                 var acc = slot.Accessory % 20;
-                DrawLayer(batch, accessorySheet, pos,
-                    new Rectangle(acc * 16 % 128, acc * 16 / 128 * 32, 16, 16), Color.White, flip);
+                var accY = facing == 2 ? 8f : 4f;
+                var accSrc = new Rectangle(acc * 16 % 128, acc * 16 / 128 * 32, 16, 16);
+                if (facing == 0 || facing == 1 || facing == 3)
+                    accSrc.Y += facing == 0 ? 0 : 16;
+                DrawLayer(batch, accessorySheet,
+                    pos + new Vector2(fx * 4f, accY + fy * 4f - (facing == 2 ? 4f : 0f)),
+                    accSrc, Color.White, flip);
             }
 
             if (hairSheet != null)
             {
                 var hair = Wrap(hairIndex, 56);
+                var hairSrc = new Rectangle(hair % 8 * 16, hair / 8 * 96, 16, 32);
                 var hairOffsetY = facing == 0 ? 64 : facing == 1 || facing == 3 ? 32 : 0;
-                DrawLayer(batch, hairSheet, pos + new Vector2(0, hairOffsetY),
-                    new Rectangle(hair % 8 * 16, hair / 8 * 96, 16, 32), hairColor, flip);
+                // Ajuste de genero do FarmerRenderer (linha 650).
+                var genderOffset = male && hair >= 16 ? -4f
+                    : !male && hair < 16 ? 4f : 0f;
+                if (facing == 0)
+                    genderOffset += 4f;
+                DrawLayer(batch, hairSheet,
+                    pos + new Vector2(fx * 4f, fy * 4f + hairOffsetY + genderOffset),
+                    hairSrc, hairColor, flip);
             }
 
             // Braco direito por cima do cabelo (FarmerRenderer:789).
