@@ -57,6 +57,30 @@ namespace LumiaValley.Game
             Windows.Storage.ApplicationData.Current.LocalSettings.Values[TokenKey] = token;
         }
 
+        private static StorageFile TryGetFile(StorageFolder folder, string relative)
+        {
+            try
+            {
+                return folder.GetFileAsync(relative).AsTask().GetAwaiter().GetResult();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        private static StorageFolder TryGetFolder(StorageFolder folder, string name)
+        {
+            try
+            {
+                return folder.GetFolderAsync(name).AsTask().GetAwaiter().GetResult();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
         protected override Stream OpenStream(string assetName)
         {
             ResolveFolder();
@@ -64,11 +88,16 @@ namespace LumiaValley.Game
             {
                 try
                 {
-                    // StorageFolder.GetFileAsync e o unico modo de ler a pasta
-                    // concedida pelo picker no sandbox UWP.
+                    // O usuario pode ter escolhido o proprio Content/ ou a
+                    // pasta PAI dele. Tentamos as duas formas.
                     var relative = assetName.Replace('/', '\\') + ".xnb";
-                    var file = _folder.GetFileAsync(relative).AsTask()
-                        .GetAwaiter().GetResult();
+                    var file = TryGetFile(_folder, relative);
+                    if (file == null)
+                    {
+                        var contentFolder = TryGetFolder(_folder, "Content");
+                        if (contentFolder != null)
+                            file = TryGetFile(contentFolder, relative);
+                    }
                     if (file != null)
                         return file.OpenStreamForReadAsync().GetAwaiter().GetResult();
                 }
