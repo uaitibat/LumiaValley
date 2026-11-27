@@ -44,19 +44,27 @@ namespace LumiaValley.Game
                 return false;
             }
 
-            // O usuario pode ter escolhido o Content/ ou a pasta pai.
+            // Conta PRIMEIRO na pasta escolhida. Só tenta entrar numa subpasta
+            // "Content" se a pasta escolhida nao tiver XNB nenhum — assim nao
+            // perdemos o caso em que o usuario já selecionou a propria Content.
             var root = folder;
-            try
-            {
-                var sub = await folder.GetFolderAsync("Content");
-                if (sub != null)
-                    root = sub;
-            }
-            catch (Exception) { }
-
             var count = await CountXnb(root);
+            if (count == 0)
+            {
+                try
+                {
+                    var sub = await folder.GetFolderAsync("Content");
+                    if (sub != null)
+                    {
+                        root = sub;
+                        count = await CountXnb(root);
+                    }
+                }
+                catch (Exception) { }
+            }
+
             var valid = count > 0 && await HasKeyAssets(root);
-            PortContentManager.SaveFolder(folder);
+            PortContentManager.SaveFolder(root); // guarda a RAIZ dos XNB
             PortContentManager.SetAssetCount(valid ? count : 0);
             return valid;
         }
