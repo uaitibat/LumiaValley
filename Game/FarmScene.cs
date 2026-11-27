@@ -465,16 +465,20 @@ namespace LumiaValley.Game
             // (bed.X .. bed.X + getTilesWide()-1, bed.Y + 1) = (9..10, 9).
             // Usamos o TILE (nao a bounding box) para nao oscilar com o
             // arredondamento do movimento.
+            // Character.cs:1177-1187 -> getStandingX/Y = centro da boundingBox.
+            // PlayerBounds e (X-24, Y-16, 48, 32), logo standing = (X, Y).
             var tx = (int)(player.X / 64f);
-            var ty = (int)((player.Y - 8f) / 64f);
-            isInBed = ty == 9 && (tx == 9 || tx == 10);
+            var ty = (int)(player.Y / 64f);
+            var bedBox = furniture.GetBoundingBox(2048, 9, 8);
+            isInBed = bedBox.Intersects(PlayerBounds(player)) ||
+                      (ty == 9 && (tx == 9 || tx == 10));
 
             // GameLocation.cs:2818-2828 — o switch do TouchAction.
             // BedFurniture.DoesTileHaveProperty: TouchAction="Sleep" no tile
             // (bed.X + bedTileOffset, bed.Y+1). bedTileOffset = 0 se o jogador
             // esta a direita do centro da cama, 1 se a esquerda.
             var standing = new Vector2(tx, ty);
-            var bed = furniture.GetBoundingBox(2048, 9, 8);
+            var bed = bedBox;
             var offset = player.X > bed.Center.X ? 0 : 1;
             var touchTile = new Vector2(9 + offset, 9);
 
