@@ -166,6 +166,30 @@ namespace LumiaValley.Game.Map
             return def != null && def.Type == 12;
         }
 
+        /// <summary>
+        /// Porte de BedFurniture.IntersectsForCollision (linhas 400-417): a cama
+        /// so bloqueia na cabeca (64px) e nos pes (Y+128 em diante). O meio fica
+        /// livre para o jogador entrar e ativar a pergunta de dormir.
+        /// </summary>
+        public bool IntersectsForCollision(int which, int tileX, int tileY, Rectangle box)
+        {
+            var def = GetDef(which);
+            if (def == null)
+                return false;
+            var full = GetBoundingBox(which, tileX, tileY);
+            if (def.Type != 15)
+                return full.Intersects(box);
+
+            var head = full;
+            head.Height = 64;
+            if (head.Intersects(box))
+                return true;
+            var foot = full;
+            foot.Y += 128;
+            foot.Height -= 128;
+            return foot.Intersects(box);
+        }
+
         /// <summary>Porte literal de Furniture.draw(spriteBatch, x, y, alpha).</summary>
         public void Draw(SpriteBatch batch, int which, int tileX, int tileY,
             int sourceIndexOffset = 0, bool flipped = false, bool isOn = false,

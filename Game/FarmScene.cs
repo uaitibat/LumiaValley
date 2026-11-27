@@ -233,18 +233,29 @@ namespace LumiaValley.Game
                 }
                 else
                 {
-                    MovePlayer(delta / distance * step);
-                    // Farmer.updateMovementAnimation: direcao pelo movimento.
-                    facing = Math.Abs(delta.X) > Math.Abs(delta.Y)
-                        ? (delta.X > 0 ? 1 : 3)
-                        : (delta.Y > 0 ? 2 : 0);
-
-                    // FarmerSprite.getAnimationFromIndex: 4 frames de 200ms.
-                    walkMs += dt * 1000;
-                    if (walkMs >= 200)
+                    var moved = MovePlayer(delta / distance * step);
+                    if (!moved)
                     {
-                        walkMs -= 200;
-                        walkFrame = (walkFrame + 1) % 4;
+                        // Bateu em colisao: cancela o alvo e a animacao, em vez
+                        // de ficar "andando" parado contra a parede/movel.
+                        hasTarget = false;
+                        walkFrame = 0;
+                        walkMs = 0;
+                    }
+                    else
+                    {
+                        // Farmer.updateMovementAnimation: direcao pelo movimento.
+                        facing = Math.Abs(delta.X) > Math.Abs(delta.Y)
+                            ? (delta.X > 0 ? 1 : 3)
+                            : (delta.Y > 0 ? 2 : 0);
+
+                        // FarmerSprite.getAnimationFromIndex: 4 frames de 200ms.
+                        walkMs += dt * 1000;
+                        if (walkMs >= 200)
+                        {
+                            walkMs -= 200;
+                            walkFrame = (walkFrame + 1) % 4;
+                        }
                     }
                 }
             }
@@ -306,7 +317,8 @@ namespace LumiaValley.Game
                 if (furniture.IsPassable(FurnitureIds[i]))
                     continue;
                 var fb = furniture.GetBoundingBox(FurnitureIds[i], FurnitureX[i], FurnitureY[i]);
-                if (fb == Rectangle.Empty || !fb.Intersects(box))
+                if (fb == Rectangle.Empty ||
+                    !furniture.IntersectsForCollision(FurnitureIds[i], FurnitureX[i], FurnitureY[i], box))
                     continue;
                 // Original: se o jogador ja esta dentro do movel, ele nao
                 // bloqueia (isCollidingPosition: !item.IntersectsForCollision
@@ -318,15 +330,20 @@ namespace LumiaValley.Game
             return false;
         }
 
-        /// <summary>Movimento por eixos: se um eixo colide, mantem o outro.</summary>
-        private void MovePlayer(Vector2 delta)
+        /// <summary>
+        /// Movimento por eixos: se um eixo colide, mantem o outro.
+        /// Retorna false se nenhum eixo andou (usado para cancelar o toque).
+        /// </summary>
+        private bool MovePlayer(Vector2 delta)
         {
+            var before = player;
             var tryX = new Vector2(player.X + delta.X, player.Y);
             if (!IsBlocked(tryX))
                 player = tryX;
             var tryY = new Vector2(player.X, player.Y + delta.Y);
             if (!IsBlocked(tryY))
                 player = tryY;
+            return player != before;
         }
 
         private void ClampPlayer()
