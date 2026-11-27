@@ -83,8 +83,10 @@
     <Compile Include="FullDeps\StardewValley.GameData\**\*.cs" Exclude="FullDeps\**\Properties\AssemblyInfo.cs" />
     <Compile Include="FullPatches\**\*.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </ItemGroup>
+  <PropertyGroup>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest"><SubType>Designer</SubType></AppxManifest>
   </ItemGroup>
