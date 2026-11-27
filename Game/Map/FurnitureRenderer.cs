@@ -13,12 +13,25 @@ namespace LumiaValley.Game.Map
     public sealed class FurnitureRenderer
     {
         private Texture2D texture;
+        private Texture2D giftbox;
         private Dictionary<int, string> data;
 
         public void Load(ContentManager content)
         {
             texture = content.Load<Texture2D>("TileSheets/furniture");
             data = content.Load<Dictionary<int, string>>("Data/Furniture");
+            try { giftbox = content.Load<Texture2D>("LooseSprites/Giftbox"); }
+            catch { giftbox = null; }
+        }
+
+        /// <summary>Chest giftbox: draw do original em LooseSprites/Giftbox.</summary>
+        public void DrawGiftbox(SpriteBatch batch, int tileX, int tileY)
+        {
+            if (giftbox == null)
+                return;
+            batch.Draw(giftbox, new Vector2(tileX * 64f, tileY * 64f - 52f),
+                new Rectangle(0, 0, 16, 32), Color.White, 0f, Vector2.Zero, 4f,
+                SpriteEffects.None, (tileY * 64f) / 10000f);
         }
 
         public void Draw(SpriteBatch batch, int which, int tileX, int tileY)
@@ -64,10 +77,33 @@ namespace LumiaValley.Game.Map
             if (src.X < 0 || src.Y < 0 || src.Right > texture.Width || src.Bottom > texture.Height)
                 return;
 
-            // Furniture.draw: x*64, y*64 - (src.Height*4 - boundingBox.Height)
-            var pos = new Vector2(tileX * 64f, tileY * 64f - (src.Height * 4f - 64f));
+            // boundingBox: Data/Furniture[3] ou o padrao por tipo.
+            int boxW = 1, boxH = 1;
+            if (parts.Length > 3 && parts[3] != "-1")
+            {
+                var bb = parts[3].Split(' ');
+                boxW = int.Parse(bb[0]);
+                boxH = int.Parse(bb[1]);
+            }
+            else
+            {
+                var type = parts.Length > 1 ? TypeNumber(parts[1]) : 9;
+                switch (type)
+                {
+                    case 1: case 3: case 4: case 10: case 14: boxW = 2; boxH = 1; break;
+                    case 2: boxW = 3; boxH = 1; break;
+                    case 5: boxW = 5; boxH = 2; break;
+                    case 6: case 11: case 12: boxW = 3; boxH = 2; break;
+                    case 17: case 13: boxW = 1; boxH = 2; break;
+                    default: boxW = 1; boxH = 1; break;
+                }
+            }
+
+            // updateDrawPosition: (boundingBox.X, Y - (src.Height*4 - box.Height)).
+            var pos = new Vector2(tileX * 64f,
+                tileY * 64f - (src.Height * 4f - boxH * 64f));
             batch.Draw(texture, pos, src, Color.White, 0f, Vector2.Zero, 4f,
-                SpriteEffects.None, (tileY * 64f + 64f) / 10000f);
+                SpriteEffects.None, (tileY * 64f + boxH * 64f - 8f) / 10000f);
         }
 
         private static int TypeNumber(string name)

@@ -230,24 +230,32 @@ namespace LumiaValley.Game
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            DrawMap(spriteBatch);
+            // Ordem do Game1.draw: fundo -> objetos/jogador -> Front/AlwaysFront.
+            DrawMap(spriteBatch, false);
             DrawFurniture(spriteBatch);
             DrawFarmer(spriteBatch);
+            DrawMap(spriteBatch, true);
             DrawHud(spriteBatch);
         }
 
-        private void DrawMap(SpriteBatch batch)
+        private void DrawMap(SpriteBatch batch, bool front)
         {
             if (map == null)
             {
-                batch.Draw(pixel, new Rectangle(0, 0, ViewportConfig.VirtualWidth,
-                    ViewportConfig.VirtualHeight), new Color(74, 132, 62));
+                if (!front)
+                    batch.Draw(pixel, new Rectangle(0, 0, ViewportConfig.VirtualWidth,
+                        ViewportConfig.VirtualHeight), new Color(74, 132, 62));
                 return;
             }
 
             foreach (var layer in map.Layers)
             {
                 if (layer == null || !layer.Visible || layer.Tiles == null)
+                    continue;
+
+                // Back/Buildings antes dos objetos; Front/AlwaysFront depois.
+                var isFront = layer.Id == "Front" || layer.Id == "AlwaysFront";
+                if (isFront != front)
                     continue;
 
                 for (var i = 0; i < layer.Tiles.Length; i++)
@@ -295,6 +303,7 @@ namespace LumiaValley.Game
             furniture.Draw(batch, 1618, 6, 8);   // tapete
             furniture.Draw(batch, 1602, 5, 1);   // quadro
             furniture.Draw(batch, 1792, 8, 4);   // lareira (8,4 no original)
+            furniture.DrawGiftbox(batch, 3, 7);  // bau-presente com 15 parafusos
         }
 
         /// <summary>Mesmas camadas do preview da criacao: corpo, calca, camisa,
@@ -452,9 +461,11 @@ namespace LumiaValley.Game
             batch.DrawString(font, "500g",
                 new Vector2(ViewportConfig.VirtualWidth - 28 - font.MeasureString("500g").X + ox, 56 + oy),
                 new Color(255, 228, 120));
-            batch.DrawString(font, energy + "/270",
-                new Vector2(ViewportConfig.VirtualWidth - 120 + ox, ViewportConfig.VirtualHeight - 60 + oy),
-                Color.White);
+            // drawWithBorder: a esquerda da barra, com Y = by + 64.
+            var staminaText = energy + "/" + maxStamina;
+            var labelSize = font.MeasureString("999/999");
+            batch.DrawString(font, staminaText,
+                new Vector2(bx - labelSize.X - 16, by + 64), Color.White);
 
 
 
