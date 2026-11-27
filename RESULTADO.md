@@ -74,7 +74,9 @@ A medicao acima era com .NET 8 DesktopGL. Aqui as fontes entram no mesmo
 | Build #102 (commit `069c7c0`) | 800 (dominante: `CS8370` file-scoped namespace — 798/807 arquivos) |
 | Build #103 (commit `fbf97a9`): `LangVersion` + `AllowUnsafeBlocks` no csproj | 16 |
 | Build #105 (commit `b72e833`): stubs/compat de API | 3 (`CS0506` em `XmlSerializer`) |
-| Build #106 (commit `9b4ce32`): `Serialize`/`Deserialize` com `new` | em validação |
+| Build #106 (commit `9b4ce32`): `Serialize`/`Deserialize` com `new` | 360 (segunda onda: perfil .NET 5 -> UWP) |
+| Build #108 (commit `b52ecec`): shim global de API + SDK/SpriteText/audio | 3 (`ThreadStart`) |
+| Build #109 (commit `6e07554`): shim `ThreadStart` | em validação |
 
 O `LangVersion` nao precisou converter 798 arquivos: o `.csproj` original das
 fontes declara `LangVersion 12.0` e `AllowUnsafeBlocks`, e o projeto UWP nao
@@ -95,6 +97,12 @@ Os 16 restantes sao apenas diferencas de API .NET 5 -> UWP:
   `FullPatches/Vector2SerializerCompat.cs`, com a mesma conversao XML
   `<Vector2><X/><Y/></Vector2>` sobre a API publica do `XmlSerializer`.
 
-O build #106 (commit `9b4ce32`) valida esse lote. O appx do experimento **nao**
+A segunda onda (360 erros) nao era logica do jogo: eram `Console`,
+`Thread`, `Environment`, `Process`, `AppDomain`, `Stream.Close()`, `Index`
+(para `array[^1]`), `Type.IsGenericType` via extensoes, `XmlTextReader` e
+stubs de SDK com assinaturas erradas. Tudo resolvido em `FullPatches/
+UwpCompatShims.cs`, `SdkShims.cs` e ajustes nos stubs existentes.
+
+O build #109 (commit `6e07554`) valida esse lote. O appx do experimento **nao**
 publica na release `latest` (que pertence ao build funcional da `main`): o
 workflow do branch salva o pacote como artifact do proprio run.
