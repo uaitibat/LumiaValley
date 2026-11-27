@@ -46,6 +46,7 @@ namespace LumiaValley.Game
         private Texture2D pantSheet;
         private Texture2D accessorySheet;
         private Texture2D skinSheet;
+        private Texture2D shoeSheet;
         private SpriteFont font;
         private TileMap map;
         private readonly Dictionary<string, Texture2D> sheets = new Dictionary<string, Texture2D>();
@@ -94,6 +95,7 @@ namespace LumiaValley.Game
                 pantSheet = content.Load<Texture2D>("Characters/Farmer/pants");
                 accessorySheet = content.Load<Texture2D>("Characters/Farmer/accessories");
                 skinSheet = content.Load<Texture2D>("Characters/Farmer/skinColors");
+                shoeSheet = content.Load<Texture2D>("Characters/Farmer/shoeColors");
             }
             catch (Exception ex)
             {
@@ -395,7 +397,8 @@ namespace LumiaValley.Game
 
             if (farmerRenderer == null)
                 farmerRenderer = new FarmerRendererPort(farmerBase, hairSheet, shirtSheet,
-                    pantSheet, accessorySheet, slot ?? new SaveSlot());
+                    pantSheet, accessorySheet, slot ?? new SaveSlot(),
+                    skinSheet, shoeSheet, shirtSheet);
 
             // Farmer.Position e o TOPO da caixa de colisao (pes - 32). O sprite
             // e desenhado com origin.Y = 32, entao a sombra fica 8px acima dos pes.

@@ -126,13 +126,66 @@ namespace LumiaValley.Game
         };
 
         private readonly Texture2D baseTexture, hairSheet, shirtSheet, pantSheet, accessorySheet;
+        private readonly Texture2D skinColors, shoeColors, shirtsTexture;
         private readonly SaveSlot who;
+        private Texture2D recolored;
 
         public FarmerRendererPort(Texture2D b, Texture2D h, Texture2D s, Texture2D p,
-            Texture2D a, SaveSlot who)
+            Texture2D a, SaveSlot who, Texture2D skin, Texture2D shoes, Texture2D shirts)
         {
             baseTexture = b; hairSheet = h; shirtSheet = s; pantSheet = p; accessorySheet = a;
+            skinColors = skin; shoeColors = shoes; shirtsTexture = shirts;
             this.who = who;
+        }
+
+        /// <summary>FarmerRenderer.executeRecolorActions: troca os pixels de
+        /// referencia 260..262 (pele), 268..271 (sapato), 276..277 (olho) e
+        /// 256..258 (manga) diretamente na textura. So o pixel com valor exato
+        /// do indice e substituido (FarmerRenderer._SwapColor).</summary>
+        private Texture2D Recolored(GraphicsDevice device)
+        {
+            if (recolored != null)
+                return recolored;
+            if (baseTexture == null)
+                return null;
+
+            var data = new Color[baseTexture.Width * baseTexture.Height];
+            baseTexture.GetData(data);
+
+            if (skinColors != null)
+            {
+                var pal = new Color[skinColors.Width * skinColors.Height];
+                skinColors.GetData(pal);
+                var w = Wrap(who.Skin, skinColors.Height) * 3;
+                Swap(data, 260, pal[w]); Swap(data, 261, pal[w + 1]); Swap(data, 262, pal[w + 2]);
+            }
+            if (shoeColors != null)
+            {
+                var pal = new Color[shoeColors.Width * shoeColors.Height];
+                shoeColors.GetData(pal);
+                var w = Wrap(who.Shoes, shoeColors.Height) * 4;
+                for (var i = 0; i < 4; i++) Swap(data, 268 + i, pal[w + i]);
+            }
+            var eye = EyePalette[Wrap(who.EyeColor, EyePalette.Length)];
+            var dark = new Color(
+                (byte)Math.Max(0, eye.R - 75),
+                (byte)Math.Max(0, eye.G - 75),
+                (byte)Math.Min(255, eye.B * 8 / 7));
+            Swap(data, 276, eye);
+            Swap(data, 277, dark);
+
+            recolored = new Texture2D(device, baseTexture.Width, baseTexture.Height);
+            recolored.SetData(data);
+            return recolored;
+        }
+
+        private static void Swap(Color[] pixels, int index, Color color)
+        {
+            if (index < 0 || index >= pixels.Length) return;
+            var refColor = pixels[index];
+            for (var i = 0; i < pixels.Length; i++)
+                if (pixels[i].PackedValue == refColor.PackedValue)
+                    pixels[i] = color;
         }
 
         private static int Wrap(int v, int c) { v %= c; return v < 0 ? v + c : v; }
@@ -149,6 +202,10 @@ namespace LumiaValley.Game
         public void Draw(SpriteBatch b, FarmerSpritePort sprite, Vector2 pos, int facing, Color skin)
         {
             if (baseTexture == null) return;
+
+            //executeRecolorActions: base recolorida, tint branco em todas as camadas.
+            var baseTex = Recolored(b.GraphicsDevice) ?? baseTexture;
+            skin = Color.White;
             var frame = sprite.Current;
             var currentFrame = frame.Number;
             var flip = frame.Flip;
@@ -168,13 +225,13 @@ namespace LumiaValley.Game
             // Braco: facing 0 (cima) tem layerDepth negativo, vai ATRAS do
             // corpo. Desenhamos antes com depth negativo, como no original.
             if (facing == 0)
-                DrawLayer(b, baseTexture, pos + off,
+                DrawLayer(b, baseTex, pos + off,
                     new Rectangle(96 + currentFrame % 6 * 16, currentFrame / 6 * 32, 16, 32),
                     skin, effects, -0.0001f);
 
             // 1. Corpo
             var bodySrc = new Rectangle(currentFrame % 6 * 16, currentFrame / 6 * 32, 16, 32);
-            DrawLayer(b, baseTexture, pos + off, bodySrc, skin, effects, 0f);
+            DrawLayer(b, baseTex, pos + off, bodySrc, skin, effects, 0f);
 
             // 2. Calca
             if (pantSheet != null)
@@ -188,9 +245,9 @@ namespace LumiaValley.Game
             var eyeX = (5 + fx + (facing == 1 ? 3 : facing == 3 ? 1 : 0)) * 4f;
             var whiteY = fy * 4f + (male && who.Facing != 2 ? 36f : 40f);
             var irisY = fy * 4f + (who.Facing == 1 || who.Facing == 3 ? 40f : 44f);
-            DrawLayer(b, baseTexture, pos + off + new Vector2(eyeX, whiteY),
+            DrawLayer(b, baseTex, pos + off + new Vector2(eyeX, whiteY),
                 new Rectangle(5, 16, facing == 2 ? 6 : 2, 2), skin, SpriteEffects.None, 0.00000005f);
-            DrawLayer(b, baseTexture, pos + off + new Vector2(eyeX, irisY),
+            DrawLayer(b, baseTex, pos + off + new Vector2(eyeX, irisY),
                 new Rectangle(264 + (facing == 3 ? 4 : 0), 2, facing == 2 ? 6 : 2, 2),
                 eyeColor, SpriteEffects.None, 0.00000012f);
 
@@ -236,7 +293,7 @@ namespace LumiaValley.Game
 
             // 5. Braco (FarmerRenderer:789) — na direcao 0 ja foi desenhado atras.
             if (facing != 0)
-                DrawLayer(b, baseTexture, pos + off,
+                DrawLayer(b, baseTex, pos + off,
                     new Rectangle(96 + currentFrame % 6 * 16, currentFrame / 6 * 32, 16, 32),
                     skin, effects, 0.000049f);
         }
