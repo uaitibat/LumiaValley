@@ -33,6 +33,10 @@ namespace LumiaValley.Game
             var portContent = new PortContentManager(Services, "Content");
             Content = portContent;
             HasExternalGameFolder = portContent.HasExternalFolder;
+            // Launcher vertical; o jogo troca para paisagem ao iniciar.
+            ViewportConfig.SetPortrait(true);
+            graphics.SupportedOrientations =
+                DisplayOrientation.Portrait | DisplayOrientation.PortraitUpsideDown;
             TouchPanel.EnabledGestures = GestureType.Tap;
         }
 
@@ -47,7 +51,7 @@ namespace LumiaValley.Game
             EnsureSceneTarget();
 
             Localization.Load(Content);
-            ChangeScreen(new TitleScreen());
+            ChangeScreen(new LauncherScreen());
 
             base.LoadContent();
         }
@@ -61,13 +65,21 @@ namespace LumiaValley.Game
                 return;
 
             sceneTarget?.Dispose();
-            sceneWidth = Settings.SceneWidth;
-            sceneHeight = Settings.SceneHeight;
+            sceneWidth = ViewportConfig.SceneWidth;
+            sceneHeight = ViewportConfig.SceneHeight;
             sceneTarget = new RenderTarget2D(GraphicsDevice, sceneWidth, sceneHeight);
         }
 
         private void ChangeScreen(IScreen next)
         {
+            var portrait = next is LauncherScreen;
+            if (ViewportConfig.IsPortrait != portrait)
+            {
+                ViewportConfig.SetPortrait(portrait);
+                graphics.SupportedOrientations = portrait
+                    ? DisplayOrientation.Portrait | DisplayOrientation.PortraitUpsideDown
+                    : DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
+            }
             next?.Load(Content, GraphicsDevice);
             current = next;
         }
