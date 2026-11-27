@@ -8,6 +8,8 @@ namespace Microsoft.Xna.Framework
     {
         public static int GetDisplayIndex(this GameWindow w) { return 0; }
         public static Microsoft.Xna.Framework.Rectangle GetDisplayBounds(this GameWindow w) { return new Microsoft.Xna.Framework.Rectangle(0, 0, 1280, 720); }
+        public static Microsoft.Xna.Framework.Rectangle GetDisplayBounds(this GameWindow w, int index) { return new Microsoft.Xna.Framework.Rectangle(0, 0, 1280, 720); }
+        public static bool CenterOnDisplay(this GameWindow w, int index) { return true; }
         public static void CenterOnDisplay(this GameWindow w, object d) { }
     }
 }
@@ -26,6 +28,7 @@ namespace Microsoft.Xna.Framework.Audio
         public bool IsPitchBeingControlledByRPC { get; set; }
         public void Play() { IsPlaying = true; }
         public void Stop() { IsPlaying = false; }
+        public void Stop(AudioStopOptions options) { IsPlaying = false; }
         public void Pause() { IsPaused = true; }
         public void Resume() { IsPaused = false; }
         public void SetVariable(string n, float v) { }
@@ -37,8 +40,9 @@ namespace Microsoft.Xna.Framework.Audio
         public AudioEngine(string s) { }
         public Cue GetCue(string n) { return new Cue(); }
         public void Update() { }
-        public int GetCategory(string n) { return 0; }
+        public AudioCategory GetCategory(string n) { return default(AudioCategory); }
         public int GetCategoryIndex(string n) { return 0; }
+        public float[] GetReverbSettings() { return new float[32]; }
         public object GetReverbSettings(string n) { return null; }
         public bool IsDisposed { get; set; }
         public void Dispose() { }
@@ -48,6 +52,7 @@ namespace Microsoft.Xna.Framework.Audio
         public SoundBank(AudioEngine e, string s) { }
         public Cue GetCue(string n) { return new Cue(); }
         public void AddCue(string n, Cue c) { }
+        public void AddCue(CueDefinition definition) { }
         public CueDefinition GetCueDefinition(string n) { return new CueDefinition(); }
         public bool IsDisposed { get; set; }
         public bool IsInUse { get; set; }
@@ -152,12 +157,22 @@ namespace SkiaSharp
     public enum SKColorType { Rgba8888, Rgb888x, Bgra8888 }
     public enum SKAlphaType { Premul, Opaque }
     public enum SKEncodedImageFormat { Png, Jpeg }
+    public struct SKImageInfo
+    {
+        public int Width, Height;
+        public SKColorType ColorType;
+        public SKImageInfo(int width, int height, SKColorType colorType)
+        {
+            Width = width; Height = height; ColorType = colorType;
+        }
+    }
     public struct SKRect { public float X, Y, Width, Height; public static SKRect Create(float x, float y, float w, float h) { return new SKRect { X = x, Y = y, Width = w, Height = h }; } }
     public class SKPaint { }
     public class SKCanvas { public void DrawBitmap(SKBitmap b, SKRect r, SKPaint p) { } }
     public class SKSurface
     {
         public SKCanvas Canvas = new SKCanvas();
+        public static SKSurface Create(int w, int h, SKColorType c, SKAlphaType al) { return new SKSurface(); }
         public static SKSurface Create(object a, int w, int h, SKColorType c, SKAlphaType al) { return new SKSurface(); }
         public SKImage Snapshot() { return new SKImage(); }
         public void Dispose() { }
@@ -203,42 +218,5 @@ namespace TextCopy
     public static class ClipboardService { public static string GetText() { return ""; } public static void SetText(string s) { } }
 }
 
-namespace StardewValley.SDKs
-{
-    public interface LobbyUpdateListener { void OnLobbyUpdate(object lobby); }
-    public abstract class SDKHelper
-    {
-        public abstract class NetworkHelper
-        {
-            public virtual void AddLobbyUpdateListener(LobbyUpdateListener l) { }
-            public virtual void RemoveLobbyUpdateListener(LobbyUpdateListener l) { }
-            public virtual void UpdateNetwork() { }
-            public virtual object CreateClient() { return null; }
-            public virtual object CreateServer() { return null; }
-            public virtual string GetLobbyData(object lobby, string key) { return ""; }
-            public virtual object GetLobbyFromInviteCode(string code) { return null; }
-            public virtual string GetLobbyOwnerName(object lobby) { return ""; }
-            public virtual object GetRequestedClient() { return null; }
-            public virtual string GetUserID() { return ""; }
-            public virtual void RequestFriendLobbyData(object lobby) { }
-            public virtual bool SupportsInviteCodes() { return false; }
-            public virtual void Dispose() { }
-        }
-        public NetworkHelper Networking = new DummyNetworkHelper();
-        public virtual void EarlyInitialize() { }
-        public virtual void Update() { }
-        public virtual void Initialize() { }
-        public virtual void Shutdown() { }
-        public virtual string DebugInfo() { return ""; }
-        public virtual string ConnectionProgress() { return ""; }
-        public virtual bool ConnectionFinished() { return true; }
-        public virtual bool HasOverlay() { return false; }
-        public virtual bool IsJapaneseRegionRelease() { return false; }
-        public virtual bool IsEnterButtonAssignmentFlipped { get { return false; } }
-        public virtual string FilterDirtyWords(string s) { return s; }
-        public virtual bool GetAchievement(string n, out bool a) { a = false; return false; }
-        public virtual void ResetAchievements() { }
-        public virtual string GetFriendInviteArgs() { return ""; }
-    }
-    public sealed class DummyNetworkHelper : SDKHelper.NetworkHelper { }
-}
+// Os stubs de SDK foram movidos para SdkShims.cs com as assinaturas exatas
+// do codigo original (SDKHelper e SDKNetHelper sao interfaces).

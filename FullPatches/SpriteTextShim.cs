@@ -10,6 +10,12 @@ namespace StardewValley.BellsAndWhistles
 
     public static class SpriteText
     {
+        // Campos publicos usados pelo codigo original (TextCreditsBlock/Game1).
+        public static bool forceEnglishFont;
+        public static float fontPixelZoom = 1f;
+        public static Texture2D spriteTexture;
+        public static Texture2D coloredTexture;
+
         private static SpriteFont font;
 
         private static SpriteFont Font
