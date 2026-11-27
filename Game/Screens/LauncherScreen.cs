@@ -79,7 +79,7 @@ namespace LumiaValley.Game.Screens
             // Botao "Pasta do jogo".
             if (p.X > 40 && p.X < w - 40 && p.Y > 880 && p.Y < 980)
             {
-                status = "Lendo pasta do jogo...";
+                status = "Copiando XNB para o app... NAO FECHE o app.";
                 _ = PickAndReport();
             }
             // Botao "Iniciar" so com pasta validada.
