@@ -397,10 +397,10 @@ namespace LumiaValley.Game
                 farmerRenderer = new FarmerRendererPort(farmerBase, hairSheet, shirtSheet,
                     pantSheet, accessorySheet, slot ?? new SaveSlot());
 
-            // Game1.draw: shadowTexture em player.Position + (32,24),
-            // origem no centro, escala 4.
+            // Farmer.Position e o TOPO da caixa de colisao (pes - 32). O sprite
+            // e desenhado com origin.Y = 32, entao a sombra fica 8px acima dos pes.
             if (shadow != null)
-                batch.Draw(shadow, new Vector2(player.X + 32f, player.Y + 24f),
+                batch.Draw(shadow, new Vector2(player.X, player.Y - 8f),
                     shadow.Bounds, Color.White, 0f,
                     new Vector2(shadow.Bounds.Center.X, shadow.Bounds.Center.Y),
                     4f, SpriteEffects.None, player.Y / 10000f - 0.000001f);
@@ -413,8 +413,18 @@ namespace LumiaValley.Game
                 lastWalking = walking;
             }
 
+            // Pele: trio sombra/base/luz do skinColors, indice do save.
             var skin = new Color(224, 172, 140);
-            var pos = new Vector2((float)Math.Floor(player.X - 32), (float)Math.Floor(player.Y - 112));
+            if (skinSheet != null && slot != null)
+            {
+                var palette = new Color[skinSheet.Width * skinSheet.Height];
+                skinSheet.GetData(palette);
+                var which = Wrap(slot.Skin, skinSheet.Height);
+                skin = palette[which * 3 + 1];
+            }
+
+            // Sprite de 128px com pes no ponto do jogador.
+            var pos = new Vector2((float)Math.Floor(player.X - 32), (float)Math.Floor(player.Y - 128));
             farmerRenderer.Draw(batch, farmerSprite, pos, facing, skin);
         }
 

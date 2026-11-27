@@ -106,6 +106,17 @@ namespace LumiaValley.Game
             new Color(164,128,64), new Color(92,64,108), new Color(64,44,76),
             new Color(50,62,120), new Color(211,215,211)
         };
+        public static readonly Color[] ShirtPalette =
+        {
+            new Color(211,215,211), new Color(88,110,170), new Color(64,86,150),
+            new Color(50,62,120), new Color(148,76,70), new Color(118,60,56),
+            new Color(80,44,40), new Color(192,148,92), new Color(148,106,64),
+            new Color(96,72,48), new Color(212,176,92), new Color(164,128,64),
+            new Color(112,148,96), new Color(72,112,80), new Color(48,80,60),
+            new Color(126,92,140), new Color(92,64,108), new Color(64,44,76),
+            new Color(180,180,180), new Color(64,64,64)
+        };
+
         public static readonly Color[] EyePalette =
         {
             new Color(96,64,40), new Color(128,88,56), new Color(160,116,76),
@@ -154,6 +165,13 @@ namespace LumiaValley.Game
             var eyeColor = EyePalette[Wrap(who.EyeColor, EyePalette.Length)];
             var male = who.IsMale;
 
+            // Braco: facing 0 (cima) tem layerDepth negativo, vai ATRAS do
+            // corpo. Desenhamos antes com depth negativo, como no original.
+            if (facing == 0)
+                DrawLayer(b, baseTexture, pos + off,
+                    new Rectangle(96 + currentFrame % 6 * 16, currentFrame / 6 * 32, 16, 32),
+                    skin, effects, -0.0000001f);
+
             // 1. Corpo
             var bodySrc = new Rectangle(currentFrame % 6 * 16, currentFrame / 6 * 32, 16, 32);
             DrawLayer(b, baseTexture, pos + off, bodySrc, skin, effects, 0f);
@@ -195,7 +213,8 @@ namespace LumiaValley.Game
             {
                 DrawLayer(b, shirtSheet, shirtPos, shirtSrc, Color.White, SpriteEffects.None, 0.00000015f);
                 DrawLayer(b, shirtSheet, shirtPos, new Rectangle(shirtSrc.X + 128, shirtSrc.Y, 8, 8),
-                    new Color(88, 110, 170), SpriteEffects.None, 0.000000151f);
+                    ShirtPalette[Wrap(who.ShirtColor, ShirtPalette.Length)],
+                    SpriteEffects.None, 0.000000151f);
             }
 
             if (who.Accessory >= 0 && facing != 0 && accessorySheet != null)
@@ -215,10 +234,11 @@ namespace LumiaValley.Game
                     hairSrc, hairColor, effects, 0.00000022f);
             }
 
-            // 5. Braco (FarmerRenderer:789)
-            DrawLayer(b, baseTexture, pos + off,
-                new Rectangle(96 + currentFrame % 6 * 16, currentFrame / 6 * 32, 16, 32),
-                skin, effects, facing == 0 ? -0.0000001f : 0.000049f);
+            // 5. Braco (FarmerRenderer:789) — na direcao 0 ja foi desenhado atras.
+            if (facing != 0)
+                DrawLayer(b, baseTexture, pos + off,
+                    new Rectangle(96 + currentFrame % 6 * 16, currentFrame / 6 * 32, 16, 32),
+                    skin, effects, 0.000049f);
         }
     }
 }
