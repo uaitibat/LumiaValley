@@ -226,6 +226,7 @@ namespace LumiaValley.Game
                 return;
             const int slot = 48;
             const int x = 8;
+            const float scale = 0.75f; // 64 -> 48
             var total = slot * 12;
             var startY = (viewportHeight - total) / 2;
 
