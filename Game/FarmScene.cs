@@ -73,6 +73,8 @@ namespace LumiaValley.Game
         private double walkMs;
         private bool fireplaceOn; // FarmHouse.fireplaceOn (default false)
         private bool giftboxOpened;
+        private bool isInBed;
+        private bool bedPromptShown;
 
         // Dialogo simples (prompt de cama / menu da TV / baú / porta).
         private string dialogText;
@@ -321,8 +323,9 @@ namespace LumiaValley.Game
         private bool TryFurnitureAction(int tx, int ty)
         {
             // Cama: BedFurniture.DoesTileHaveProperty injeta TouchAction="Sleep"
-            // no tile (bed.X + bedTileOffset, bed.Y + 1) = (10,9).
-            if (tx == 10 && ty == 9)
+            // no tile (bed.X + bedTileOffset, bed.Y + 1). O offset e 0 se o
+            // jogador estiver a direita do centro da cama, 1 se a esquerda.
+            if (ty == 9 && (tx == 9 || tx == 10))
             {
                 var dormir = Localization.Location("FarmHouse_Bed_GoToSleep", "Dormir agora?");
                 ShowDialog(dormir, new[] { "Sim", "Nao" }, i =>
@@ -360,7 +363,7 @@ namespace LumiaValley.Game
             // Baú presente: Chest.dumpContents (3,7).
             if (tx == 3 && ty == 7 && !giftboxOpened)
             {
-                ShowDialog("Voc\\u00ea recebeu 15 sementes!", new[] { "OK" }, i =>
+                ShowDialog("Você recebeu 15 sementes!", new[] { "OK" }, i =>
                 {
                     giftboxOpened = true;
                 });
@@ -426,9 +429,48 @@ namespace LumiaValley.Game
             }
 
             farmerSprite.Update(dt * 1000);
+            CheckBedState();
 
             ClampPlayer();
             UpdateCamera();
+        }
+
+        /// <summary>
+        /// Farmer.Update: isInBed vem da propriedade "Bed" do tile pisado
+        /// (Farmer.cs:7162). BedFurniture.DoesTileHaveProperty injeta
+        /// TouchAction="Sleep" no tile lateral e o prompt dispara ao pisar.
+        /// </summary>
+        private void CheckBedState()
+        {
+            var bounds = PlayerBounds(player);
+            isInBed = furniture.IsInsidePassableBand(2048, 9, 8, bounds);
+
+            var bed = furniture.GetBoundingBox(2048, 9, 8);
+            var offset = player.X > bed.Center.X ? 0 : 1;
+            var tx = 9 + offset;
+            var ty = (int)((player.Y - 8f) / 64f);
+            if (tx == (int)(player.X / 64f) && ty == 9)
+            {
+                if (!bedPromptShown && !HasDialog)
+                {
+                    bedPromptShown = true;
+                    var dormir = Localization.Location("FarmHouse_Bed_GoToSleep", "Dormir agora?");
+                    ShowDialog(dormir, new[] { "Sim", "Nao" }, i =>
+                    {
+                        if (i != 0) return;
+                        gameMinutes = 360;
+                        energy = 270;
+                        hasTarget = false;
+                        player = new Vector2(9 * 64f, 9 * 64f + 32f);
+                        facing = 1;
+                        UpdateCamera();
+                    });
+                }
+            }
+            else
+            {
+                bedPromptShown = false;
+            }
         }
 
         /// <summary>
@@ -481,11 +523,22 @@ namespace LumiaValley.Game
                     !furniture.IntersectsForCollision(FurnitureIds[i], FurnitureX[i], FurnitureY[i], box))
                     continue;
                 // Original: se o jogador ja esta dentro do movel, ele nao
-                // bloqueia (isCollidingPosition: !item.IntersectsForCollision
-                // (Game1.player.GetBoundingBox())). Evita prender no spawn.
-                if (fb.Intersects(PlayerBounds(player)))
+                // bloqueia. Na cama isso so vale para a FAIXA LIVRE do meio:
+                // a cabeca e os pes continuam bloqueando de dentro para fora.
+                var current = PlayerBounds(player);
+                if (furniture.IsPassable(FurnitureIds[i]) ||
+                    furniture.IsInsidePassableBand(FurnitureIds[i], FurnitureX[i], FurnitureY[i], current))
                     continue;
                 return true;
+            }
+
+            // Bau de sementes (giftbox) e um Object: isCollidingPosition tambem
+            // testa objects[^].getBoundingBox() e nao e passavel.
+            if (!giftboxOpened)
+            {
+                var chest = new Rectangle(3 * 64, 7 * 64, 64, 64);
+                if (chest.Intersects(box) && !chest.Intersects(PlayerBounds(player)))
+                    return true;
             }
             return false;
         }
@@ -537,8 +590,19 @@ namespace LumiaValley.Game
             // Ordem do Game1.draw: fundo -> objetos/jogador -> Front/AlwaysFront.
             DrawMap(spriteBatch, false);
             DrawLights(spriteBatch);
-            DrawFurniture(spriteBatch);
-            DrawFarmer(spriteBatch);
+            // BedFurniture.draw desenha a frente do lençol com depth maior que
+            // o do jogador: se ele esta na cama, a frente vai DEPOIS dele.
+            if (isInBed)
+            {
+                DrawFurniture(spriteBatch, skipBed: true);
+                DrawFarmer(spriteBatch);
+                furniture.DrawBedFront(spriteBatch, 2048, 9, 8);
+            }
+            else
+            {
+                DrawFurniture(spriteBatch);
+                DrawFarmer(spriteBatch);
+            }
             DrawMap(spriteBatch, true);
             DrawHud(spriteBatch);
             DrawDialog(spriteBatch);
@@ -656,13 +720,14 @@ namespace LumiaValley.Game
         /// parser. Usamos os indices corretos do townInterior (cama) para
         /// sobrepor as brasoes do walls_and_floors.
         /// </summary>
-        private void DrawFurniture(SpriteBatch batch)
+        private void DrawFurniture(SpriteBatch batch, bool skipBed = false)
         {
             // FarmHouse.doAction / Game1.loadForNewGame: moveis iniciais do
             // casal (whichFarm = 0), exatamente como no original.
             // Lista exata de Game1.loadForNewGame / FarmHouse (whichFarm=0).
             var time = elapsedMs;
-            furniture.Draw(batch, 2048, 9, 8);   // cama
+            if (!skipBed)
+                furniture.Draw(batch, 2048, 9, 8);   // cama
             furniture.Draw(batch, 1120, 5, 4, heldObject: 1364); // mesa + tigela
             furniture.Draw(batch, 1376, 1, 10);  // planta
             furniture.Draw(batch, 0, 4, 4);      // cadeira

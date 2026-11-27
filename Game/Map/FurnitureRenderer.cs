@@ -277,6 +277,44 @@ namespace LumiaValley.Game.Map
             }
         }
 
+        /// <summary>
+        /// True se 'box' esta somente na faixa livre do meio da cama
+        /// (BedFurniture.IntersectsForCollision devolve false la).
+        /// </summary>
+        public bool IsInsidePassableBand(int which, int tileX, int tileY, Rectangle box)
+        {
+            var def = GetDef(which);
+            if (def == null || def.Type != 15)
+                return false;
+            var full = GetBoundingBox(which, tileX, tileY);
+            var head = full; head.Height = 64;
+            if (head.Intersects(box)) return false;
+            var foot = full; foot.Y += 128; foot.Height -= 128;
+            if (foot.Height > 0 && foot.Intersects(box)) return false;
+            // Esta dentro da cama e na faixa do meio.
+            return full.Intersects(box);
+        }
+
+        /// <summary>
+        /// BedFurniture.draw: metade da frente do lençol, desenhada DEPOIS do
+        /// jogador quando ele esta deitado (depth boundingBox.Bottom - 1).
+        /// </summary>
+        public void DrawBedFront(SpriteBatch batch, int which, int tileX, int tileY)
+        {
+            var def = GetDef(which);
+            if (texture == null || def == null || def.Type != 15)
+                return;
+            var src = SourceRect(which, def, 0);
+            var half = src.Width / 2;
+            var front = new Rectangle(src.X + half, src.Y, half, src.Height);
+            if (front.Right > texture.Width || front.Bottom > texture.Height)
+                return;
+            var box = GetBoundingBox(which, tileX, tileY);
+            var pos = new Vector2(tileX * 64f, tileY * 64f - (src.Height * 4f - box.Height));
+            batch.Draw(texture, pos, front, Color.White, 0f, Vector2.Zero, 4f,
+                SpriteEffects.None, (box.Bottom - 1) / 10000f);
+        }
+
         /// <summary>Chest giftbox: draw do original em LooseSprites/Giftbox.</summary>
         public void DrawGiftbox(SpriteBatch batch, int tileX, int tileY)
         {
