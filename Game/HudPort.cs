@@ -230,10 +230,16 @@ namespace LumiaValley.Game
             var total = slot * 12;
             var startY = (viewportHeight - total) / 2;
 
-            // Fundo simples translucido (sem o drawTextureBox, que com 12
-            // slots verticais virava uma barra grossa e bugada).
-            b.Draw(menu, new Rectangle(x, startY, 56, total),
-                new Rectangle(0, 256, 60, 60), Color.White * 0.55f);
+            // Fundo translucido usando as 3 fatias do MenuTiles (canto,
+            // meio, canto) esticadas na vertical.
+            var src = new Rectangle(0, 256, 60, 60);
+            var n = src.Width / 3; // 20
+            b.Draw(menu, new Rectangle(x + 4, startY + n + offsetY, 48, total - n * 2),
+                new Rectangle(src.X + n, src.Y + n, n, n), Color.White * 0.55f);
+            b.Draw(menu, new Rectangle(x + 4 + offsetX, startY + offsetY, 48, n),
+                new Rectangle(src.X + n, src.Y + n, n, n), Color.White * 0.55f);
+            b.Draw(menu, new Rectangle(x + 4 + offsetX, startY + total - n + offsetY, 48, n),
+                new Rectangle(src.X + n, src.Y + n, n, n), Color.White * 0.55f);
 
             for (var j = 0; j < 12; j++)
             {

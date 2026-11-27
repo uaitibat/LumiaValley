@@ -914,16 +914,14 @@ namespace LumiaValley.Game
             // DayTimeMoneyBox: relogio/data/clima/dinheiro 1:1.
             // O original nao desenha hora/dinheiro no drawHUD - delega ao menu.
             var timeOfDay = gameHour * 100 + gameMinutes;
-            // HUD e interface: coordenadas de TELA, sem compensar a camera.
-            // (A compensacao ox/oy e so para o mundo/objetos desenhados nele.)
-            var worldW = map != null ? map.Width * 64 : 0;
+            // O SpriteBatch ainda esta sob sceneTransform (camera * escala).
+            // Compensamos com ox/oy para o HUD ficar em coordenadas de TELA.
             clock.Draw(batch, ViewportConfig.VirtualWidth, timeOfDay, 1,
-                "spring", 0, 500, (int)elapsedMs % 7000,
-                0, 0, worldW);
+                "spring", 0, 500, (int)elapsedMs % 7000, ox, oy);
 
             // Toolbar vertical (mobile) na esquerda da tela, como pedido.
             toolbar.DrawVertical(batch, ViewportConfig.VirtualHeight,
-                selectedSlot, 0, 0);
+                selectedSlot, ox, oy);
 
             // drawWithBorder: a esquerda da barra, com Y = by + 64.
             var staminaText = energy + "/" + maxStamina;
