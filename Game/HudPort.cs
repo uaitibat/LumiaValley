@@ -76,15 +76,23 @@ namespace LumiaValley.Game
             b.Draw(cursors, position + new Vector2(28f, 172f),
                 new Rectangle(340, 472, 65, 17), Color.White, 0f, Vector2.Zero, 4f,
                 SpriteEffects.None, 0.9f);
-            if (font != null)
+            // MoneyDial.draw (linhas 119-134): digitos de Cursors(286,
+            // 502 - digito*8, 5, 8), 24px por digito, Color.Maroon.
+            const int numDigits = 8;
+            var num3 = (int)Math.Pow(10, numDigits - 1);
+            var flag = false;
+            var digitX = 0;
+            for (var i = 0; i < numDigits; i++)
             {
-                var moneyText = money + "g";
-                var ms = font.MeasureString(moneyText);
-                // Caixa em position+(28,172), tamanho 65*4=260 por 17*4=68.
-                // Centraliza o valor dentro dela.
-                DrawShadowText(b, moneyText, font,
-                    position + new Vector2(28f + (260f - ms.X) / 2f, 172f + (68f - ms.Y) / 2f),
-                    new Color(255, 228, 120));
+                var digit = money / num3 % 10;
+                if (digit > 0 || i == numDigits - 1)
+                    flag = true;
+                if (flag)
+                    b.Draw(cursors, position + new Vector2(62 + digitX, 200),
+                        new Rectangle(286, 502 - digit * 8, 5, 8), Color.Maroon,
+                        0f, Vector2.Zero, 4f, SpriteEffects.None, 0.9f);
+                digitX += 24;
+                num3 /= 10;
             }
 
             // Ponteiro do relogio (linha 433).
@@ -230,16 +238,10 @@ namespace LumiaValley.Game
             var total = slot * 12;
             var startY = (viewportHeight - total) / 2;
 
-            // Fundo translucido usando as 3 fatias do MenuTiles (canto,
-            // meio, canto) esticadas na vertical.
-            var src = new Rectangle(0, 256, 60, 60);
-            var n = src.Width / 3; // 20
-            b.Draw(menu, new Rectangle(x + 4, startY + n + offsetY, 48, total - n * 2),
-                new Rectangle(src.X + n, src.Y + n, n, n), Color.White * 0.55f);
-            b.Draw(menu, new Rectangle(x + 4 + offsetX, startY + offsetY, 48, n),
-                new Rectangle(src.X + n, src.Y + n, n, n), Color.White * 0.55f);
-            b.Draw(menu, new Rectangle(x + 4 + offsetX, startY + total - n + offsetY, 48, n),
-                new Rectangle(src.X + n, src.Y + n, n, n), Color.White * 0.55f);
+            // Fundo translucido alinhado aos SLOTS (mesmo x dos quadrados).
+            var slotX = x + 4 + offsetX;
+            b.Draw(menu, new Rectangle(slotX, startY + offsetY, 48, total),
+                new Rectangle(0, 256, 60, 60), Color.White * 0.45f);
 
             for (var j = 0; j < 12; j++)
             {
