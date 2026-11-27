@@ -15,6 +15,8 @@ namespace LumiaValley.Game
     {
         private Texture2D pixel;
         private Texture2D cursors;
+        private Texture2D shadow;
+        private Texture2D windowLight;
         private Texture2D farmerBase;
         private Texture2D hairSheet;
         private Texture2D shirtSheet;
@@ -52,6 +54,10 @@ namespace LumiaValley.Game
             catch { font = null; }
             try { cursors = content.Load<Texture2D>("LooseSprites/Cursors.pt-BR"); }
             catch { cursors = null; }
+            try { shadow = content.Load<Texture2D>("LooseSprites/shadow"); }
+            catch { shadow = null; }
+            try { windowLight = content.Load<Texture2D>("LooseSprites/Lighting/indoorWindowLight"); }
+            catch { windowLight = null; }
             try { furniture.Load(content); }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Furniture: " + ex.Message); }
 
@@ -232,6 +238,7 @@ namespace LumiaValley.Game
         {
             // Ordem do Game1.draw: fundo -> objetos/jogador -> Front/AlwaysFront.
             DrawMap(spriteBatch, false);
+            DrawLights(spriteBatch);
             DrawFurniture(spriteBatch);
             DrawFarmer(spriteBatch);
             DrawMap(spriteBatch, true);
@@ -283,6 +290,20 @@ namespace LumiaValley.Game
             }
         }
 
+        /// <summary>Luz da janela: Game1.drawLighting com indoorWindowLight.</summary>
+        private void DrawLights(SpriteBatch batch)
+        {
+            if (windowLight == null)
+                return;
+            // Janela em (3,1), centro do tile. A textura e 493x638 e o original
+            // centraliza e escala pelo radius do LightSource.
+            var center = new Vector2(3 * 64f + 32f, 1 * 64f + 32f);
+            batch.Draw(windowLight, center, windowLight.Bounds,
+                new Color(255, 244, 190) * 0.35f, 0f,
+                new Vector2(windowLight.Width / 2f, windowLight.Height / 2f),
+                1.1f, SpriteEffects.None, 0f);
+        }
+
         /// <summary>
         /// Moveis que no xTile vem de tiles com a sheet errada no nosso
         /// parser. Usamos os indices corretos do townInterior (cama) para
@@ -314,6 +335,15 @@ namespace LumiaValley.Game
                 return;
 
             var pos = new Vector2((float)Math.Floor(player.X - 32), (float)Math.Floor(player.Y - 112));
+
+            // Game1.draw: shadowTexture em player.Position + (32,24),
+            // origem no centro, escala 4.
+            if (shadow != null)
+                batch.Draw(shadow, new Vector2(player.X + 32f, player.Y + 24f),
+                    shadow.Bounds, Color.White, 0f,
+                    new Vector2(shadow.Bounds.Center.X, shadow.Bounds.Center.Y),
+                    4f, SpriteEffects.None, player.Y / 10000f - 0.000001f);
+
             var male = slot == null || slot.IsMale;
             // Tom fixo da 1.5.6; a leitura do XNB de skinColors no UWP ARM
             // devolve valores inconsistentes, entao usamos o padrao.
