@@ -71,6 +71,14 @@ namespace LumiaValley.Game
         private int facing = 2;
         private int walkFrame;
         private double walkMs;
+        private bool fireplaceOn; // FarmHouse.fireplaceOn (default false)
+        private bool giftboxOpened;
+
+        // Dialogo simples (prompt de cama / menu da TV / baú / porta).
+        private string dialogText;
+        private string[] dialogOptions;
+        private Action<int> dialogAction;
+        private Rectangle[] dialogRects;
 
         public FarmScene(SaveSlot slot = null)
         {
@@ -181,17 +189,51 @@ namespace LumiaValley.Game
                 }
             }
 
-            // O original nao troca o piso da casa inicial (whichFarm=0 nao
-            // chama setFloor), entao mantemos os indices do mapa.
+            // ReadWallpaperAndFloorTileData chama setFloors()/setWallpapers()
+            // no construtor: appliedFloor/appliedWallpaper = "0". O piso
+            // tambem e aplicado (DecoratableLocation.cs:273-274, 365-408).
+            const int firstFlooringTile = 336; // GetFirstFlooringTile()
+            for (var y = 0; y < back.Height; y++)
+            {
+                for (var x = 0; x < back.Width; x++)
+                {
+                    var tile = back.Get(x, y);
+                    if (tile == null || !tile.Properties.ContainsKey("FloorID"))
+                        continue;
+                    if (tile.Sheet == null || !IsWallAndFloorSheet(tile.Sheet.Id))
+                        continue;
+
+                    var num = tile.Index;
+                    var sw = tile.Sheet.SheetWidth;
+                    if (tile.Sheet.Id == "walls_and_floors")
+                        num -= firstFlooringTile;
+                    var idx = num % 2 + sw * (num % (sw * 2) / sw);
+
+                    // UpdateFloor: value=0 -> 0*2 + 0/(sw/2)*sw = 0;
+                    // walls_and_floors -> +GetFirstFlooringTile() = 336.
+                    var targetTile = back.Get(x, y);
+                    if (targetTile != null)
+                        targetTile.Index = firstFlooringTile + idx;
+                }
+            }
+        }
+
+        private static bool IsWallAndFloorSheet(string id)
+        {
+            return id == "walls_and_floors" || id.StartsWith("x_WallsAndFloors_");
         }
 
         public void Reset()
         {
-            // Save novo: o jogador nasce deitado na cama (9,8), parado.
-            player = new Vector2(9 * 64f, 9 * 64f);
+            // Original: TitleMenu.createdNewCharacter seta (9,9)*64 com
+            // isInBed=true; NewDay -> BedFurniture.ApplyWakeUpPosition ->
+            // GetPlayerBedSpot (10,9), ShiftPositionForBed (-64 X se o tile a
+            // esquerda da cama estiver livre) e +32 em Y. Resultado tipico:
+            // (576, 608), virado para a direita (facing 1).
+            player = new Vector2(9 * 64f, 9 * 64f + 32f);
             target = player;
             hasTarget = false;
-            facing = 2;
+            facing = 1;
             direction = Vector2.Zero;
             UpdateCamera();
         }
@@ -202,11 +244,129 @@ namespace LumiaValley.Game
             get { return Matrix.CreateTranslation(-camera.X, -camera.Y, 0f); }
         }
 
+        public bool HasDialog { get { return dialogText != null; } }
+
         public void OnTap(Vector2 screenPoint)
         {
+            var world = screenPoint + camera;
+            var tx = (int)(world.X / 64f);
+            var ty = (int)(world.Y / 64f);
+
+            // Ordem do original: Buildings.Action -> TouchAction -> moveis.
+            if (TryTileAction(tx, ty))
+                return;
+            if (TryFurnitureAction(tx, ty))
+                return;
+
             // Sem D-pad: apenas toque no mundo, como no original em desktop.
-            target = screenPoint + camera;
+            target = world;
             hasTarget = true;
+        }
+
+        /// <summary>Trata o toque numa opcao do dialogo (ponto virtual).</summary>
+        public void HandleDialogTap(Vector2 point)
+        {
+            if (dialogRects == null)
+                return;
+            for (var i = 0; i < dialogRects.Length; i++)
+            {
+                if (dialogRects[i].Contains(point))
+                {
+                    var action = dialogAction;
+                    dialogText = null;
+                    dialogOptions = null;
+                    dialogRects = null;
+                    if (action != null) action(i);
+                    return;
+                }
+            }
+            // Toque fora fecha o dialogo sem acao.
+            dialogText = null;
+            dialogOptions = null;
+            dialogRects = null;
+        }
+
+        private void ShowDialog(string text, string[] options, Action<int> action)
+        {
+            dialogText = text;
+            dialogOptions = options;
+            dialogAction = action;
+            hasTarget = false;
+            walkFrame = 0;
+            walkMs = 0;
+        }
+
+        private bool TryTileAction(int tx, int ty)
+        {
+            if (map == null || map.Layers.Count < 2)
+                return false;
+            var buildings = map.Layers[1];
+            var tile = buildings.Get(tx, ty);
+            if (tile == null)
+                return false;
+            string action;
+            if (!tile.Properties.TryGetValue("Action", out action))
+                return false;
+            if (!action.StartsWith("Warp"))
+                return false;
+            // GameLocation.performAction "Warp": troca de mapa. Ate a cena da
+            // fazenda existir, mostramos a acao resolvida em vez de engasgar.
+            var parts = action.Split(' ');
+            var destino = parts.Length > 1 ? parts[1] : "Farm";
+            ShowDialog("Ir para " + destino + "?", new[] { "Agora", "Depois" },
+                i => { if (i == 0) { /* troca de cena futura */ } });
+            return true;
+        }
+
+        private bool TryFurnitureAction(int tx, int ty)
+        {
+            // Cama: BedFurniture.DoesTileHaveProperty injeta TouchAction="Sleep"
+            // no tile (bed.X + bedTileOffset, bed.Y + 1) = (10,9).
+            if (tx == 10 && ty == 9)
+            {
+                var dormir = Localization.Location("FarmHouse_Bed_GoToSleep", "Dormir agora?");
+                ShowDialog(dormir, new[] { "Sim", "Nao" }, i =>
+                {
+                    if (i != 0) return;
+                    // Game1.NewDay observavel: hora 6:00, energia cheia.
+                    gameMinutes = 360;
+                    energy = 270;
+                    hasTarget = false;
+                    player = new Vector2(9 * 64f, 9 * 64f + 32f);
+                    facing = 1;
+                    UpdateCamera();
+                });
+                return true;
+            }
+
+            // TV: Furniture.checkForAction (TV.cs:41-75).
+            if (tx == 1 && ty == 4)
+            {
+                ShowDialog(Localization.CS("TV.cs.13120", "O que voc\\u00ea quer assistir?"),
+                    new[] { Localization.CS("TV.cs.13105", "Previs\\u00e3o do tempo"),
+                            Localization.CS("TV.cs.13107", "Hor\\u00f3scopo"),
+                            Localization.CS("TV.cs.13118", "Sair") },
+                    i => { });
+                return true;
+            }
+
+            // Lareira: FarmHouse.checkAction alterna fireplaceOn (tiles 794-797).
+            if (tx == 8 && ty == 4)
+            {
+                fireplaceOn = !fireplaceOn;
+                return true;
+            }
+
+            // Baú presente: Chest.dumpContents (3,7).
+            if (tx == 3 && ty == 7 && !giftboxOpened)
+            {
+                ShowDialog("Voc\\u00ea recebeu 15 sementes!", new[] { "OK" }, i =>
+                {
+                    giftboxOpened = true;
+                });
+                return true;
+            }
+            return false;
         }
 
         public void ReleaseDirection()
@@ -381,6 +541,34 @@ namespace LumiaValley.Game
             DrawFarmer(spriteBatch);
             DrawMap(spriteBatch, true);
             DrawHud(spriteBatch);
+            DrawDialog(spriteBatch);
+        }
+
+        /// <summary>
+        /// Caixa de dialogo em coordenadas de tela (compensa a camera como o HUD).
+        /// </summary>
+        private void DrawDialog(SpriteBatch batch)
+        {
+            if (dialogText == null || font == null)
+                return;
+            var ox = (int)camera.X;
+            var oy = (int)camera.Y;
+            var x = 96 + ox;
+            var y = ViewportConfig.VirtualHeight - 208 + oy;
+            var w = 448;
+            var h = 176;
+            batch.Draw(pixel, new Rectangle(x, y, w, h), new Color(18, 16, 28) * 0.96f);
+            batch.Draw(pixel, new Rectangle(x + 4, y + 4, w - 8, 2), new Color(220, 196, 128));
+            batch.DrawString(font, dialogText, new Vector2(x + 16, y + 16), Color.White);
+
+            dialogRects = new Rectangle[dialogOptions.Length];
+            for (var i = 0; i < dialogOptions.Length; i++)
+            {
+                var r = new Rectangle(x + 16, y + 56 + i * 32, w - 32, 28);
+                dialogRects[i] = r;
+                batch.Draw(pixel, r, i == 0 ? new Color(58, 92, 52) : new Color(36, 32, 48));
+                batch.DrawString(font, dialogOptions[i], new Vector2(r.X + 8, r.Y + 6), Color.White);
+            }
         }
 
         private void DrawMap(SpriteBatch batch, bool front)
@@ -447,6 +635,17 @@ namespace LumiaValley.Game
                 new Vector2(windowLight.Width / 2f, windowLight.Height / 2f),
                 1.1f, SpriteEffects.None, 0f);
 
+            // Lareira acesa: GameLocation.setFireplace cria duas luzes
+            // (tileX*1000 + tileY) com raio 2, sprite 12x11 de Cursors.
+            if (fireplaceOn && cursors != null)
+            {
+                var fp = new Vector2(8 * 64f + 32f, 4 * 64f - 32f);
+                batch.Draw(cursors, fp, new Rectangle(276, 1985, 12, 11),
+                    new Color(255, 214, 150) * 0.35f, 0f,
+                    new Vector2(cursors.Bounds.Center.X, cursors.Bounds.Center.Y),
+                    2f, SpriteEffects.None, 0f);
+            }
+
             batch.End();
             batch.Begin(samplerState: SamplerState.PointClamp,
                 transformMatrix: Game1.SceneTransform);
@@ -471,8 +670,10 @@ namespace LumiaValley.Game
             furniture.Draw(batch, 1614, 3, 1);   // janela
             furniture.Draw(batch, 1618, 6, 8);   // tapete
             furniture.Draw(batch, 1602, 5, 1);   // quadro
-            furniture.Draw(batch, 1792, 8, 4, isOn: true, timeMs: time); // lareira
-            furniture.DrawGiftbox(batch, 3, 7);  // bau-presente com 15 parafusos
+            furniture.Draw(batch, 1792, 8, 4,
+                isOn: fireplaceOn, timeMs: time); // lareira (FarmHouse.fireplaceOn)
+            if (!giftboxOpened)
+                furniture.DrawGiftbox(batch, 3, 7);  // bau-presente com 15 parafusos
         }
 
         /// <summary>Mesmas camadas do preview da criacao: corpo, calca, camisa,

@@ -44,7 +44,12 @@ namespace LumiaValley.Game.Screens
         public IScreen Update(GameTime gameTime, Vector2? tap)
         {
             if (tap.HasValue)
-                scene.OnTap(tap.Value);
+            {
+                if (scene.HasDialog)
+                    scene.HandleDialogTap(tap.Value);
+                else
+                    scene.OnTap(tap.Value);
+            }
 
             scene.Update(gameTime);
             return this;

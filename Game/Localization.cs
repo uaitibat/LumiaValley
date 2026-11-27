@@ -13,6 +13,7 @@ namespace LumiaValley.Game
     {
         private static Dictionary<string, string> csFiles;
         private static Dictionary<string, string> ui;
+        private static Dictionary<string, string> locations;
         private static bool loaded;
 
         public static void Load(ContentManager content)
@@ -23,6 +24,7 @@ namespace LumiaValley.Game
             loaded = true;
             csFiles = TryLoad(content, "Strings/StringsFromCSFiles.pt-BR");
             ui = TryLoad(content, "Strings/UI.pt-BR");
+            locations = TryLoad(content, "Strings/Locations.pt-BR");
         }
 
         private static Dictionary<string, string> TryLoad(ContentManager content, string asset)
@@ -44,6 +46,15 @@ namespace LumiaValley.Game
         {
             string value;
             if (csFiles != null && csFiles.TryGetValue(key, out value) && !string.IsNullOrEmpty(value))
+                return value;
+            return fallback;
+        }
+
+        /// <summary>String de Locations.pt-BR (ex: FarmHouse_Bed_GoToSleep).</summary>
+        public static string Location(string key, string fallback)
+        {
+            string value;
+            if (locations != null && locations.TryGetValue(key, out value) && !string.IsNullOrEmpty(value))
                 return value;
             return fallback;
         }
