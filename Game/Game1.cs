@@ -21,6 +21,8 @@ namespace LumiaValley.Game
         private int sceneHeight;
         private IScreen current;
 
+        public static bool HasExternalGameFolder { get; private set; }
+
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -28,7 +30,9 @@ namespace LumiaValley.Game
             // chain pelo SwapChainPanel.
             graphics.SupportedOrientations =
                 DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
-            Content.RootDirectory = "Content";
+            var portContent = new PortContentManager(Services, "Content");
+            Content = portContent;
+            HasExternalGameFolder = portContent.HasExternalFolder;
             TouchPanel.EnabledGestures = GestureType.Tap;
         }
 

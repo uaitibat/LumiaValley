@@ -140,8 +140,8 @@ jobs:
           try {
             # fullport usa uma tag propria para nao sobrescrever o appx da main.
             $release = Invoke-RestMethod -Headers $headers `
-              -Uri "$api/releases/tags/fullport"
-            Write-Host "Release fullport existente reaproveitada"
+              -Uri "$api/releases/tags/port"
+            Write-Host "Release port existente reaproveitada"
 
             # Atualiza o corpo da release para mostrar o build atual.
             $patchBody = @{ body = "Build automatico: $sha" } | ConvertTo-Json
@@ -155,11 +155,11 @@ jobs:
               Write-Host "Asset antigo removido: $($old.name)"
             }
           } catch {
-            Write-Host "Criando release fullport"
+            Write-Host "Criando release port"
 
             $body = @{
-              tag_name = "fullport"
-              name = "LumiaValley ARM (fullport - experimental)"
+              tag_name = "port"
+              name = "LumiaValleyV1.1 ARM (port - pasta do jogo externa)"
               body = "Build automatico: $sha"
               draft = $false
               prerelease = $false
@@ -190,4 +190,4 @@ jobs:
             Write-Host "Publicado: $($p.Name)"
           }
 
-          Write-Host "Appx publicado (privado): https://github.com/$assetsRepo/releases/tag/fullport"
+          Write-Host "Appx publicado (privado): https://github.com/$assetsRepo/releases/tag/port"

@@ -276,6 +276,11 @@ namespace LumiaValley.Game.Screens
                 {
                     return new OptionsScreen();
                 }
+                else if (Contains(new Rectangle(16, 664, 180, 36), tap.Value))
+                {
+                    // Port tipo PortMaster: escolher a pasta com os XNB do jogo.
+                    _ = PortFolderPicker.PickAsync();
+                }
             }
 
             return this;
@@ -516,6 +521,14 @@ namespace LumiaValley.Game.Screens
             batch.DrawString(font,
                 Localization.CS("StringsFromCSFiles:TitleMenu.cs.11740", "Idioma"),
                 new Vector2(1168, 597), Color.White);
+
+            // Botao da pasta do jogo (appx tipo port).
+            var label = Game1.HasExternalGameFolder
+                ? "Pasta do jogo: OK" : "Pasta do jogo";
+            batch.Draw(pixel, new Rectangle(16, 664, 180, 36),
+                new Color(24, 28, 40) * 0.85f);
+            batch.DrawString(font, label, new Vector2(24, 672),
+                Game1.HasExternalGameFolder ? new Color(140, 220, 130) : Color.White);
         }
 
         /// <summary>Ceu e logo usados como fundo da criacao de personagem.</summary>

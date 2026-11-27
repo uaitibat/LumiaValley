@@ -3,10 +3,10 @@
          xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
          xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
          IgnorableNamespaces="uap mp">
-  <Identity Name="LumiaValley" Publisher="CN=uaiti" Version="0.1.0.0" />
+  <Identity Name="LumiaValleyV1.1" Publisher="CN=uaiti" Version="0.1.0.0" />
   <mp:PhoneIdentity PhoneProductId="9ec8eb2f-bc04-4607-a525-0e31e18b8d4b" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
-    <DisplayName>LumiaValley</DisplayName>
+    <DisplayName>LumiaValleyV1.1</DisplayName>
     <PublisherDisplayName>uaiti</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -18,7 +18,7 @@
   </Resources>
   <Applications>
     <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="LumiaValley.App">
-      <uap:VisualElements DisplayName="LumiaValley" Square150x150Logo="Assets\Square150x150Logo.png"
+      <uap:VisualElements DisplayName="LumiaValleyV1.1" Square150x150Logo="Assets\Square150x150Logo.png"
                           Square44x44Logo="Assets\Square44x44Logo.png" Description="Port experimental de Stardew Valley para Windows 10 Mobile"
                           BackgroundColor="#1B4D3E">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
