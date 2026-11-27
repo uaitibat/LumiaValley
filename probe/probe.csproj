@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <NoWarn>CS0618;CS0612;CS0169;CS0649;CS0414</NoWarn>
+    <DefineConstants>NO_STEAM;NO_GALAXY</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
+    <Compile Include="../FullSrc/**/*.cs" Exclude="../FullSrc/**/StardewValley.Network/LidgrenClient.cs;../FullSrc/**/StardewValley.Network/LidgrenServer.cs;../FullSrc/**/StardewValley.Network/GameServer.cs;../FullSrc/**/StardewValley.SDKs/**/*.cs;../FullSrc/**/StardewValley.BellsAndWhistles/SpriteText.cs;../FullSrc/**/StardewValley/LidgrenClient.cs;../FullSrc/**/StardewValley/Network/Lidgren*.cs" />
+    <Compile Include="../FullDeps/xTile/**/*.cs" Exclude="../FullDeps/**/Properties/AssemblyInfo.cs" />
+    <Compile Include="../FullDeps/StardewValley.GameData/**/*.cs" Exclude="../FullDeps/**/Properties/AssemblyInfo.cs" />
+    <Compile Include="Stubs.cs" />
+    <Compile Include="SpriteTextShim.cs" />
+    <Compile Include="StubsFull.cs" />
+  </ItemGroup>
+</Project>
