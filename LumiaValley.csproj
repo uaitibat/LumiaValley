@@ -113,6 +113,7 @@
        escolhida pelo usuario no cartao SD (PortContentManager). -->
   <ItemGroup>
     <Content Include="Assets\LauncherBackground.jpg" />
+    <Content Include="Assets\Fonts\SmallFont.pt-BR.xnb" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml"><Generator>MSBuild:Compile</Generator><SubType>Designer</SubType></ApplicationDefinition>

@@ -23,8 +23,17 @@ namespace LumiaValley.Game.Screens
             pixel = new Texture2D(device, 1, 1);
             pixel.SetData(new[] { Color.White });
             background = LoadPackageImage(device, "Assets/LauncherBackground.jpg");
-            try { font = content.Load<SpriteFont>("Fonts/SmallFont.pt-BR"); }
-            catch { font = null; }
+            // A fonte foi embutida em Assets/Fonts (fora do Content externo).
+            try
+            {
+                var assetFonts = new ContentManager(content.ServiceProvider, "Assets");
+                font = assetFonts.Load<SpriteFont>("Fonts/SmallFont.pt-BR");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Fonte: " + ex.Message);
+                font = null;
+            }
         }
 
         /// <summary>Carrega um JPG do pacote pelo FromStream do MonoGame
@@ -91,13 +100,14 @@ namespace LumiaValley.Game.Screens
                 batch.Draw(pixel, new Rectangle(0, 0, w, h), new Color(20, 24, 34));
             }
 
-            // Faixa escura no topo e botoes.
-            batch.Draw(pixel, new Rectangle(0, 0, w, 260), Color.Black * 0.72f);
+            // Titulo com sombra direto sobre a foto (sem faixa que corta).
             if (font != null)
             {
+                batch.DrawString(font, "LumiaValley V1.1", new Vector2(42, 62), Color.Black * 0.8f);
                 batch.DrawString(font, "LumiaValley V1.1", new Vector2(40, 60), Color.White);
+                batch.DrawString(font, status, new Vector2(42, 152), Color.Black * 0.8f);
                 batch.DrawString(font, status, new Vector2(40, 150),
-                    new Color(210, 210, 190));
+                    new Color(230, 230, 210));
             }
 
             DrawButton(batch, 880, Game1.HasExternalGameFolder ? "Pasta do jogo: OK" : "Pasta do jogo",
