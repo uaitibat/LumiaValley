@@ -46,6 +46,7 @@ namespace LumiaValley.Game
         private Texture2D pantSheet;
         private Texture2D accessorySheet;
         private Texture2D skinSheet;
+        private Texture2D shoeSheet;
         private SpriteFont font;
         private TileMap map;
         private readonly Dictionary<string, Texture2D> sheets = new Dictionary<string, Texture2D>();
@@ -94,6 +95,7 @@ namespace LumiaValley.Game
                 pantSheet = content.Load<Texture2D>("Characters/Farmer/pants");
                 accessorySheet = content.Load<Texture2D>("Characters/Farmer/accessories");
                 skinSheet = content.Load<Texture2D>("Characters/Farmer/skinColors");
+                shoeSheet = content.Load<Texture2D>("Characters/Farmer/shoeColors");
             }
             catch (Exception ex)
             {
@@ -246,6 +248,8 @@ namespace LumiaValley.Game
                 walkMs = 0;
             }
 
+            farmerSprite.Update(dt * 1000);
+
             ClampPlayer();
             UpdateCamera();
         }
@@ -381,159 +385,50 @@ namespace LumiaValley.Game
         /// <summary>Mesmas camadas do preview da criacao: corpo, calca, camisa,
         /// cabelo, braco e acessorio. Escala 4 = 64x128 no espaco do mundo.
         /// </summary>
+        private readonly FarmerSpritePort farmerSprite = new FarmerSpritePort();
+        private FarmerRendererPort farmerRenderer;
+        private int lastFacing = -1;
+        private bool lastWalking;
+
         private void DrawFarmer(SpriteBatch batch)
         {
             if (farmerBase == null)
                 return;
 
-            var pos = new Vector2((float)Math.Floor(player.X - 32), (float)Math.Floor(player.Y - 112));
+            if (farmerRenderer == null)
+                farmerRenderer = new FarmerRendererPort(farmerBase, hairSheet, shirtSheet,
+                    pantSheet, accessorySheet, slot ?? new SaveSlot(),
+                    skinSheet, shoeSheet, shirtSheet);
 
-            // Game1.draw: shadowTexture em player.Position + (32,24),
-            // origem no centro, escala 4.
+            // Farmer.Position e o TOPO da caixa de colisao (pes - 32). O sprite
+            // e desenhado com origin.Y = 32, entao a sombra fica 8px acima dos pes.
             if (shadow != null)
-                batch.Draw(shadow, new Vector2(player.X + 32f, player.Y + 24f),
+                batch.Draw(shadow, new Vector2(player.X, player.Y - 8f),
                     shadow.Bounds, Color.White, 0f,
                     new Vector2(shadow.Bounds.Center.X, shadow.Bounds.Center.Y),
                     4f, SpriteEffects.None, player.Y / 10000f - 0.000001f);
 
-            var male = slot == null || slot.IsMale;
-            // Tom fixo da 1.5.6; a leitura do XNB de skinColors no UWP ARM
-            // devolve valores inconsistentes, entao usamos o padrao.
+            var walking = hasTarget;
+            if (facing != lastFacing || walking != lastWalking)
+            {
+                farmerSprite.SetDirection(facing, walking);
+                lastFacing = facing;
+                lastWalking = walking;
+            }
+
+            // Pele: trio sombra/base/luz do skinColors, indice do save.
             var skin = new Color(224, 172, 140);
-            // Paletas identicas as da criacao de personagem.
-            var hairPalette = new[]
+            if (skinSheet != null && slot != null)
             {
-                new Color(110, 58, 30), new Color(129, 66, 36), new Color(155, 79, 43),
-                new Color(193, 90, 50), new Color(224, 137, 83), new Color(246, 191, 121),
-                new Color(255, 222, 170), new Color(148, 118, 92), new Color(94, 73, 54),
-                new Color(75, 49, 32), new Color(45, 35, 25), new Color(241, 174, 73)
-            };
-            var shirtPalette = new[]
-            {
-                new Color(211, 215, 211), new Color(88, 110, 170), new Color(64, 86, 150),
-                new Color(50, 62, 120), new Color(148, 76, 70), new Color(118, 60, 56),
-                new Color(80, 44, 40), new Color(192, 148, 92), new Color(148, 106, 64),
-                new Color(96, 72, 48), new Color(212, 176, 92), new Color(164, 128, 64)
-            };
-            // Valores do slot: 0 e 1 sao os padroes da 1.5.6 (que o original
-            // usa quando o save nao traz cor/estilo explicito).
-            var hairIndex = slot == null ? 0 : slot.Hair;
-            var hairTone = slot == null ? 0 : slot.HairColor;
-            var shirtTone = slot == null ? 1 : slot.ShirtColor;
-            var hairColor = hairPalette[Wrap(hairTone, hairPalette.Length)];
-            // ShirtColor 0 = branco da 1.5.6, mas ele fica invisivel sobre o
-            // fundo claro. Usamos o azul padrao quando o save nao traz cor.
-            var shirtColor = shirtTone <= 0
-                ? new Color(88, 110, 170)
-                : shirtPalette[Wrap(shirtTone, shirtPalette.Length)];
-            var pantsPalette = new[]
-            {
-                new Color(64, 86, 150), new Color(46, 85, 183), new Color(38, 64, 128),
-                new Color(88, 110, 170), new Color(148, 76, 70), new Color(118, 60, 56),
-                new Color(80, 44, 40), new Color(96, 72, 48), new Color(112, 148, 96),
-                new Color(72, 112, 80), new Color(48, 80, 60), new Color(64, 64, 64),
-                new Color(126, 92, 140), new Color(180, 180, 180), new Color(192, 148, 92),
-                new Color(164, 128, 64), new Color(92, 64, 108), new Color(64, 44, 76),
-                new Color(50, 62, 120), new Color(211, 215, 211)
-            };
-            var eyePalette = new[]
-            {
-                new Color(96, 64, 40), new Color(128, 88, 56), new Color(160, 116, 76),
-                new Color(80, 112, 128), new Color(96, 140, 160), new Color(128, 176, 188),
-                new Color(64, 96, 72), new Color(96, 132, 84), new Color(128, 164, 104),
-                new Color(112, 72, 120), new Color(148, 104, 148), new Color(180, 148, 180)
-            };
-            var pantsColor = pantsPalette[Wrap(slot == null ? 0 : slot.PantsColor, pantsPalette.Length)];
-            var eyeColor = eyePalette[Wrap(slot == null ? 0 : slot.EyeColor, eyePalette.Length)];
-
-            // FarmerSprite.UpdateSourceRect: frame*16 % 96, frame*16/96*32.
-            // Frames idle: cima=12, direita=6, baixo=0, esquerda=6 + flip.
-            var flip = facing == 3 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
-
-            // FarmerSprite.getAnimationFromIndex (linhas 1212-1239).
-            var idleFrames = new[] { 12, 6, 0, 6 };
-            var walkFrames = new[]
-            {
-                new[] { 13, 12, 14, 12 }, // cima
-                new[] { 7, 6, 8, 6 },     // direita
-                new[] { 1, 0, 2, 0 },     // baixo
-                new[] { 7, 6, 8, 6 }      // esquerda
-            };
-            var bodyFrame = hasTarget && walkFrame > 0
-                ? walkFrames[Wrap(facing, 4)][walkFrame]
-                : idleFrames[Wrap(facing, 4)];
-            var bodySrc = new Rectangle(bodyFrame % 6 * 16, bodyFrame / 6 * 32, 16, 32);
-            DrawLayer(batch, farmerBase, pos, bodySrc, skin, flip);
-
-            var fx = FeatureX[Wrap(bodyFrame, FeatureX.Length)];
-            var fy = FeatureY[Wrap(bodyFrame, FeatureY.Length)];
-
-            // Olhos (FarmerRenderer:764-781): branco em (5,16), irina em (264,2).
-            if (facing != 0)
-            {
-                // FarmerRenderer:765-770 — num = 5 +/- fx, +3 (direita) ou +1 (esquerda).
-                var eyeNum = (facing == 3 ? 5 - fx : 5 + fx)
-                    + (facing == 1 ? 3 : facing == 3 ? 1 : 0);
-                var eyeX = eyeNum * 4f;
-                var whiteY = fy * 4f + (male && facing != 2 ? 36f : 40f);
-                var irisY = fy * 4f + (facing == 1 || facing == 3 ? 40f : 44f);
-                DrawLayer(batch, farmerBase, pos + new Vector2(eyeX, whiteY),
-                    new Rectangle(5, 16, facing == 2 ? 6 : 2, 2), skin, flip);
-                DrawLayer(batch, farmerBase, pos + new Vector2(eyeX, irisY),
-                    new Rectangle(264 + (facing == 3 ? 4 : 0), 2, facing == 2 ? 6 : 2, 2),
-                    eyeColor, flip);
+                var palette = new Color[skinSheet.Width * skinSheet.Height];
+                skinSheet.GetData(palette);
+                var which = Wrap(slot.Skin, skinSheet.Height);
+                skin = palette[which * 3 + 1];
             }
 
-            if (pantSheet != null && slot != null)
-            {
-                var style = slot.Pants % 20;
-                DrawLayer(batch, pantSheet, pos,
-                    new Rectangle(style % 10 * 192 + (male ? 0 : 96), style / 10 * 688, 16, 32),
-                    pantsColor, flip);
-            }
-
-            if (shirtSheet != null && slot != null && slot.Shirt >= 0 && slot.Shirt < 112)
-            {
-                var sx = slot.Shirt * 8 % 128;
-                var sy = slot.Shirt * 8 / 128 * 32;
-                // FarmerRenderer: shirtYOffset=56 + fx/fy do frame.
-                var sp = pos + new Vector2(16f + fx * 4f, 56f + fy * 4f);
-                DrawLayer(batch, shirtSheet, sp, new Rectangle(sx, sy, 8, 8), Color.White, flip);
-                DrawLayer(batch, shirtSheet, sp, new Rectangle(sx + 128, sy, 8, 8), shirtColor, flip);
-            }
-
-            if (accessorySheet != null && slot != null && slot.Accessory >= 0 && facing != 0)
-            {
-                var acc = slot.Accessory % 20;
-                // Offset de 16 no sourceRect para os lados; baixo sem offset.
-                var accSrc = new Rectangle(acc * 16 % 128,
-                    acc * 16 / 128 * 32 + (facing == 1 || facing == 3 ? 16 : 0), 16, 16);
-                var accY = facing == 2 ? 8f : 4f;
-                DrawLayer(batch, accessorySheet,
-                    pos + new Vector2(fx * 4f, accY + fy * 4f - (facing == 2 ? 4f : 0f)),
-                    accSrc, Color.White, flip);
-            }
-
-            if (hairSheet != null)
-            {
-                var hair = Wrap(hairIndex, 56);
-                // O offset de direcao e no SOURCERECT (Y da spritesheet),
-                // nao na posicao de destino — era isso que deslocava o cabelo.
-                var hairOffsetY = facing == 0 ? 64 : facing == 1 || facing == 3 ? 32 : 0;
-                var hairSrc = new Rectangle(hair % 8 * 16, hair / 8 * 96 + hairOffsetY, 16, 32);
-                var genderOffset = male && hair >= 16 ? -4f
-                    : !male && hair < 16 ? 4f : 0f;
-                if (facing == 0)
-                    genderOffset += 4f;
-                DrawLayer(batch, hairSheet,
-                    pos + new Vector2(fx * 4f, fy * 4f + genderOffset),
-                    hairSrc, hairColor, flip);
-            }
-
-            // Braco direito por cima do cabelo (FarmerRenderer:789).
-            DrawLayer(batch, farmerBase, pos,
-                new Rectangle(96 + bodyFrame % 6 * 16, bodyFrame / 6 * 32, 16, 32),
-                skin, flip);
+            // Sprite de 128px com pes no ponto do jogador.
+            var pos = new Vector2((float)Math.Floor(player.X - 32), (float)Math.Floor(player.Y - 128));
+            farmerRenderer.Draw(batch, farmerSprite, pos, facing, skin);
         }
 
         private static int Wrap(int value, int count)
