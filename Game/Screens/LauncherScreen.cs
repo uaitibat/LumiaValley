@@ -23,7 +23,7 @@ namespace LumiaValley.Game.Screens
         {
             var count = PortContentManager.GetAssetCount();
             status = count > 0
-                ? "Pasta do jogo: " + count + " XNB carregados. Pode iniciar."
+                ? "Pasta do jogo: " + count + " arquivos-chave encontrados. Pode iniciar."
                 : "Toque em \"Pasta do jogo\" para escolher onde estao os XNB.";
         }
 
@@ -97,8 +97,8 @@ namespace LumiaValley.Game.Screens
             var ok = await PortFolderPicker.PickAsync();
             var count = PortContentManager.GetAssetCount();
             status = ok
-                ? "Pasta do jogo: " + count + " XNB carregados. Pode iniciar."
-                : "Pasta invalida: " + count + " XNB achados. Selecione a pasta Content.";
+                ? "Pasta do jogo: " + count + " arquivos-chave encontrados. Pode iniciar."
+                : "Pasta invalida: " + count + " arquivos-chave achados. Selecione a pasta Content.";
         }
 
         public void Draw(SpriteBatch batch)

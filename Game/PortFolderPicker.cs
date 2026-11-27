@@ -2,24 +2,26 @@ using System;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
-using Windows.Storage.Search;
 using Windows.ApplicationModel.Core;
 using Windows.UI.Core;
 
 namespace LumiaValley.Game
 {
     /// <summary>
-    /// Abre o seletor de pasta, CONTA os XNB encontrados e so aceita a
-    /// pasta se pelo menos um asset-chave existir. O resultado fica em
-    /// cache (LocalSettings) para a home mostrar quantos foram carregados.
+    /// Abre o seletor e valida a pasta usando GetFileAsync direto em arquivos
+    /// conhecidos. CreateFileQueryWithOptions falha em cartoes SD removiveis;
+    /// GetFileAsync funciona com a permissao do FutureAccessList.
     /// </summary>
     public static class PortFolderPicker
     {
-        private static readonly string[] KeyAssets =
+        // Arquivos que SEMPRE existem no Content do Stardew 1.5.6.
+        private static readonly string[] ProbeFiles =
         {
-            "Maps/FarmHouse.xnb",
-            "Data/Furniture.xnb",
-            "LooseSprites/Cursors.pt-BR.xnb"
+            "Maps\\FarmHouse.xnb",
+            "Data\\Furniture.xnb",
+            "LooseSprites\\shadow.xnb",
+            "Fonts\\SmallFont.pt-BR.xnb",
+            "Characters\\Farmer\\farmer_base.xnb"
         };
 
         public static async Task<bool> PickAsync()
@@ -31,80 +33,61 @@ namespace LumiaValley.Game
             };
             picker.FileTypeFilter.Add("*");
 
-            StorageFolder folder = null;
+            StorageFolder picked = null;
             var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
             await dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
             {
-                folder = await picker.PickSingleFolderAsync();
+                picked = await picker.PickSingleFolderAsync();
             });
 
-            if (folder == null)
+            if (picked == null)
             {
                 PortContentManager.SetAssetCount(0);
                 return false;
             }
 
-            // Conta PRIMEIRO na pasta escolhida. Só tenta entrar numa subpasta
-            // "Content" se a pasta escolhida nao tiver XNB nenhum — assim nao
-            // perdemos o caso em que o usuario já selecionou a propria Content.
-            var root = folder;
-            var count = await CountXnb(root);
-            if (count == 0)
+            // Testa a propria pasta e, se falhar, a subpasta Content.
+            StorageFolder root = picked;
+            var found = await ProbeCount(root);
+            if (found == 0)
             {
-                try
+                var sub = await TryFolder(picked, "Content");
+                if (sub != null)
                 {
-                    var sub = await folder.GetFolderAsync("Content");
-                    if (sub != null)
-                    {
-                        root = sub;
-                        count = await CountXnb(root);
-                    }
+                    root = sub;
+                    found = await ProbeCount(root);
                 }
-                catch (Exception) { }
             }
 
-            // Qualquer XNB na pasta ja basta para validar. O HasKeyAssets era
-            // rigoroso demais (nomes pt-BR/outros assets podem divergir) e
-            // fazia pastas corretas serem marcadas como invalidas.
-            var valid = count > 0;
-            PortContentManager.SaveFolder(root); // guarda a RAIZ dos XNB
-            PortContentManager.SetAssetCount(valid ? count : 0);
-            return valid;
+            PortContentManager.SaveFolder(root);
+            PortContentManager.SetAssetCount(found);
+            return found > 0;
         }
 
-        private static async Task<int> CountXnb(StorageFolder folder)
+        private static async Task<int> ProbeCount(StorageFolder folder)
         {
-            try
-            {
-                var options = new QueryOptions(CommonFolderQuery.DefaultQuery);
-                // SEM ISSO o UWP so conta a raiz da pasta. Os XNB ficam em
-                // Maps/, Characters/, Data/... -> era por isso que dava 0.
-                options.FolderDepth = FolderDepth.Deep;
-                options.FileTypeFilter.Add(".xnb");
-                var query = folder.CreateFileQueryWithOptions(options);
-                var files = await query.GetFilesAsync();
-                return files.Count;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Contar XNB: " + ex.Message);
+            if (folder == null)
                 return 0;
+            var count = 0;
+            foreach (var relative in ProbeFiles)
+            {
+                var file = await TryFile(folder, relative);
+                if (file != null)
+                    count++;
             }
+            return count;
         }
 
-        private static async Task<bool> HasKeyAssets(StorageFolder folder)
+        private static async Task<StorageFile> TryFile(StorageFolder folder, string relative)
         {
-            foreach (var relative in KeyAssets)
-            {
-                try
-                {
-                    var windowsPath = relative.Replace('/', '\\');
-                    if (await folder.GetFileAsync(windowsPath) != null)
-                        return true; // pelo menos um asset-chave basta
-                }
-                catch (Exception) { }
-            }
-            return false;
+            try { return await folder.GetFileAsync(relative); }
+            catch (Exception) { return null; }
+        }
+
+        private static async Task<StorageFolder> TryFolder(StorageFolder folder, string name)
+        {
+            try { return await folder.GetFolderAsync(name); }
+            catch (Exception) { return null; }
         }
     }
 }
