@@ -73,6 +73,8 @@ A medicao acima era com .NET 8 DesktopGL. Aqui as fontes entram no mesmo
 |---|---|
 | Build #102 (commit `069c7c0`) | 800 (dominante: `CS8370` file-scoped namespace — 798/807 arquivos) |
 | Build #103 (commit `fbf97a9`): `LangVersion` + `AllowUnsafeBlocks` no csproj | 16 |
+| Build #105 (commit `b72e833`): stubs/compat de API | 3 (`CS0506` em `XmlSerializer`) |
+| Build #106 (commit `9b4ce32`): `Serialize`/`Deserialize` com `new` | em validação |
 
 O `LangVersion` nao precisou converter 798 arquivos: o `.csproj` original das
 fontes declara `LangVersion 12.0` e `AllowUnsafeBlocks`, e o projeto UWP nao
@@ -93,6 +95,6 @@ Os 16 restantes sao apenas diferencas de API .NET 5 -> UWP:
   `FullPatches/Vector2SerializerCompat.cs`, com a mesma conversao XML
   `<Vector2><X/><Y/></Vector2>` sobre a API publica do `XmlSerializer`.
 
-O build #105 (commit `b72e833`) valida esse lote. O appx do experimento **nao**
+O build #106 (commit `9b4ce32`) valida esse lote. O appx do experimento **nao**
 publica na release `latest` (que pertence ao build funcional da `main`): o
 workflow do branch salva o pacote como artifact do proprio run.
