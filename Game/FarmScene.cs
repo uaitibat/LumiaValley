@@ -498,17 +498,12 @@ namespace LumiaValley.Game
             {
                 if (furniture.IsPassable(FurnitureIds[i]))
                     continue;
-                // GameLocation.resetForPlayerEntry adiciona a cama em
-                // TemporaryPassableTiles quando o jogador comeca dentro dela.
-                // Liberamos lados e pes para sair; a cabeca (subir) continua
-                // bloqueada, como no original.
-                if (FurnitureIds[i] == 2048 && isInBed)
-                {
-                    if (pos.Y < player.Y && box.Intersects(
-                            furniture.GetBoundingBox(2048, 9, 8)))
-                        return true;
-                    continue;
-                }
+                // Cama: nunca deixar o jogador ANDAR para dentro do lençol.
+                // No original ele se deita via TouchAction (prompt), nao
+                // atravessando a colisao. O unico modo de entrar e o toque
+                // na cama (TryFurnitureAction).
+                if (FurnitureIds[i] == 2048)
+                    return true;
 
                 var fb = furniture.GetBoundingBox(FurnitureIds[i], FurnitureX[i], FurnitureY[i]);
                 if (fb == Rectangle.Empty ||
