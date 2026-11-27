@@ -36,7 +36,7 @@ namespace LumiaValley.Game
             // Launcher vertical; o jogo troca para paisagem ao iniciar.
             ViewportConfig.SetPortrait(true);
             graphics.SupportedOrientations =
-                DisplayOrientation.Portrait | DisplayOrientation.PortraitUpsideDown;
+                DisplayOrientation.Portrait;
             TouchPanel.EnabledGestures = GestureType.Tap;
         }
 
@@ -77,7 +77,7 @@ namespace LumiaValley.Game
             {
                 ViewportConfig.SetPortrait(portrait);
                 graphics.SupportedOrientations = portrait
-                    ? DisplayOrientation.Portrait | DisplayOrientation.PortraitUpsideDown
+                    ? DisplayOrientation.Portrait
                     : DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
             }
             next?.Load(Content, GraphicsDevice);

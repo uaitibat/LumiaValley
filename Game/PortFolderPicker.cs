@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.ApplicationModel.Core;
 using Windows.UI.Core;
 
 namespace LumiaValley.Game
