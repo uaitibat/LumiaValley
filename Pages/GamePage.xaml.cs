@@ -16,8 +16,9 @@ namespace LumiaValley.Pages
             // e compilado junto para permitir trocar sistemas por classes 1:1.
             _game = XamlGame<LumiaValley.Game.Game1>.Create(string.Empty, Window.Current.CoreWindow, SwapPanel);
 
-            DisplayInformation.AutoRotationPreferences =
-                DisplayOrientations.Landscape | DisplayOrientations.LandscapeFlipped;
+            // O launcher e vertical; o jogo troca para paisagem ao iniciar
+            // (Game1.ChangeScreen -> SupportedOrientations).
+            DisplayInformation.AutoRotationPreferences = DisplayOrientations.Portrait;
         }
     }
 }

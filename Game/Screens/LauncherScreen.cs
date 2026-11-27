@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -21,10 +22,42 @@ namespace LumiaValley.Game.Screens
         {
             pixel = new Texture2D(device, 1, 1);
             pixel.SetData(new[] { Color.White });
-            try { background = content.Load<Texture2D>("LauncherBackground"); }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Foto: " + ex.Message); }
+            background = LoadPackageImage(device, "Assets/LauncherBackground.jpg");
             try { font = content.Load<SpriteFont>("Fonts/SmallFont.pt-BR"); }
             catch { font = null; }
+        }
+
+        /// <summary>Carrega um JPG do pacote (Assets/) sem passar pelo ContentManager
+        /// de XNB. Necessario porque o Content/ agora vem da pasta externa.</summary>
+        private static Texture2D LoadPackageImage(GraphicsDevice device, string path)
+        {
+            try
+            {
+                var uri = new Uri("ms-appx:///" + path.Replace('\\', '/'));
+                var file = Windows.Storage.StorageFile.GetFileFromApplicationUriAsync(uri)
+                    .AsTask().GetAwaiter().GetResult();
+                using (var stream = file.OpenStreamForReadAsync().GetAwaiter().GetResult())
+                {
+                    var decoder = Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(
+                        stream.AsRandomAccessStream()).AsTask().GetAwaiter().GetResult();
+                    var pixels = decoder.GetPixelDataAsync(
+                        Windows.Graphics.Imaging.BitmapPixelFormat.Bgra8,
+                        Windows.Graphics.Imaging.BitmapAlphaMode.Straight,
+                        new Windows.Graphics.Imaging.BitmapTransform(),
+                        Windows.Graphics.Imaging.ExifOrientationMode.IgnoreExifOrientation,
+                        Windows.Graphics.Imaging.ColorManagementMode.DoNotColorManage)
+                        .AsTask().GetAwaiter().GetResult().DetachPixelData();
+                    var texture = new Texture2D(device, (int)decoder.PixelWidth,
+                        (int)decoder.PixelHeight, false, SurfaceFormat.Color);
+                    texture.SetData(pixels);
+                    return texture;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Foto: " + ex.Message);
+                return null;
+            }
         }
 
         public Matrix Transform { get { return Matrix.Identity; } }
