@@ -48,6 +48,9 @@ namespace LumiaValley.Game
         private Texture2D skinSheet;
         private Texture2D shoeSheet;
         private SpriteFont font;
+        private readonly DayTimeMoneyBoxPort clock = new DayTimeMoneyBoxPort();
+        private readonly ToolbarPort toolbar = new ToolbarPort();
+        private int selectedSlot;
         private TileMap map;
         private readonly Dictionary<string, Texture2D> sheets = new Dictionary<string, Texture2D>();
         private readonly FurnitureRenderer furniture = new FurnitureRenderer();
@@ -97,6 +100,8 @@ namespace LumiaValley.Game
 
             try { font = content.Load<SpriteFont>("Fonts/SmallFont.pt-BR"); }
             catch { font = null; }
+            try { clock.Load(content); toolbar.Load(content); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("HUD: " + ex.Message); }
             try { cursors = content.Load<Texture2D>("LooseSprites/Cursors.pt-BR"); }
             catch { cursors = null; }
             try { shadow = content.Load<Texture2D>("LooseSprites/shadow"); }
@@ -893,18 +898,16 @@ namespace LumiaValley.Game
             if (font == null)
                 return;
 
-            var hour = 6 + gameMinutes / 60;
-            var minute = gameMinutes % 60;
-            var suffix = hour >= 12 ? "PM" : "AM";
-            var h12 = hour % 12;
-            if (h12 == 0) h12 = 12;
-            var timeText = h12 + ":" + minute.ToString("00") + " " + suffix;
-            var timeSize = font.MeasureString(timeText);
-            batch.DrawString(font, timeText,
-                new Vector2(ViewportConfig.VirtualWidth - 28 - timeSize.X + ox, 24 + oy), Color.White);
-            batch.DrawString(font, "500g",
-                new Vector2(ViewportConfig.VirtualWidth - 28 - font.MeasureString("500g").X + ox, 56 + oy),
-                new Color(255, 228, 120));
+            // DayTimeMoneyBox: relogio/data/clima/dinheiro 1:1.
+            // O original nao desenha hora/dinheiro no drawHUD - delega ao menu.
+            var timeOfDay = (6 + gameMinutes / 60) * 100 + gameMinutes % 60;
+            clock.Draw(batch, ViewportConfig.VirtualWidth, timeOfDay, 1,
+                "spring", 0, 500, (int)elapsedMs % 7000, ox, oy);
+
+            // Toolbar com os 5 itens iniciais de Farmer.initialTools().
+            toolbar.Draw(batch, ViewportConfig.VirtualWidth,
+                ViewportConfig.VirtualHeight, selectedSlot, ox, oy);
+
             // drawWithBorder: a esquerda da barra, com Y = by + 64.
             var staminaText = energy + "/" + maxStamina;
             var labelSize = font.MeasureString("999/999");
