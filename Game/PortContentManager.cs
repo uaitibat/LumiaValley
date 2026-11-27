@@ -6,17 +6,16 @@ using Windows.Storage;
 namespace LumiaValley.Game
 {
     /// <summary>
-    /// ContentManager "tipo port": se o usuario escolheu uma pasta com os
-    /// XNB do jogo, le da pasta; senao usa o Content embutido no appx.
-    /// A restauracao do folder e LAZY para nao bloquear a thread de jogo
-    /// no startup (GetAwaiter().GetResult() em WinRT pode travar).
+    /// ContentManager "tipo port": le os XNB da StorageFolder escolhida pelo
+    /// usuario (cartao SD). A restauracao e LAZY e usa APIs assincronas do
+    /// StorageFolder — File.Exists/File.OpenRead NAO enxergam o caminho
+    /// concedido pelo FutureAccessList no sandbox UWP.
     /// </summary>
     public sealed class PortContentManager : ContentManager
     {
         private const string TokenKey = "LumiaValley.GameFolderToken";
         private StorageFolder _folder;
         private bool _folderResolved;
-        private string _folderPath;
 
         public PortContentManager(IServiceProvider serviceProvider, string rootDirectory)
             : base(serviceProvider, rootDirectory)
@@ -44,7 +43,6 @@ namespace LumiaValley.Game
                     return;
                 _folder = Windows.Storage.AccessCache.StorageApplicationPermissions
                     .FutureAccessList.GetFolderAsync(token).AsTask().GetAwaiter().GetResult();
-                _folderPath = _folder == null ? null : _folder.Path;
             }
             catch (Exception)
             {
@@ -62,20 +60,21 @@ namespace LumiaValley.Game
         protected override Stream OpenStream(string assetName)
         {
             ResolveFolder();
-            if (!string.IsNullOrEmpty(_folderPath))
+            if (_folder != null)
             {
                 try
                 {
-                    // Caminho direto evita GetFileAsync() assincrono na thread
-                    // do jogo. O UWP concede acesso ao folder via FutureAccessList.
-                    var relative = assetName.Replace('/', Path.DirectorySeparatorChar) + ".xnb";
-                    var path = Path.Combine(_folderPath, relative);
-                    if (File.Exists(path))
-                        return File.OpenRead(path);
+                    // StorageFolder.GetFileAsync e o unico modo de ler a pasta
+                    // concedida pelo picker no sandbox UWP.
+                    var relative = assetName.Replace('/', '\\') + ".xnb";
+                    var file = _folder.GetFileAsync(relative).AsTask()
+                        .GetAwaiter().GetResult();
+                    if (file != null)
+                        return file.OpenStreamForReadAsync().GetAwaiter().GetResult();
                 }
                 catch (Exception)
                 {
-                    // Asset ausente: cai para o embutido.
+                    // Asset ausente na pasta: cai para o embutido.
                 }
             }
             return base.OpenStream(assetName);
