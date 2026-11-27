@@ -39,6 +39,8 @@ namespace LumiaValley.Game
         private int gameMinutes = 360;
         private int energy = 270;
         private int facing = 2;
+        private int walkFrame;
+        private double walkMs;
 
         public FarmScene(SaveSlot slot = null)
         {
@@ -201,7 +203,24 @@ namespace LumiaValley.Game
                 else
                 {
                     player += delta / distance * step;
+                    // Farmer.updateMovementAnimation: direcao pelo movimento.
+                    facing = Math.Abs(delta.X) > Math.Abs(delta.Y)
+                        ? (delta.X > 0 ? 1 : 3)
+                        : (delta.Y > 0 ? 2 : 0);
+
+                    // FarmerSprite.getAnimationFromIndex: 4 frames de 200ms.
+                    walkMs += dt * 1000;
+                    if (walkMs >= 200)
+                    {
+                        walkMs -= 200;
+                        walkFrame = (walkFrame + 1) % 4;
+                    }
                 }
+            }
+            else
+            {
+                walkFrame = 0;
+                walkMs = 0;
             }
 
             ClampPlayer();
@@ -384,11 +403,57 @@ namespace LumiaValley.Game
             var shirtColor = shirtTone <= 0
                 ? new Color(88, 110, 170)
                 : shirtPalette[Wrap(shirtTone, shirtPalette.Length)];
-            var pantsColor = new Color(64, 86, 150);
-            // Corpo: facing 2 = camara (Y=0); facing 3 = esquerda (Y=16).
+            var pantsPalette = new[]
+            {
+                new Color(64, 86, 150), new Color(46, 85, 183), new Color(38, 64, 128),
+                new Color(88, 110, 170), new Color(148, 76, 70), new Color(118, 60, 56),
+                new Color(80, 44, 40), new Color(96, 72, 48), new Color(112, 148, 96),
+                new Color(72, 112, 80), new Color(48, 80, 60), new Color(64, 64, 64),
+                new Color(126, 92, 140), new Color(180, 180, 180), new Color(192, 148, 92),
+                new Color(164, 128, 64), new Color(92, 64, 108), new Color(64, 44, 76),
+                new Color(50, 62, 120), new Color(211, 215, 211)
+            };
+            var eyePalette = new[]
+            {
+                new Color(96, 64, 40), new Color(128, 88, 56), new Color(160, 116, 76),
+                new Color(80, 112, 128), new Color(96, 140, 160), new Color(128, 176, 188),
+                new Color(64, 96, 72), new Color(96, 132, 84), new Color(128, 164, 104),
+                new Color(112, 72, 120), new Color(148, 104, 148), new Color(180, 148, 180)
+            };
+            var pantsColor = pantsPalette[Wrap(slot == null ? 0 : slot.PantsColor, pantsPalette.Length)];
+            var eyeColor = eyePalette[Wrap(slot == null ? 0 : slot.EyeColor, eyePalette.Length)];
+
+            // FarmerSprite.UpdateSourceRect: frame*16 % 96, frame*16/96*32.
+            // Frames idle: cima=12, direita=6, baixo=0, esquerda=6 + flip.
             var flip = facing == 3 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
-            var bodyY = facing == 3 ? 16 : 0;
-            DrawLayer(batch, farmerBase, pos, new Rectangle(0, bodyY, 16, 32), skin, flip);
+
+            // FarmerSprite.getAnimationFromIndex (linhas 1212-1239).
+            var idleFrames = new[] { 12, 6, 0, 6 };
+            var walkFrames = new[]
+            {
+                new[] { 13, 12, 14, 12 }, // cima
+                new[] { 7, 6, 8, 6 },     // direita
+                new[] { 1, 0, 2, 0 },     // baixo
+                new[] { 7, 6, 8, 6 }      // esquerda
+            };
+            var bodyFrame = hasTarget && walkFrame > 0
+                ? walkFrames[Wrap(facing, 4)][walkFrame]
+                : idleFrames[Wrap(facing, 4)];
+            var bodySrc = new Rectangle(bodyFrame % 6 * 16, bodyFrame / 6 * 32, 16, 32);
+            DrawLayer(batch, farmerBase, pos, bodySrc, skin, flip);
+
+            // Olhos (FarmerRenderer:764-781): branco em (5,16), irina em (264,2).
+            if (facing != 0)
+            {
+                var eyeX = facing == 1 ? 8 : facing == 3 ? 6 : 5;
+                DrawLayer(batch, farmerBase,
+                    pos + new Vector2(eyeX * 4f, facing == 2 ? 44f : 40f),
+                    new Rectangle(5, 16, facing == 2 ? 6 : 2, 2), skin, flip);
+                DrawLayer(batch, farmerBase,
+                    pos + new Vector2(eyeX * 4f, facing == 2 ? 44f : 40f),
+                    new Rectangle(264 + (facing == 3 ? 4 : 0), 2, facing == 2 ? 6 : 2, 2),
+                    eyeColor, flip);
+            }
 
             if (pantSheet != null && slot != null)
             {
@@ -416,16 +481,16 @@ namespace LumiaValley.Game
 
             if (hairSheet != null)
             {
-                // O original usa o tile do cabelo doindice escolhido e tinta
-                // com a cor do HairData/picker. Hair 0 = cabelo curto.
                 var hair = Wrap(hairIndex, 56);
-                // FarmerRenderer.case 2: sourceRect 16x15 (nao 16x32).
-                DrawLayer(batch, hairSheet, pos,
-                    new Rectangle(hair % 8 * 16, hair / 8 * 96, 16, 15), hairColor, flip);
+                var hairOffsetY = facing == 0 ? 64 : facing == 1 || facing == 3 ? 32 : 0;
+                DrawLayer(batch, hairSheet, pos + new Vector2(0, hairOffsetY),
+                    new Rectangle(hair % 8 * 16, hair / 8 * 96, 16, 32), hairColor, flip);
             }
 
-            // Braco direito por cima do cabelo.
-            DrawLayer(batch, farmerBase, pos, new Rectangle(96, bodyY, 16, 32), skin, flip);
+            // Braco direito por cima do cabelo (FarmerRenderer:789).
+            DrawLayer(batch, farmerBase, pos,
+                new Rectangle(96 + bodyFrame % 6 * 16, bodyFrame / 6 * 32, 16, 32),
+                skin, flip);
         }
 
         private static int Wrap(int value, int count)
