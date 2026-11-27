@@ -471,7 +471,10 @@ namespace LumiaValley.Game
             // Olhos (FarmerRenderer:764-781): branco em (5,16), irina em (264,2).
             if (facing != 0)
             {
-                var eyeX = (5 + fx) * 4f;
+                // FarmerRenderer:765-770 — num = 5 +/- fx, +3 (direita) ou +1 (esquerda).
+                var eyeNum = (facing == 3 ? 5 - fx : 5 + fx)
+                    + (facing == 1 ? 3 : facing == 3 ? 1 : 0);
+                var eyeX = eyeNum * 4f;
                 var whiteY = fy * 4f + (male && facing != 2 ? 36f : 40f);
                 var irisY = fy * 4f + (facing == 1 || facing == 3 ? 40f : 44f);
                 DrawLayer(batch, farmerBase, pos + new Vector2(eyeX, whiteY),
@@ -499,13 +502,13 @@ namespace LumiaValley.Game
                 DrawLayer(batch, shirtSheet, sp, new Rectangle(sx + 128, sy, 8, 8), shirtColor, flip);
             }
 
-            if (accessorySheet != null && slot != null && slot.Accessory >= 0)
+            if (accessorySheet != null && slot != null && slot.Accessory >= 0 && facing != 0)
             {
                 var acc = slot.Accessory % 20;
+                // Offset de 16 no sourceRect para os lados; baixo sem offset.
+                var accSrc = new Rectangle(acc * 16 % 128,
+                    acc * 16 / 128 * 32 + (facing == 1 || facing == 3 ? 16 : 0), 16, 16);
                 var accY = facing == 2 ? 8f : 4f;
-                var accSrc = new Rectangle(acc * 16 % 128, acc * 16 / 128 * 32, 16, 16);
-                if (facing == 0 || facing == 1 || facing == 3)
-                    accSrc.Y += facing == 0 ? 0 : 16;
                 DrawLayer(batch, accessorySheet,
                     pos + new Vector2(fx * 4f, accY + fy * 4f - (facing == 2 ? 4f : 0f)),
                     accSrc, Color.White, flip);
@@ -514,15 +517,16 @@ namespace LumiaValley.Game
             if (hairSheet != null)
             {
                 var hair = Wrap(hairIndex, 56);
-                var hairSrc = new Rectangle(hair % 8 * 16, hair / 8 * 96, 16, 32);
+                // O offset de direcao e no SOURCERECT (Y da spritesheet),
+                // nao na posicao de destino — era isso que deslocava o cabelo.
                 var hairOffsetY = facing == 0 ? 64 : facing == 1 || facing == 3 ? 32 : 0;
-                // Ajuste de genero do FarmerRenderer (linha 650).
+                var hairSrc = new Rectangle(hair % 8 * 16, hair / 8 * 96 + hairOffsetY, 16, 32);
                 var genderOffset = male && hair >= 16 ? -4f
                     : !male && hair < 16 ? 4f : 0f;
                 if (facing == 0)
                     genderOffset += 4f;
                 DrawLayer(batch, hairSheet,
-                    pos + new Vector2(fx * 4f, fy * 4f + hairOffsetY + genderOffset),
+                    pos + new Vector2(fx * 4f, fy * 4f + genderOffset),
                     hairSrc, hairColor, flip);
             }
 

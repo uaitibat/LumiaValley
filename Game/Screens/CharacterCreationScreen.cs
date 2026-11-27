@@ -685,7 +685,7 @@ namespace LumiaValley.Game.Screens
             }
 
             // Acessorio (sempre desenhado quando >= 0, inclusive de frente).
-            if (accessoryTexture != null && draft.Accessory >= 0)
+            if (accessoryTexture != null && draft.Accessory >= 0 && facing != 0)
             {
                 var acc = Wrap(draft.Accessory, 20);
                 var src = new Rectangle(acc * 16 % 128, acc * 16 / 128 * 32 + accessoryOffsetY, 16, 16);
