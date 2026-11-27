@@ -77,6 +77,9 @@ namespace LumiaValley.Game
             try
             {
                 var options = new QueryOptions(CommonFolderQuery.DefaultQuery);
+                // SEM ISSO o UWP so conta a raiz da pasta. Os XNB ficam em
+                // Maps/, Characters/, Data/... -> era por isso que dava 0.
+                options.FolderDepth = FolderDepth.Deep;
                 options.FileTypeFilter.Add(".xnb");
                 var query = folder.CreateFileQueryWithOptions(options);
                 var files = await query.GetFilesAsync();
