@@ -79,6 +79,9 @@ A medicao acima era com .NET 8 DesktopGL. Aqui as fontes entram no mesmo
 | Build #109 (commit `6e07554`): shim `ThreadStart` | 56 (`Binder`, reflexao, XML) |
 | Build #110 (commit `dbcee35`): shims de reflexao/IO | 9 (duplicatas + casts) |
 | Build #111 (commit `6069700`): remover extensoes duplicadas | **0 — SUCESSO** |
+| Build #113 (commit `4e178c2`): merge dos 5 commits de fidelidade da main | **0 — SUCESSO** |
+| Build #114 (commit `4f936e0`): moveis 1:1 + colisao + release `fullport` | **0 — SUCESSO** |
+| Build #115 (commit `61e570e`): parar ao colidir, cama parcial, catalogo | **0 — SUCESSO** |
 
 O `LangVersion` nao precisou converter 798 arquivos: o `.csproj` original das
 fontes declara `LangVersion 12.0` e `AllowUnsafeBlocks`, e o projeto UWP nao
