@@ -251,7 +251,7 @@ public class Event
 	{
 		if (_commandLookup == null)
 		{
-			_commandLookup = new Dictionary<string, MethodInfo>(StringComparer.InvariantCultureIgnoreCase);
+			_commandLookup = new Dictionary<string, MethodInfo>(StringComparer.OrdinalIgnoreCase);
 			MethodInfo[] array = (from method_info in typeof(Event).GetMethods()
 				where method_info.Name.StartsWith("command_")
 				select method_info).ToArray();

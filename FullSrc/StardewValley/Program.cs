@@ -52,7 +52,8 @@ public static class Program
 	/// <summary>
 	/// The main entry point for the application.
 	/// </summary>
-	public static void Main(string[] args)
+	// UWP: o entry point e gerado pelo XAML; evita CS0017 (multiplos Main).
+	public static void MainOriginal(string[] args)
 	{
 		GameTesterMode = true;
 		AppDomain.CurrentDomain.UnhandledException += handleException;

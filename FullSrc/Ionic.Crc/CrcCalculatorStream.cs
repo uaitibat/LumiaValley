@@ -331,7 +331,7 @@ public class CrcCalculatorStream : Stream, IDisposable
 	// UWP: Stream.Close() nao e virtual; "new" preserva o comportamento original.
 	public new void Close()
 	{
-		base.Close();
+		base.Dispose(); // UWP: Stream.Close() nao existe
 		if (!_leaveOpen)
 		{
 			_innerStream.Close();

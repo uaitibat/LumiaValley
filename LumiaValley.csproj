@@ -17,7 +17,7 @@
     <FileAlignment>512</FileAlignment>
     <LangVersion>latest</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <StartupObject>LumiaValley.App</StartupObject>
+    <!-- App.xaml.cs herda Application e nao tem Main; o host UWP fornece o entry point. -->
     <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WindowsXamlEnableOverview>true</WindowsXamlEnableOverview>
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
@@ -82,7 +82,9 @@
     <Compile Include="Pages\GamePage.xaml.cs"><DependentUpon>GamePage.xaml</DependentUpon></Compile>
     <Compile Include="Game\**\*.cs" />
     <Compile Include="FullSrc\**\*.cs" Exclude="FullSrc\**\Properties\AssemblyInfo.cs;FullSrc\**\app.manifest;FullSrc\**\StardewValley.Network\LidgrenClient.cs;FullSrc\**\StardewValley.Network\LidgrenServer.cs;FullSrc\**\StardewValley.Network\GameServer.cs;FullSrc\**\StardewValley.SDKs\**\*.cs;FullSrc\**\StardewValley.BellsAndWhistles\SpriteText.cs;FullSrc\**\StardewValley\LidgrenClient.cs;FullSrc\**\StardewValley\Network\Lidgren*.cs;FullSrc\**\StardewValley\LocalMultiplayer.cs;FullSrc\**\StardewValley\Vector2Reader.cs;FullSrc\**\StardewValley\Vector2Writer.cs;FullSrc\**\StardewValley\Vector2Serializer.cs" />
-    <Compile Include="FullDeps\xTile\**\*.cs" Exclude="FullDeps\**\Properties\AssemblyInfo.cs" />
+    <!-- TideFormat/FormatManager/TideReader usam XmlTextReader/Writer (ausentes no UWP)
+         e nao sao usados: o mapa e lido pelo TideMapReader do port incremental. -->
+    <Compile Include="FullDeps\xTile\**\*.cs" Exclude="FullDeps\**\Properties\AssemblyInfo.cs;FullDeps\xTile\xTile.Format\TideFormat.cs;FullDeps\xTile\xTile.Format\FormatManager.cs;FullDeps\xTile\xTile.Pipeline\TideReader.cs" />
     <Compile Include="FullDeps\StardewValley.GameData\**\*.cs" Exclude="FullDeps\**\Properties\AssemblyInfo.cs" />
     <Compile Include="FullPatches\**\*.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -57,6 +57,7 @@ namespace Microsoft.Xna.Framework.Audio
         public bool IsDisposed { get; set; }
         public bool IsInUse { get; set; }
         public void PlayCue(string n) { }
+        public void PlayCue(string n, AudioListener listener, AudioEmitter emitter) { }
         public void Dispose() { }
     }
     public class WaveBank { public WaveBank(AudioEngine e, string s) { } }
@@ -106,7 +107,9 @@ namespace Lidgren.Network
         public void Write(int i) { }
         public void Write(long l) { }
         public void Write(bool b) { }
+        public void Write(byte[] b, int offset, int count) { }
         public byte[] ReadBytes(int n) { return new byte[n]; }
+        public void ReadBytes(byte[] b, int offset, int count) { }
         public string ReadString() { return ""; }
     }
     public class NetPeerConfiguration

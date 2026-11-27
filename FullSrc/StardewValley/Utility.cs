@@ -2755,7 +2755,7 @@ public class Utility
 		string text = "";
 		try
 		{
-			return ((string)type.InvokeMember(methodName, BindingFlags.Static | BindingFlags.Public | BindingFlags.InvokeMethod, null, toBeCalled, parameters)) ?? "";
+			return ((string)type.InvokeMember(methodName, BindingFlags.Static | BindingFlags.Public, null, toBeCalled, parameters)) ?? "";
 		}
 		catch (Exception ex)
 		{

@@ -49,7 +49,7 @@ public class GameRunner : Game
 		Game1.graphics.PreferredBackBufferWidth = 1280;
 		Game1.graphics.PreferredBackBufferHeight = 720;
 		base.Content.RootDirectory = "Content";
-		SpriteBatch.TextureTuckAmount = 0.001f;
+		// SpriteBatch.TextureTuckAmount nao existe no MonoGame UWP.
 		LocalMultiplayer.Initialize();
 		MaxTextureSize = int.MaxValue;
 		base.Window.AllowUserResizing = true;

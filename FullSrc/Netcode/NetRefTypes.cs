@@ -12,7 +12,7 @@ internal static class NetRefTypes
 	public static Type ReadType(this BinaryReader reader)
 	{
 		Type type = reader.ReadGenericType();
-		if (type == null || !type.IsGenericTypeDefinition)
+		if (type == null || !type.GetTypeInfo().IsGenericTypeDefinition)
 		{
 			return type;
 		}
@@ -43,12 +43,12 @@ internal static class NetRefTypes
 	public static void WriteType(this BinaryWriter writer, Type type)
 	{
 		Type type2 = type;
-		if (type != null && type.IsGenericType)
+		if (type != null && type.GetTypeInfo().IsGenericType)
 		{
 			type2 = type.GetGenericTypeDefinition();
 		}
 		writer.WriteGenericType(type2);
-		if (!(type2 == null) && type2.IsGenericType)
+		if (!(type2 == null) && type2.GetTypeInfo().IsGenericType)
 		{
 			Type[] genericArguments = type.GetGenericArguments();
 			foreach (Type type3 in genericArguments)

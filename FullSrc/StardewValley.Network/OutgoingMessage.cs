@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Reflection;
 using Microsoft.Xna.Framework;
 using Netcode;
 
@@ -20,7 +21,7 @@ public struct OutgoingMessage
 
 	public Farmer SourceFarmer => Game1.getFarmer(farmerID);
 
-	public ReadOnlyCollection<object> Data => Array.AsReadOnly(data);
+	public ReadOnlyCollection<object> Data => new ReadOnlyCollection<object>(data); // UWP: Array.AsReadOnly ausente
 
 	public OutgoingMessage(byte messageType, long farmerID, params object[] data)
 	{
@@ -101,7 +102,7 @@ public struct OutgoingMessage
 				}
 				else
 				{
-					if (!(obj is IConvertible) || !obj.GetType().IsValueType)
+					if (!(obj is IConvertible) || !obj.GetType().GetTypeInfo().IsValueType)
 					{
 						throw new InvalidDataException();
 					}

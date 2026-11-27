@@ -591,7 +591,7 @@ public class Options
 		FieldInfo[] fields = typeFromHandle.GetFields(BindingFlags.Instance | BindingFlags.Public);
 		foreach (FieldInfo fieldInfo in fields)
 		{
-			if (fieldInfo.GetCustomAttributes(typeof(DontLoadDefaultSetting), inherit: true).Length == 0 && fieldInfo.GetCustomAttributes(typeof(XmlIgnoreAttribute), inherit: true).Length == 0)
+			if (fieldInfo.GetCustomAttributes(typeof(DontLoadDefaultSetting), inherit: true).Count() == 0 && fieldInfo.GetCustomAttributes(typeof(XmlIgnoreAttribute), inherit: true).Count() == 0)
 			{
 				fieldInfo.SetValue(this, fieldInfo.GetValue(options));
 			}
@@ -599,7 +599,7 @@ public class Options
 		PropertyInfo[] properties = typeFromHandle.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 		foreach (PropertyInfo propertyInfo in properties)
 		{
-			if (propertyInfo.GetCustomAttributes(typeof(DontLoadDefaultSetting), inherit: true).Length == 0 && propertyInfo.GetCustomAttributes(typeof(XmlIgnoreAttribute), inherit: true).Length == 0 && propertyInfo.GetSetMethod() != null && propertyInfo.GetGetMethod() != null)
+			if (propertyInfo.GetCustomAttributes(typeof(DontLoadDefaultSetting), inherit: true).Count() == 0 && propertyInfo.GetCustomAttributes(typeof(XmlIgnoreAttribute), inherit: true).Count() == 0 && propertyInfo.GetSetMethod() != null && propertyInfo.GetGetMethod() != null)
 			{
 				propertyInfo.SetValue(this, propertyInfo.GetValue(options, null), null);
 			}

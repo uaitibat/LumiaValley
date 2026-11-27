@@ -22,7 +22,7 @@ public class NetBufferReadStream : Stream
 	{
 		get
 		{
-			return (Buffer.Position - offset) / 8;
+			return (int)((Buffer.Position - offset) / 8); // UWP: Position e long
 		}
 		set
 		{

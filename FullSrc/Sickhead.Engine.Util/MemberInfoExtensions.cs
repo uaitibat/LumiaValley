@@ -118,11 +118,11 @@ public static class MemberInfoExtensions
 	/// </summary>        
 	public static Delegate CreateDelegate(this MethodInfo method, Type type, object target)
 	{
-		return Delegate.CreateDelegate(type, target, method);
+		return method.CreateDelegate(type, target); // UWP: sem Delegate.CreateDelegate estatico
 	}
 
 	public static Delegate CreateDelegate(this MethodInfo method, Type type)
 	{
-		return Delegate.CreateDelegate(type, method);
+		return method.CreateDelegate(type); // UWP: sem Delegate.CreateDelegate estatico
 	}
 }

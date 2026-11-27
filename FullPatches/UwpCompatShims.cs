@@ -125,7 +125,7 @@ namespace System.Collections
     {
         public static void CopyTo(this BitArray bits, Array array, int index)
         {
-            for (int i = 0; i < bits.Count; i++)
+            for (int i = 0; i < bits.Length; i++)
             {
                 array.SetValue(bits[i], index + i);
             }
@@ -174,6 +174,7 @@ namespace System.Diagnostics
         public string Verb { get; set; }
         public bool UseShellExecute { get; set; }
         public bool CreateNoWindow { get; set; }
+        public bool RedirectStandardInput { get; set; }
         public bool RedirectStandardOutput { get; set; }
     }
 
@@ -185,7 +186,10 @@ namespace System.Diagnostics
         public static Process Start(ProcessStartInfo startInfo) { return new Process(); }
         public ProcessStartInfo StartInfo { get; set; } = new ProcessStartInfo();
         public int Id { get { return 0; } }
+        public int ExitCode { get { return 0; } }
         public bool HasExited { get { return true; } }
+        public IO.StreamWriter StandardInput { get { return IO.Stream.Null; } }
+        public IO.StreamReader StandardOutput { get { return new IO.StreamReader(IO.Stream.Null); } }
         public void Kill() { }
         public void Close() { }
         public bool WaitForExit(int milliseconds) { return true; }

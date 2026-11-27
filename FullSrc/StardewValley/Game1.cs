@@ -5826,7 +5826,7 @@ public class Game1 : InstanceGame
 
 	public static string DateCompiled()
 	{
-		Version version = Assembly.GetExecutingAssembly().GetName().Version;
+		Version version = typeof(Game1).GetTypeInfo().Assembly.GetName().Version;
 		return version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
 	}
 
@@ -11005,7 +11005,7 @@ public class Game1 : InstanceGame
 
 	public static void runTestEvent()
 	{
-		StreamReader streamReader = new StreamReader("test_event.txt");
+		StreamReader streamReader = new StreamReader(File.OpenRead("test_event.txt"));
 		string? text = streamReader.ReadLine();
 		string event_string = streamReader.ReadToEnd();
 		event_string = event_string.Replace("\r\n", "/");
@@ -13099,7 +13099,7 @@ public class Game1 : InstanceGame
 				getCharacterFromName<Pet>(player.getPetName(), mustBeVillager: false).setAtFarmPosition();
 				break;
 			case "version":
-				debugOutput = typeof(Game1).Assembly.GetName().Version?.ToString() ?? "";
+				debugOutput = typeof(Game1).GetTypeInfo().Assembly.GetName().Version?.ToString() ?? "";
 				break;
 			case "nosave":
 			case "ns":
@@ -15533,7 +15533,7 @@ public class Game1 : InstanceGame
 				}
 				try
 				{
-					StreamReader streamReader = new StreamReader(text2);
+					StreamReader streamReader = new StreamReader(File.OpenRead(text2));
 					string text3 = "";
 					while ((text3 = streamReader.ReadLine()) != null)
 					{

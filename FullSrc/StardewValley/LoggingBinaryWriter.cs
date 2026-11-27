@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Netcode;
@@ -44,7 +45,7 @@ public class LoggingBinaryWriter : BinaryWriter, ILoggingWriter
 	// UWP: BinaryWriter.Close() nao e virtual; "new" preserva o comportamento original.
 	public new void Close()
 	{
-		base.Close();
+		base.Dispose(); // UWP: BinaryWriter.Close() nao existe
 		writer.Close();
 	}
 

@@ -480,7 +480,6 @@ public static class StringBuilderFormatEx
 		case TypeCode.String:
 			stringBuilder.Append(arg);
 			break;
-		case TypeCode.DBNull:
 		case TypeCode.Char:
 		case TypeCode.Decimal:
 		case TypeCode.DateTime:

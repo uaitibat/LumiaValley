@@ -57,7 +57,7 @@ public class FormatManager
 	{
 		foreach (IMapFormat value in m_mapFormats.Values)
 		{
-			if (value.FileExtension.Equals(fileExtension, StringComparison.InvariantCultureIgnoreCase))
+			if (value.FileExtension.Equals(fileExtension, StringComparison.OrdinalIgnoreCase))
 			{
 				return value;
 			}

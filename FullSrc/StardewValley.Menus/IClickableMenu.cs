@@ -247,7 +247,7 @@ public abstract class IClickableMenu
 		FieldInfo[] fields = GetType().GetFields();
 		foreach (FieldInfo fieldInfo in fields)
 		{
-			if (fieldInfo.GetCustomAttributes(typeof(SkipForClickableAggregation), inherit: true).Length != 0 || fieldInfo.DeclaringType == typeof(IClickableMenu))
+			if (fieldInfo.GetCustomAttributes(typeof(SkipForClickableAggregation), inherit: true).Count() != 0 || fieldInfo.DeclaringType == typeof(IClickableMenu))
 			{
 				continue;
 			}
