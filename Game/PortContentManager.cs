@@ -27,6 +27,27 @@ namespace LumiaValley.Game
             get { ResolveFolder(); return _folder != null; }
         }
 
+        // Cache persistido da ultima validacao da pasta (quantos XNB achou).
+        private const string CountKey = "LumiaValley.AssetCount";
+
+        public static int GetAssetCount()
+        {
+            try
+            {
+                object value;
+                if (Windows.Storage.ApplicationData.Current.LocalSettings.Values
+                    .TryGetValue(CountKey, out value))
+                    return (int)value;
+            }
+            catch (Exception) { }
+            return 0;
+        }
+
+        public static void SetAssetCount(int count)
+        {
+            Windows.Storage.ApplicationData.Current.LocalSettings.Values[CountKey] = count;
+        }
+
         private void ResolveFolder()
         {
             if (_folderResolved)

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -16,7 +17,15 @@ namespace LumiaValley.Game.Screens
         private Texture2D background;
         private Texture2D pixel;
         private SpriteFont font;
-        private string status = "Toque em \"Pasta do jogo\" para escolher onde estao os XNB.";
+        private string status;
+
+        public LauncherScreen()
+        {
+            var count = PortContentManager.GetAssetCount();
+            status = count > 0
+                ? "Pasta do jogo: " + count + " XNB carregados. Pode iniciar."
+                : "Toque em \"Pasta do jogo\" para escolher onde estao os XNB.";
+        }
 
         public void Load(ContentManager content, GraphicsDevice device)
         {
@@ -70,15 +79,26 @@ namespace LumiaValley.Game.Screens
             // Botao "Pasta do jogo".
             if (p.X > 40 && p.X < w - 40 && p.Y > 880 && p.Y < 980)
             {
-                _ = PortFolderPicker.PickAsync();
-                status = "Abrindo seletor de pasta...";
+                status = "Lendo pasta do jogo...";
+                _ = PickAndReport();
             }
-            // Botao "Iniciar".
+            // Botao "Iniciar" so com pasta validada.
             else if (p.X > 40 && p.X < w - 40 && p.Y > 1010 && p.Y < 1110)
             {
-                return new TitleScreen();
+                if (PortContentManager.GetAssetCount() > 0)
+                    return new TitleScreen();
+                status = "Escolha primeiro a pasta do jogo.";
             }
             return this;
+        }
+
+        private async Task PickAndReport()
+        {
+            var ok = await PortFolderPicker.PickAsync();
+            var count = PortContentManager.GetAssetCount();
+            status = ok
+                ? "Pasta do jogo: " + count + " XNB carregados. Pode iniciar."
+                : "Pasta invalida. Escolha a pasta Content do Stardew.";
         }
 
         public void Draw(SpriteBatch batch)
