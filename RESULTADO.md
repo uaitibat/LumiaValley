@@ -76,7 +76,9 @@ A medicao acima era com .NET 8 DesktopGL. Aqui as fontes entram no mesmo
 | Build #105 (commit `b72e833`): stubs/compat de API | 3 (`CS0506` em `XmlSerializer`) |
 | Build #106 (commit `9b4ce32`): `Serialize`/`Deserialize` com `new` | 360 (segunda onda: perfil .NET 5 -> UWP) |
 | Build #108 (commit `b52ecec`): shim global de API + SDK/SpriteText/audio | 3 (`ThreadStart`) |
-| Build #109 (commit `6e07554`): shim `ThreadStart` | em validação |
+| Build #109 (commit `6e07554`): shim `ThreadStart` | 56 (`Binder`, reflexao, XML) |
+| Build #110 (commit `dbcee35`): shims de reflexao/IO | 9 (duplicatas + casts) |
+| Build #111 (commit `6069700`): remover extensoes duplicadas | **0 — SUCESSO** |
 
 O `LangVersion` nao precisou converter 798 arquivos: o `.csproj` original das
 fontes declara `LangVersion 12.0` e `AllowUnsafeBlocks`, e o projeto UWP nao
@@ -103,6 +105,17 @@ A segunda onda (360 erros) nao era logica do jogo: eram `Console`,
 stubs de SDK com assinaturas erradas. Tudo resolvido em `FullPatches/
 UwpCompatShims.cs`, `SdkShims.cs` e ajustes nos stubs existentes.
 
-O build #109 (commit `6e07554`) valida esse lote. O appx do experimento **nao**
+O build #112 (commit `6069700`) fechou a compilação: **0 erros**. O appx gerado
+(`LumiaValley_0.1.0.0_ARM.appx`, 21 MB / 46 MB com dependencias) contem
+1.213 arquivos XNB e 120 DLLs de runtime — a arvore inteira do Stardew 1.5.6
+compilada dentro de um appx ARM instalavel.
+
+**Estado atual do appx:** o host ainda e o `Game1` do port incremental
+(`Pages/GamePage.xaml.cs` usa `XamlGame<LumiaValley.Game.Game1>`). As classes
+originais estao linkadas, mas ainda nao sao usadas em runtime. O proximo passo e
+trocar sistemas por classes 1:1, um de cada vez, começando por renderizacao de
+fazendeiro/moveis — os pontos de fidelidade apontados pelo usuario.
+
+O appx do experimento **nao**
 publica na release `latest` (que pertence ao build funcional da `main`): o
 workflow do branch salva o pacote como artifact do proprio run.
