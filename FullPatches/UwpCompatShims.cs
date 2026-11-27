@@ -135,6 +135,8 @@ namespace System.Collections
 
 namespace System.Threading
 {
+    public delegate void ThreadStart();
+
     public enum ApartmentState { STA, MTA, Unknown }
 
     public class Thread
