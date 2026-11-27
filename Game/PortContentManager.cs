@@ -7,39 +7,48 @@ namespace LumiaValley.Game
 {
     /// <summary>
     /// ContentManager "tipo port": se o usuario escolheu uma pasta com os
-    /// XNB do jogo (Data/Maps/Characters/...), le da pasta; senao usa o
-    /// Content embutido no appx. OpenStream e virtual, entao basta trocar.
+    /// XNB do jogo, le da pasta; senao usa o Content embutido no appx.
+    /// A restauracao do folder e LAZY para nao bloquear a thread de jogo
+    /// no startup (GetAwaiter().GetResult() em WinRT pode travar).
     /// </summary>
     public sealed class PortContentManager : ContentManager
     {
         private const string TokenKey = "LumiaValley.GameFolderToken";
-        private readonly StorageFolder _folder;
+        private StorageFolder _folder;
+        private bool _folderResolved;
+        private string _folderPath;
 
         public PortContentManager(IServiceProvider serviceProvider, string rootDirectory)
             : base(serviceProvider, rootDirectory)
         {
-            _folder = TryRestoreFolder();
         }
 
-        public bool HasExternalFolder { get { return _folder != null; } }
-
-        private static StorageFolder TryRestoreFolder()
+        public bool HasExternalFolder
         {
+            get { ResolveFolder(); return _folder != null; }
+        }
+
+        private void ResolveFolder()
+        {
+            if (_folderResolved)
+                return;
+            _folderResolved = true;
             try
             {
                 var settings = Windows.Storage.ApplicationData.Current.LocalSettings;
                 object value;
                 if (!settings.Values.TryGetValue(TokenKey, out value))
-                    return null;
+                    return;
                 var token = value as string;
                 if (string.IsNullOrEmpty(token))
-                    return null;
-                return Windows.Storage.AccessCache.StorageApplicationPermissions
+                    return;
+                _folder = Windows.Storage.AccessCache.StorageApplicationPermissions
                     .FutureAccessList.GetFolderAsync(token).AsTask().GetAwaiter().GetResult();
+                _folderPath = _folder == null ? null : _folder.Path;
             }
             catch (Exception)
             {
-                return null;
+                _folder = null;
             }
         }
 
@@ -52,18 +61,21 @@ namespace LumiaValley.Game
 
         protected override Stream OpenStream(string assetName)
         {
-            if (_folder != null)
+            ResolveFolder();
+            if (!string.IsNullOrEmpty(_folderPath))
             {
                 try
                 {
+                    // Caminho direto evita GetFileAsync() assincrono na thread
+                    // do jogo. O UWP concede acesso ao folder via FutureAccessList.
                     var relative = assetName.Replace('/', Path.DirectorySeparatorChar) + ".xnb";
-                    var file = _folder.GetFileAsync(relative).AsTask().GetAwaiter().GetResult();
-                    if (file != null)
-                        return file.OpenStreamForReadAsync().GetAwaiter().GetResult();
+                    var path = Path.Combine(_folderPath, relative);
+                    if (File.Exists(path))
+                        return File.OpenRead(path);
                 }
                 catch (Exception)
                 {
-                    // Asset ausente na pasta externa: cai para o embutido.
+                    // Asset ausente: cai para o embutido.
                 }
             }
             return base.OpenStream(assetName);

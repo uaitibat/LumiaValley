@@ -27,8 +27,8 @@ namespace LumiaValley.Game.Screens
             catch { font = null; }
         }
 
-        /// <summary>Carrega um JPG do pacote (Assets/) sem passar pelo ContentManager
-        /// de XNB. Necessario porque o Content/ agora vem da pasta externa.</summary>
+        /// <summary>Carrega um JPG do pacote pelo FromStream do MonoGame
+        /// (sincrono, sem BitmapDecoder/GetResult que trava no startup).</summary>
         private static Texture2D LoadPackageImage(GraphicsDevice device, string path)
         {
             try
@@ -38,19 +38,7 @@ namespace LumiaValley.Game.Screens
                     .AsTask().GetAwaiter().GetResult();
                 using (var stream = file.OpenStreamForReadAsync().GetAwaiter().GetResult())
                 {
-                    var decoder = Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(
-                        stream.AsRandomAccessStream()).AsTask().GetAwaiter().GetResult();
-                    var pixels = decoder.GetPixelDataAsync(
-                        Windows.Graphics.Imaging.BitmapPixelFormat.Bgra8,
-                        Windows.Graphics.Imaging.BitmapAlphaMode.Straight,
-                        new Windows.Graphics.Imaging.BitmapTransform(),
-                        Windows.Graphics.Imaging.ExifOrientationMode.IgnoreExifOrientation,
-                        Windows.Graphics.Imaging.ColorManagementMode.DoNotColorManage)
-                        .AsTask().GetAwaiter().GetResult().DetachPixelData();
-                    var texture = new Texture2D(device, (int)decoder.PixelWidth,
-                        (int)decoder.PixelHeight, false, SurfaceFormat.Color);
-                    texture.SetData(pixels);
-                    return texture;
+                    return Texture2D.FromStream(device, stream);
                 }
             }
             catch (Exception ex)
