@@ -29,11 +29,17 @@ namespace LumiaValley.Game
 
         public void Draw(SpriteBatch b, int viewportWidth, int timeOfDay, int dayOfMonth,
             string season, int weatherIcon, int money, int gameTimeInterval,
-            int offsetX = 0, int offsetY = 0)
+            int offsetX = 0, int offsetY = 0, int worldWidth = 0)
         {
             if (cursors == null)
                 return;
-            var position = new Vector2(viewportWidth - 300 + offsetX, 8f + offsetY);
+            // DayTimeMoneyBox.updatePosition (linhas 436-445):
+            // position = viewport.Width - 300; se o mapa e menor que o
+            // viewport, limita ao canto direito do mapa.
+            var x = viewportWidth - 300;
+            if (worldWidth > 0 && worldWidth < viewportWidth)
+                x = Math.Min(x, (viewportWidth - worldWidth) / 2 + worldWidth - 300);
+            var position = new Vector2(x + offsetX, 8f + offsetY);
             b.Draw(cursors, position, sourceRect, Color.White, 0f, Vector2.Zero, 4f,
                 SpriteEffects.None, 0.9f);
 
@@ -77,8 +83,10 @@ namespace LumiaValley.Game
             {
                 var moneyText = money + "g";
                 var ms = font.MeasureString(moneyText);
+                // Caixa em position+(28,172), tamanho 65*4=260 por 17*4=68.
+                // Centraliza o valor dentro dela.
                 DrawShadowText(b, moneyText, font,
-                    position + new Vector2(68f + 130f - ms.X, 196f),
+                    position + new Vector2(28f + (260f - ms.X) / 2f, 172f + (68f - ms.Y) / 2f),
                     new Color(255, 228, 120));
             }
 
@@ -154,12 +162,13 @@ namespace LumiaValley.Game
         }
 
         public void Draw(SpriteBatch b, int viewportWidth, int viewportHeight, int selected,
-            int offsetX = 0, int offsetY = 0)
+            int offsetX = 0, int offsetY = 0, int worldCenter = 0)
         {
             if (menu == null)
                 return;
             var y = viewportHeight + 8 + offsetY;
-            var x0 = viewportWidth / 2 - 384 - 16 + offsetX;
+            var center = worldCenter > 0 ? worldCenter : viewportWidth / 2;
+            var x0 = center - 384 - 16 + offsetX;
 
             // IClickableMenu.drawTextureBox (simplificado sem sombra, como
             // Toolbar chama drawShadow: false).
@@ -178,7 +187,7 @@ namespace LumiaValley.Game
 
             for (var j = 0; j < 12; j++)
             {
-                var sx = viewportWidth / 2 - 384 + j * 64 + offsetX;
+                var sx = center - 384 + j * 64 + offsetX;
                 var sy = y - 96 + 8;
                 b.Draw(menu, new Vector2(sx, sy),
                     StdRect(menu, selected == j ? 56 : 10, 16), Color.White);
@@ -188,7 +197,7 @@ namespace LumiaValley.Game
 
             for (var k = 0; k < ToolIcon.Length; k++)
             {
-                var sx = viewportWidth / 2 - 384 + k * 64 + offsetX;
+                var sx = center - 384 + k * 64 + offsetX;
                 var sy = y - 96 + 8;
                 var scale = selected == k ? 0.9f : 0.8f;
                 if (ToolIcon[k] < 0)
