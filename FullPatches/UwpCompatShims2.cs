@@ -51,7 +51,7 @@ namespace System.Reflection
             return property.SetMethod;
         }
 
-        public static object InvokeMember(this Type type, string name, BindingFlags invokeAttr, Binder binder,
+        public static object InvokeMember(this Type type, string name, BindingFlags invokeAttr, object binder,
             object target, object[] args)
         {
             MethodInfo method = type.GetRuntimeMethod(name, new Type[0]);
