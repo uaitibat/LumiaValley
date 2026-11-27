@@ -69,7 +69,9 @@ namespace LumiaValley.Game
 
         private readonly SaveSlot slot;
         private double elapsedMs;
-        private int gameMinutes = 360;
+        private float clockMs;
+        private int gameHour = 6;
+        private int gameMinutes = 0;
         private int energy = 270;
         private int facing = 2;
         private int walkFrame;
@@ -347,7 +349,7 @@ namespace LumiaValley.Game
                 {
                     if (i != 0) return;
                     // Game1.NewDay observavel: hora 6:00, energia cheia.
-                    gameMinutes = 360;
+                    gameHour = 6; gameMinutes = 0; clockMs = 0;
                     energy = 270;
                     hasTarget = false;
                     player = new Vector2(9 * 64f, 9 * 64f + 32f);
@@ -396,7 +398,18 @@ namespace LumiaValley.Game
         {
             var dt = (float)Math.Min(gameTime.ElapsedGameTime.TotalSeconds, 0.05);
             elapsedMs += dt * 1000;
-            gameMinutes += (int)(dt * 12); // um dia de 20 minutos
+            // Game1.cs:6442-6451 -> performTenMinuteClockUpdate a cada 7000ms.
+            clockMs += dt * 1000f;
+            while (clockMs >= 7000f)
+            {
+                clockMs -= 7000f;
+                gameMinutes += 10;
+                if (gameMinutes >= 60)
+                {
+                    gameMinutes -= 60;
+                    gameHour++;
+                }
+            }
 
             const float speed = 192f;
             if (hasTarget)
@@ -490,7 +503,7 @@ namespace LumiaValley.Game
                     ShowTouchDialog(dormir, new[] { "Sim", "Nao" }, i =>
                     {
                         if (i != 0) return;
-                        gameMinutes = 360;
+                        gameHour = 6; gameMinutes = 0; clockMs = 0;
                         energy = 270;
                         player = new Vector2(9 * 64f, 9 * 64f + 32f);
                         facing = 1;
@@ -900,7 +913,7 @@ namespace LumiaValley.Game
 
             // DayTimeMoneyBox: relogio/data/clima/dinheiro 1:1.
             // O original nao desenha hora/dinheiro no drawHUD - delega ao menu.
-            var timeOfDay = (6 + gameMinutes / 60) * 100 + gameMinutes % 60;
+            var timeOfDay = gameHour * 100 + gameMinutes;
             clock.Draw(batch, ViewportConfig.VirtualWidth, timeOfDay, 1,
                 "spring", 0, 500, (int)elapsedMs % 7000, ox, oy);
 

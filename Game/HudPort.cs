@@ -130,8 +130,14 @@ namespace LumiaValley.Game
             { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=" };
 
         // Farmer.initialTools() (linhas 2300-2310): Axe, Hoe, WateringCan,
-        // Pickaxe, MeleeWeapon(47).
-        private static readonly int[] ToolIcon = { 0, 1, 2, 3, -1 };
+        // Pickaxe, MeleeWeapon(47). O menu usa IndexOfMenuItemView, NAO os
+        // indices 0..3 (Tool.cs:1126-1152):
+        //   Axe   = 189 + 5 + 21 = 215
+        //   Hoe   =  21 + 5 + 21 = 47
+        //   Can   = 273 + 2 + 21 = 296
+        //   Pick  = 105 + 5 + 21 = 131
+        // MeleeWeapon(47): weaponsTexture com IndexOfMenuItemView = 47.
+        private static readonly int[] ToolIcon = { 215, 47, 296, 131, -1 };
 
         public void Load(ContentManager content)
         {
@@ -188,13 +194,15 @@ namespace LumiaValley.Game
                 if (ToolIcon[k] < 0)
                 {
                     if (weapons != null)
-                        b.Draw(weapons, new Vector2(sx, sy), StdRect(weapons, 47, 16),
-                            Color.White, 0f, Vector2.Zero, scale * 4f, SpriteEffects.None, 0f);
+                        b.Draw(weapons, new Vector2(sx + 32, sy + 32),
+                            StdRect(weapons, 47, 16), Color.White, 0f,
+                            new Vector2(8f, 8f), scale * 4f, SpriteEffects.None, 0f);
                 }
                 else if (tools != null)
                 {
-                    b.Draw(tools, new Vector2(sx, sy), StdRect(tools, ToolIcon[k], 16),
-                        Color.White, 0f, Vector2.Zero, scale * 4f, SpriteEffects.None, 0f);
+                    b.Draw(tools, new Vector2(sx + 32, sy + 32),
+                        StdRect(tools, ToolIcon[k], 16), Color.White, 0f,
+                        new Vector2(8f, 8f), scale * 4f, SpriteEffects.None, 0f);
                 }
             }
         }
