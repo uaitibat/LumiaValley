@@ -59,9 +59,72 @@ namespace LumiaValley.Game
                 }
             }
 
+            if (found == 0)
+            {
+                PortContentManager.SetAssetCount(0);
+                return false;
+            }
+
+            // Copia os XNB para o LocalFolder do app. Leitura em cartao SD
+            // removivel pode falhar mesmo com FutureAccessList; no LocalFolder
+            // o UWP SEMPRE consegue ler.
+            var copied = await CopyToLocalFolder(root);
             PortContentManager.SaveFolder(root);
-            PortContentManager.SetAssetCount(found);
-            return found > 0;
+            PortContentManager.SetAssetCount(copied > 0 ? copied : found);
+            return copied > 0 || found > 0;
+        }
+
+        /// <summary>Copia a arvore de XNB para LocalFolder/Content do app.</summary>
+        private static async Task<int> CopyToLocalFolder(StorageFolder source)
+        {
+            var count = 0;
+            try
+            {
+                var local = Windows.Storage.ApplicationData.Current.LocalFolder;
+                var target = await local.CreateFolderAsync("Content",
+                    CreationCollisionOption.OpenIfExists);
+
+                var files = await source.GetFilesAsync();
+                foreach (var file in files)
+                {
+                    if (!file.Name.EndsWith(".xnb", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    var copy = await file.CopyAsync(target, file.Name,
+                        NameCollisionOption.ReplaceExisting);
+                    if (copy != null) count++;
+                }
+
+                var subfolders = await source.GetFoldersAsync();
+                foreach (var sub in subfolders)
+                    count += await CopyFolderRecursive(sub, target);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Copiar XNB: " + ex.Message);
+            }
+            return count;
+        }
+
+        private static async Task<int> CopyFolderRecursive(StorageFolder source, StorageFolder parent)
+        {
+            var count = 0;
+            try
+            {
+                var target = await parent.CreateFolderAsync(source.Name,
+                    CreationCollisionOption.OpenIfExists);
+                foreach (var file in await source.GetFilesAsync())
+                {
+                    if (!file.Name.EndsWith(".xnb", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    await file.CopyAsync(target, file.Name,
+                        NameCollisionOption.ReplaceExisting);
+                    count++;
+                }
+                foreach (var sub in await source.GetFoldersAsync())
+                    count += await CopyFolderRecursive(sub, target);
+            }
+            catch (Exception) { }
+            return count;
         }
 
         private static async Task<int> ProbeCount(StorageFolder folder)

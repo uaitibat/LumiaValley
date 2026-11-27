@@ -104,6 +104,23 @@ namespace LumiaValley.Game
 
         protected override Stream OpenStream(string assetName)
         {
+            // 1) LocalFolder do app (copiado pelo picker) — sempre legivel.
+            try
+            {
+                var local = Windows.Storage.ApplicationData.Current.LocalFolder;
+                var localContent = local.GetFolderAsync("Content").AsTask()
+                    .GetAwaiter().GetResult();
+                if (localContent != null)
+                {
+                    var relative = assetName.Replace('/', '\\') + ".xnb";
+                    var localFile = localContent.GetFileAsync(relative).AsTask()
+                        .GetAwaiter().GetResult();
+                    if (localFile != null)
+                        return localFile.OpenStreamForReadAsync().GetAwaiter().GetResult();
+                }
+            }
+            catch (Exception) { }
+
             ResolveFolder();
             if (_folder != null)
             {
