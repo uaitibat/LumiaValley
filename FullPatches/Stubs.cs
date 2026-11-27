@@ -14,6 +14,7 @@ namespace System
             IsTerminating = isTerminating;
         }
     }
+    public delegate void UnhandledExceptionEventHandler(object sender, UnhandledExceptionEventArgs e);
 }
 
 namespace Galaxy.Api
