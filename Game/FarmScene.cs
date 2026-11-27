@@ -442,12 +442,15 @@ namespace LumiaValley.Game
         /// </summary>
         private void CheckBedState()
         {
-            var bounds = PlayerBounds(player);
-            isInBed = furniture.IsInsidePassableBand(2048, 9, 8, bounds);
-
-            // O prompt e aberto pelo TOQUE na cama (TryFurnitureAction), como
-            // no original desktop. Abrir automaticamente ao pisar cancelava
-            // hasTarget e travava o jogador dentro da cama.
+            // Farmer.cs:7162 -> isInBed = currentLocation.doesTileHaveProperty
+            // (getTileLocation().X, getTileLocation().Y, "Bed", "Back") != null.
+            // BedFurniture.DoesTileHaveProperty devolve "Bed" para os tiles
+            // (bed.X .. bed.X + getTilesWide()-1, bed.Y + 1) = (9..10, 9).
+            // Usamos o TILE (nao a bounding box) para nao oscilar com o
+            // arredondamento do movimento.
+            var tx = (int)(player.X / 64f);
+            var ty = (int)((player.Y - 8f) / 64f);
+            isInBed = ty == 9 && (tx == 9 || tx == 10);
         }
 
         /// <summary>
@@ -495,16 +498,27 @@ namespace LumiaValley.Game
             {
                 if (furniture.IsPassable(FurnitureIds[i]))
                     continue;
+                // GameLocation.resetForPlayerEntry adiciona a cama em
+                // TemporaryPassableTiles quando o jogador comeca dentro dela.
+                // Liberamos lados e pes para sair; a cabeca (subir) continua
+                // bloqueada, como no original.
+                if (FurnitureIds[i] == 2048 && isInBed)
+                {
+                    if (pos.Y < player.Y && box.Intersects(
+                            furniture.GetBoundingBox(2048, 9, 8)))
+                        return true;
+                    continue;
+                }
+
                 var fb = furniture.GetBoundingBox(FurnitureIds[i], FurnitureX[i], FurnitureY[i]);
                 if (fb == Rectangle.Empty ||
                     !furniture.IntersectsForCollision(FurnitureIds[i], FurnitureX[i], FurnitureY[i], box))
                     continue;
                 // Original: se o jogador ja esta dentro do movel, ele nao
-                // bloqueia. Na cama isso so vale para a FAIXA LIVRE do meio:
-                // a cabeca e os pes continuam bloqueando de dentro para fora.
-                var current = PlayerBounds(player);
+                // bloqueia (!item.IntersectsForCollision(player.GetBoundingBox)).
                 if (furniture.IsPassable(FurnitureIds[i]) ||
-                    furniture.IsInsidePassableBand(FurnitureIds[i], FurnitureX[i], FurnitureY[i], current))
+                    furniture.IsInsidePassableBand(FurnitureIds[i], FurnitureX[i], FurnitureY[i],
+                        PlayerBounds(player)))
                     continue;
                 return true;
             }
