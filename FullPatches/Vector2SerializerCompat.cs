@@ -15,7 +15,8 @@ public class Vector2Serializer : XmlSerializer
         return xmlReader.IsStartElement("Vector2");
     }
 
-    public override void Serialize(XmlWriter xmlWriter, object o)
+    // UWP: Serialize/Deserialize nao sao virtuais; "new" mantem a API do original.
+    public new void Serialize(XmlWriter xmlWriter, object o)
     {
         Vector2 vec = (Vector2)o;
         xmlWriter.WriteStartElement("Vector2");
@@ -28,7 +29,7 @@ public class Vector2Serializer : XmlSerializer
         xmlWriter.WriteEndElement();
     }
 
-    public override object Deserialize(XmlReader xmlReader)
+    public new object Deserialize(XmlReader xmlReader)
     {
         xmlReader.ReadStartElement("Vector2");
         xmlReader.ReadStartElement("X");
