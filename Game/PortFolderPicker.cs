@@ -29,6 +29,7 @@ namespace LumiaValley.Game
             // Chamar o picker DIRETO (sem RunAsync aninhado): o RunAsync fazia
             // o seletor abrir fora do contexto da pagina e retornar null.
             var picked = await picker.PickSingleFolderAsync();
+            LastDiagnostic = "Seletor fechou. Abrindo pasta...";
 
             if (picked == null)
             {
