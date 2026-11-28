@@ -32,7 +32,21 @@ namespace LumiaValley.Game
                 System.Diagnostics.Debug.WriteLine(line);
             }
             catch (Exception) { }
+            // Salva imediatamente (sem timer: o timer de 2s derrubava o app).
+            FlushLine(DateTime.Now.ToString("HH:mm:ss") + " " + line);
             try { Changed?.Invoke(); } catch (Exception) { }
+        }
+
+        private static void FlushLine(string text)
+        {
+            try
+            {
+                var path = System.IO.Path.Combine(
+                    Windows.Storage.ApplicationData.Current.LocalFolder.Path,
+                    "launch.log");
+                System.IO.File.AppendAllText(path, text + "\n");
+            }
+            catch (Exception) { }
         }
 
         /// <summary>Chamado pelo LauncherPage DEPOIS da tela existir.</summary>

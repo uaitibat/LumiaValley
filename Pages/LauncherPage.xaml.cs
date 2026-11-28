@@ -19,11 +19,7 @@ namespace LumiaValley.Pages
             LaunchLog.Write("Appx: " + Windows.ApplicationModel.Package.Current.Id.Name +
                 " " + Windows.ApplicationModel.Package.Current.Id.Version);
 
-            // Salva o log a cada 2s para sobreviver ao fechamento do app.
-            var timer = new Windows.UI.Xaml.DispatcherTimer();
-            timer.Interval = TimeSpan.FromSeconds(2);
-            timer.Tick += (s, e) => LaunchLog.FlushToDisk();
-            timer.Start();
+            // Log salvo a cada Write (sem timer — o timer derrubava o app).
         }
 
         private void Refresh()
