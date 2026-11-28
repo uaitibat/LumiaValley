@@ -4,9 +4,9 @@ using System.Text;
 namespace LumiaValley.Game
 {
     /// <summary>
-    /// Log em memoria, SEM I/O no construtor estatico (isso fazia o app
-    /// fechar na hora no boot). O log da sessao anterior e carregado
-    /// explicitamente pelo LauncherPage, depois que a tela ja esta up.
+    /// Log APENAS em memoria — nenhum I/O em disco. I/O no boot fazia o
+    /// app fechar na hora no Lumia (mesmo dentro de try/catch: e um crash
+    /// nativo que o managed nao pega). O texto aparece no launcher.
     /// </summary>
     public static class LaunchLog
     {
@@ -32,76 +32,16 @@ namespace LumiaValley.Game
                 System.Diagnostics.Debug.WriteLine(line);
             }
             catch (Exception) { }
-            // Salva imediatamente (sem timer: o timer de 2s derrubava o app).
-            FlushLine(DateTime.Now.ToString("HH:mm:ss") + " " + line);
             try { Changed?.Invoke(); } catch (Exception) { }
         }
 
-        private static void FlushLine(string text)
-        {
-            try
-            {
-                var path = System.IO.Path.Combine(
-                    Windows.Storage.ApplicationData.Current.LocalFolder.Path,
-                    "launch.log");
-                System.IO.File.AppendAllText(path, text + "\n");
-            }
-            catch (Exception) { }
-        }
-
-        /// <summary>Chamado pelo LauncherPage DEPOIS da tela existir.</summary>
-        public static void LoadPreviousSession()
-        {
-            try
-            {
-                var path = System.IO.Path.Combine(
-                    Windows.Storage.ApplicationData.Current.LocalFolder.Path,
-                    "launch.log");
-                if (System.IO.File.Exists(path))
-                {
-                    var text = System.IO.File.ReadAllText(path);
-                    lock (Buf)
-                    {
-                        Buf.Insert(0, "=== sessao anterior ===\n" + text +
-                            "\n=== nova sessao ===\n");
-                    }
-                    Write("Log da sessao anterior carregado.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Write("Nao foi possivel carregar log anterior: " + ex.Message);
-            }
-        }
-
+        // Mantidos para compatibilidade com chamadas existentes, mas sem I/O.
+        public static void LoadPreviousSession() { }
+        public static void FlushToDisk() { }
         public static void Clear()
         {
-            try
-            {
-                lock (Buf)
-                {
-                    Buf.Clear();
-                }
-                var path = System.IO.Path.Combine(
-                    Windows.Storage.ApplicationData.Current.LocalFolder.Path,
-                    "launch.log");
-                if (System.IO.File.Exists(path))
-                    System.IO.File.WriteAllText(path, "");
-                Write("Log limpo.");
-            }
-            catch (Exception) { }
-        }
-
-        public static void FlushToDisk()
-        {
-            try
-            {
-                var path = System.IO.Path.Combine(
-                    Windows.Storage.ApplicationData.Current.LocalFolder.Path,
-                    "launch.log");
-                System.IO.File.WriteAllText(path, Text);
-            }
-            catch (Exception) { }
+            lock (Buf) Buf.Clear();
+            Write("Log limpo.");
         }
     }
 }
