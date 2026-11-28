@@ -13,6 +13,9 @@ public class AudioCategoryWrapper : IAudioCategory
 
 	public void SetVolume(float volume)
 	{
-		audioCategory.SetVolume(volume);
+		// UWP/MonoGame: GetCategory pode devolver null (audio XACT indisponivel).
+		// Sem essa guarda, updateMusic() derruba o jogo no primeiro frame.
+		if (audioCategory != null)
+			audioCategory.SetVolume(volume);
 	}
 }
