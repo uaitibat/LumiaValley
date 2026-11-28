@@ -22,7 +22,6 @@ namespace LumiaValley.Pages
         private void Refresh()
         {
             LogText.Text = LaunchLog.Text;
-            LogText.SelectionStart = LogText.Text.Length;
         }
 
         private void Start_Click(object sender, RoutedEventArgs e)
