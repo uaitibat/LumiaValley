@@ -26,9 +26,24 @@ namespace LumiaValley.Game
             };
             picker.FileTypeFilter.Add("*");
 
-            // Chamar o picker DIRETO (sem RunAsync aninhado): o RunAsync fazia
-            // o seletor abrir fora do contexto da pagina e retornar null.
-            var picked = await picker.PickSingleFolderAsync();
+            // O FolderPicker so abre na UI THREAD do UWP. O RunAsync com
+            // lambda async nao era esperado (retornava null); usamos uma
+            // TaskCompletionSource para esperar o resultado de verdade.
+            var tcs = new TaskCompletionSource<StorageFolder>();
+            var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
+            await dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
+            {
+                try
+                {
+                    var folder = await picker.PickSingleFolderAsync();
+                    tcs.TrySetResult(folder);
+                }
+                catch (Exception ex)
+                {
+                    tcs.TrySetException(ex);
+                }
+            });
+            var picked = await tcs.Task;
             LastDiagnostic = "Seletor fechou. Abrindo pasta...";
 
             if (picked == null)
