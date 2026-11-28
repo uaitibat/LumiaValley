@@ -80,6 +80,16 @@ namespace LumiaValley.Game
                     ? DisplayOrientation.Portrait
                     : DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
             }
+            // O GamePage fixa AutoRotationPreferences em Portrait e isso
+            // sobrepoe o SupportedOrientations do MonoGame. Ajusta junto.
+            if (Windows.Graphics.Display.DisplayInformation.AutoRotationPreferences !=
+                (portrait ? Windows.Graphics.Display.DisplayOrientations.Portrait
+                          : Windows.Graphics.Display.DisplayOrientations.Landscape))
+            {
+                Windows.Graphics.Display.DisplayInformation.AutoRotationPreferences =
+                    portrait ? Windows.Graphics.Display.DisplayOrientations.Portrait
+                             : Windows.Graphics.Display.DisplayOrientations.Landscape;
+            }
             next?.Load(Content, GraphicsDevice);
             current = next;
         }
