@@ -18,6 +18,7 @@ namespace LumiaValley.Game.Screens
         private Texture2D pixel;
         private SpriteFont font;
         private string status;
+        private bool busy;
 
         public LauncherScreen()
         {
@@ -79,6 +80,9 @@ namespace LumiaValley.Game.Screens
             // Botao "Pasta do jogo".
             if (p.X > 40 && p.X < w - 40 && p.Y > 880 && p.Y < 980)
             {
+                if (busy)
+                    return this;
+                busy = true;
                 status = "Escolha a pasta do jogo no seletor...";
                 _ = PickAndReport();
             }
@@ -100,6 +104,7 @@ namespace LumiaValley.Game.Screens
             status = ok
                 ? "Pasta do jogo: " + count + " XNB copiados. Pode iniciar. " + diag
                 : "Pasta invalida. " + diag;
+            busy = false; // so libera o botao DEPOIS de escrever o resultado
         }
 
         public void Draw(SpriteBatch batch)
