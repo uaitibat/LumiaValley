@@ -45,14 +45,41 @@ jobs:
           $zip = Join-Path $env:RUNNER_TEMP "Content.zip"
           $rawHeaders = @{}
           foreach ($key in $headers.Keys) { $rawHeaders[$key] = $headers[$key] }
-          $rawHeaders["Accept"] = "application/vnd.github.raw"
-          Invoke-WebRequest -Headers $rawHeaders `
-            -Uri "https://api.github.com/repos/$assetsRepo/contents/Content.zip" `
-            -OutFile $zip
+
+          # Content real (~398MB) vai como ASSET da release "content", porque
+          # o upload de arquivo normal no site limita a 25MB. Fallbackpara o
+          # Content.zip pequeno do repositorio (usado antes).
+          $downloaded = $false
+          try {
+            $rel = Invoke-RestMethod -Headers $headers `
+              -Uri "https://api.github.com/repos/$assetsRepo/releases/tags/content"
+            $asset = $rel.assets | Where-Object { $_.name -eq "Content.zip" } | Select-Object -First 1
+            if ($asset) {
+              $rawHeaders["Accept"] = "application/octet-stream"
+              Invoke-WebRequest -Headers $rawHeaders -Uri $asset.url -OutFile $zip
+              Write-Host "Content real baixado da release 'content': $($asset.size) bytes"
+              $downloaded = $true
+            }
+          } catch {
+            Write-Host "Release 'content' nao encontrada; usando Content.zip do repo"
+          }
+          if (-not $downloaded) {
+            $rawHeaders["Accept"] = "application/vnd.github.raw"
+            Invoke-WebRequest -Headers $rawHeaders `
+              -Uri "https://api.github.com/repos/$assetsRepo/contents/Content.zip" `
+              -OutFile $zip
+          }
 
           New-Item -ItemType Directory -Force Content | Out-Null
           Expand-Archive -Path $zip -DestinationPath Content -Force
-          Write-Host "Assets extraidos: $((Get-ChildItem Content -Recurse -File).Count) arquivos"
+          # O zip do Content real tem "Content/" como raiz interna, o que
+          # gera Content/Content/. Normaliza para Content/Maps, Content/Data...
+          if (Test-Path "Content\Content") {
+            Write-Host "Normalizando Content/Content -> Content/"
+            Copy-Item "Content\Content\*" "Content" -Recurse -Force
+            Remove-Item "Content\Content" -Recurse -Force
+          }
+          Write-Host "Assets extraidos: $((Get-ChildItem Content -Recurse -File).Count) arquivos (Content real da Steam)"
 
       - name: Configurar MSBuild
         uses: microsoft/setup-msbuild@v2
@@ -138,9 +165,10 @@ jobs:
           $sha = (git rev-parse --short HEAD).Trim()
 
           try {
+            # fullport usa uma tag propria para nao sobrescrever o appx da main.
             $release = Invoke-RestMethod -Headers $headers `
-              -Uri "$api/releases/tags/latest"
-            Write-Host "Release existente reaproveitada"
+              -Uri "$api/releases/tags/port"
+            Write-Host "Release port existente reaproveitada"
 
             # Atualiza o corpo da release para mostrar o build atual.
             $patchBody = @{ body = "Build automatico: $sha" } | ConvertTo-Json
@@ -154,11 +182,11 @@ jobs:
               Write-Host "Asset antigo removido: $($old.name)"
             }
           } catch {
-            Write-Host "Criando release latest"
+            Write-Host "Criando release port"
 
             $body = @{
-              tag_name = "latest"
-              name = "LumiaValley ARM (latest)"
+              tag_name = "port"
+              name = "LumiaValleyV1.1 ARM (port - pasta do jogo externa)"
               body = "Build automatico: $sha"
               draft = $false
               prerelease = $false
@@ -185,8 +213,8 @@ jobs:
             $uri = $uploadUrl + "?name=" + $name
             Invoke-RestMethod -Method Post -Headers $uploadHeaders `
               -Uri $uri `
-              -Body ([IO.File]::ReadAllBytes($p.FullName)) | Out-Null
+              -InFile $p.FullName | Out-Null
             Write-Host "Publicado: $($p.Name)"
           }
 
-          Write-Host "Appx publicado (privado): https://github.com/$assetsRepo/releases/tag/latest"
+          Write-Host "Appx publicado (privado): https://github.com/$assetsRepo/releases/tag/port"
