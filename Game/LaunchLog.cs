@@ -74,6 +74,24 @@ namespace LumiaValley.Game
             }
         }
 
+        public static void Clear()
+        {
+            try
+            {
+                lock (Buf)
+                {
+                    Buf.Clear();
+                }
+                var path = System.IO.Path.Combine(
+                    Windows.Storage.ApplicationData.Current.LocalFolder.Path,
+                    "launch.log");
+                if (System.IO.File.Exists(path))
+                    System.IO.File.WriteAllText(path, "");
+                Write("Log limpo.");
+            }
+            catch (Exception) { }
+        }
+
         public static void FlushToDisk()
         {
             try

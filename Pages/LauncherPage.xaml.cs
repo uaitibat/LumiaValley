@@ -25,6 +25,13 @@ namespace LumiaValley.Pages
         private void Refresh()
         {
             LogText.Text = LaunchLog.Text;
+            LogScroll.ChangeView(null, LogScroll.ScrollableHeight, null, false);
+        }
+
+        private void Clear_Click(object sender, RoutedEventArgs e)
+        {
+            LaunchLog.Clear();
+            Refresh();
         }
 
         private void Start_Click(object sender, RoutedEventArgs e)
