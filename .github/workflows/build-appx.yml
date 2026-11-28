@@ -72,6 +72,13 @@ jobs:
 
           New-Item -ItemType Directory -Force Content | Out-Null
           Expand-Archive -Path $zip -DestinationPath Content -Force
+          # O zip do Content real tem "Content/" como raiz interna, o que
+          # gera Content/Content/. Normaliza para Content/Maps, Content/Data...
+          if (Test-Path "Content\Content") {
+            Write-Host "Normalizando Content/Content -> Content/"
+            Copy-Item "Content\Content\*" "Content" -Recurse -Force
+            Remove-Item "Content\Content" -Recurse -Force
+          }
           Write-Host "Assets extraidos: $((Get-ChildItem Content -Recurse -File).Count) arquivos (Content real da Steam)"
 
       - name: Configurar MSBuild
