@@ -6,14 +6,15 @@ using Windows.Storage;
 namespace LumiaValley.Game
 {
     /// <summary>
-    /// ContentManager "tipo port": le os XNB da StorageFolder escolhida pelo
-    /// usuario (cartao SD). A restauracao e LAZY e usa APIs assincronas do
-    /// StorageFolder — File.Exists/File.OpenRead NAO enxergam o caminho
-    /// concedido pelo FutureAccessList no sandbox UWP.
+    /// ContentManager "tipo port". O Content real (515 MB) esta EMBUTIDO no
+    /// appx, entao a prioridade e: appx -> LocalFolder -> pasta externa.
+    /// Antes a ordem era invertida e restos de picker/previous installs
+    /// faziam o jogo carregar assets errados (tela azul-clara).
     /// </summary>
     public sealed class PortContentManager : ContentManager
     {
         private const string TokenKey = "LumiaValley.GameFolderToken";
+        private const string CountKey = "LumiaValley.AssetCount";
         private StorageFolder _folder;
         private bool _folderResolved;
 
@@ -26,9 +27,6 @@ namespace LumiaValley.Game
         {
             get { ResolveFolder(); return _folder != null; }
         }
-
-        // Cache persistido da ultima validacao da pasta (quantos XNB achou).
-        private const string CountKey = "LumiaValley.AssetCount";
 
         public static int GetAssetCount()
         {
@@ -46,6 +44,13 @@ namespace LumiaValley.Game
         public static void SetAssetCount(int count)
         {
             Windows.Storage.ApplicationData.Current.LocalSettings.Values[CountKey] = count;
+        }
+
+        public static void SaveFolder(StorageFolder folder)
+        {
+            var token = Windows.Storage.AccessCache.StorageApplicationPermissions
+                .FutureAccessList.Add(folder);
+            Windows.Storage.ApplicationData.Current.LocalSettings.Values[TokenKey] = token;
         }
 
         private void ResolveFolder()
@@ -71,40 +76,19 @@ namespace LumiaValley.Game
             }
         }
 
-        public static void SaveFolder(StorageFolder folder)
-        {
-            var token = Windows.Storage.AccessCache.StorageApplicationPermissions
-                .FutureAccessList.Add(folder);
-            Windows.Storage.ApplicationData.Current.LocalSettings.Values[TokenKey] = token;
-        }
-
-        private static StorageFile TryGetFile(StorageFolder folder, string relative)
-        {
-            try
-            {
-                return folder.GetFileAsync(relative).AsTask().GetAwaiter().GetResult();
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
-        private static StorageFolder TryGetFolder(StorageFolder folder, string name)
-        {
-            try
-            {
-                return folder.GetFolderAsync(name).AsTask().GetAwaiter().GetResult();
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
         protected override Stream OpenStream(string assetName)
         {
-            // 1) LocalFolder do app (copiado pelo picker) — sempre legivel.
+            // 1) Content EMBUTIDO no appx (sempre correto).
+            try
+            {
+                return base.OpenStream(assetName);
+            }
+            catch (Exception)
+            {
+                // Nao estava no appx: tenta as fontes externas abaixo.
+            }
+
+            // 2) LocalFolder (copiado pelo picker, se usado).
             try
             {
                 var local = Windows.Storage.ApplicationData.Current.LocalFolder;
@@ -121,30 +105,29 @@ namespace LumiaValley.Game
             }
             catch (Exception) { }
 
+            // 3) Pasta externa escolhida no picker.
             ResolveFolder();
             if (_folder != null)
             {
                 try
                 {
-                    // O usuario pode ter escolhido o proprio Content/ ou a
-                    // pasta PAI dele. Tentamos as duas formas.
                     var relative = assetName.Replace('/', '\\') + ".xnb";
-                    var file = TryGetFile(_folder, relative);
+                    var file = _folder.GetFileAsync(relative).AsTask().GetAwaiter().GetResult();
                     if (file == null)
                     {
-                        var contentFolder = TryGetFolder(_folder, "Content");
+                        var contentFolder = _folder.GetFolderAsync("Content").AsTask()
+                            .GetAwaiter().GetResult();
                         if (contentFolder != null)
-                            file = TryGetFile(contentFolder, relative);
+                            file = contentFolder.GetFileAsync(relative).AsTask()
+                                .GetAwaiter().GetResult();
                     }
                     if (file != null)
                         return file.OpenStreamForReadAsync().GetAwaiter().GetResult();
                 }
-                catch (Exception)
-                {
-                    // Asset ausente na pasta: cai para o embutido.
-                }
+                catch (Exception) { }
             }
-            return base.OpenStream(assetName);
+
+            throw new FileNotFoundException("Asset nao encontrado: " + assetName);
         }
     }
 }
