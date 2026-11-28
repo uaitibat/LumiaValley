@@ -36,6 +36,7 @@ public class GameRunner : Game
 
 	public GameRunner()
 	{
+		LumiaValley.Game.LaunchLog.Write("GameRunner ctor inicio");
 		// Original: Program.Main fazia "GameRunner.instance = gameRunner"
 		// depois do new. O XamlGame nao faz isso, entao setamos aqui para
 		// Game1() -> GameRunner.instance.GetNewInstanceID() nao dar NRE.
@@ -220,8 +221,11 @@ public class GameRunner : Game
 
 	protected override void Initialize()
 	{
+		LumiaValley.Game.LaunchLog.Write("GameRunner.Initialize inicio");
 		DebugTools.BeforeGameInitialize(this);
+		LumiaValley.Game.LaunchLog.Write("GameRunner: BeforeGameInitialize OK");
 		InitializeMainInstance();
+		LumiaValley.Game.LaunchLog.Write("GameRunner: InitializeMainInstance OK");
 		base.IsFixedTimeStep = true;
 		base.Initialize();
 		Game1.graphics.SynchronizeWithVerticalRetrace = true;
@@ -332,6 +336,7 @@ public class GameRunner : Game
 
 	protected override void LoadContent()
 	{
+		LumiaValley.Game.LaunchLog.Write("GameRunner.LoadContent inicio");
 		Game1.graphics.PreferredBackBufferWidth = 1280;
 		Game1.graphics.PreferredBackBufferHeight = 720;
 		Game1.graphics.ApplyChanges();

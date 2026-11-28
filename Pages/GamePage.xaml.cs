@@ -18,9 +18,11 @@ namespace LumiaValley.Pages
             try
             {
                 Log("Criando GameRunner...");
+                LumiaValley.Game.LaunchLog.Write("GamePage: antes de XamlGame.Create");
                 _game = XamlGame<StardewValley.GameRunner>.Create(
                     string.Empty, Window.Current.CoreWindow, SwapPanel);
                 Log("GameRunner criado.");
+                LumiaValley.Game.LaunchLog.Write("GamePage: GameRunner criado");
             }
             catch (Exception ex)
             {
