@@ -80,18 +80,14 @@ namespace LumiaValley.Game.Screens
             // Botao "Pasta do jogo".
             if (p.X > 40 && p.X < w - 40 && p.Y > 880 && p.Y < 980)
             {
-                if (busy)
-                    return this;
-                busy = true;
-                status = "Escolha a pasta do jogo no seletor...";
+                status = "Seletor de pasta (opcional) - o jogo ja funciona sem ele.";
                 _ = PickAndReport();
             }
-            // Botao "Iniciar" so com pasta validada.
+            // Botao "Iniciar": SEMPRE disponivel. O Content esta embutido
+            // no appx, entao nao depende do seletor de pasta externa.
             else if (p.X > 40 && p.X < w - 40 && p.Y > 1010 && p.Y < 1110)
             {
-                if (PortContentManager.GetAssetCount() > 0)
-                    return new TitleScreen();
-                status = "Escolha primeiro a pasta do jogo.";
+                return new TitleScreen();
             }
             return this;
         }
@@ -104,7 +100,6 @@ namespace LumiaValley.Game.Screens
             status = ok
                 ? "Pasta do jogo: " + count + " XNB copiados. Pode iniciar. " + diag
                 : "Pasta invalida. " + diag;
-            busy = false; // so libera o botao DEPOIS de escrever o resultado
         }
 
         public void Draw(SpriteBatch batch)
