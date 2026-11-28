@@ -11,15 +11,37 @@ namespace LumiaValley
     {
         public App()
         {
-            // Log MINIMO no construtor: sem isso nao sabemos se o App inicia.
-            Mark("App ctor");
             InitializeComponent();
             Suspending += OnSuspending;
+            UnhandledException += (sender, e) =>
+            {
+                // Mostra o erro na tela para fotografia via MTP/camera.
+                try
+                {
+                    var panel = new StackPanel
+                    {
+                        Background = new Windows.UI.Xaml.Media.SolidColorBrush(
+                            Windows.UI.Colors.Black)
+                    };
+                    var text = new TextBlock
+                    {
+                        Text = "CRASH LumiaValley\n" + e.Exception,
+                        Foreground = new Windows.UI.Xaml.Media.SolidColorBrush(
+                            Windows.UI.Colors.White),
+                        TextWrapping = Windows.UI.Xaml.TextWrapping.Wrap,
+                        FontSize = 14,
+                        Margin = new Windows.UI.Xaml.Thickness(12)
+                    };
+                    panel.Children.Add(text);
+                    Window.Current.Content = panel;
+                    Window.Current.Activate();
+                }
+                catch (Exception) { }
+            };
         }
 
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
-            Mark("OnLaunched");
             var rootFrame = Window.Current.Content as Frame;
             if (rootFrame == null)
             {
@@ -30,34 +52,14 @@ namespace LumiaValley
             if (e.PrelaunchActivated == false)
             {
                 if (rootFrame.Content == null)
-                {
-                    Mark("Navegando para GamePage");
                     rootFrame.Navigate(typeof(Pages.GamePage), e.Arguments);
-                    Mark("Navegou");
-                }
                 Window.Current.Activate();
-                Mark("Ativado");
             }
-        }
-
-        internal static void Mark(string text)
-        {
-            try
-            {
-                var file = Windows.Storage.KnownFolders.DocumentsLibrary
-                    .CreateFileAsync("LumiaValley-crash.log",
-                        Windows.Storage.CreationCollisionOption.OpenIfExists)
-                    .AsTask().GetAwaiter().GetResult();
-                Windows.Storage.FileIO.AppendTextAsync(file,
-                    DateTime.Now.ToString("o") + " " + text + "\n")
-                    .AsTask().GetAwaiter().GetResult();
-            }
-            catch (Exception) { }
         }
 
         void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
         {
-            Mark("NAV FALHOU: " + e.Exception);
+            throw new Exception("Falha ao carregar a pagina " + e.SourcePageType.FullName);
         }
 
         private void OnSuspending(object sender, SuspendingEventArgs e)
