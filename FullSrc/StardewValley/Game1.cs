@@ -2676,8 +2676,20 @@ public class Game1 : InstanceGame
 			wind = soundBank.GetCue("wind");
 			chargeUpSound = soundBank.GetCue("toolCharge");
 		}
-		int width = graphics.GraphicsDevice.Viewport.Width;
-		int height = graphics.GraphicsDevice.Viewport.Height;
+		// Diagnostico 1:1 — no UWP o GraphicsDevice pode nao estar pronto
+		// neste ponto; cai para o viewport virtual 1280x720.
+		int width;
+		int height;
+		try
+		{
+			width = graphics.GraphicsDevice.Viewport.Width;
+			height = graphics.GraphicsDevice.Viewport.Height;
+		}
+		catch (Exception)
+		{
+			width = 1280;
+			height = 720;
+		}
 		screen = new RenderTarget2D(graphics.GraphicsDevice, width, height, mipMap: false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
 		allocateLightmap(width, height);
 		AmbientLocationSounds.InitShared();

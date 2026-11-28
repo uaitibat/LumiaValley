@@ -36,6 +36,10 @@ public class GameRunner : Game
 
 	public GameRunner()
 	{
+		// Original: Program.Main fazia "GameRunner.instance = gameRunner"
+		// depois do new. O XamlGame nao faz isso, entao setamos aqui para
+		// Game1() -> GameRunner.instance.GetNewInstanceID() nao dar NRE.
+		instance = this;
 		Program.sdk.EarlyInitialize();
 		if (!Program.releaseBuild)
 		{

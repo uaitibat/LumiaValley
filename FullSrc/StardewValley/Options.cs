@@ -694,8 +694,27 @@ public class Options
 		ambientVolumeLevel = 0.75f;
 		footstepVolumeLevel = 0.9f;
 		soundVolumeLevel = 1f;
-		preferredResolutionX = Game1.graphics.GraphicsDevice.Adapter.SupportedDisplayModes.Last().Width;
-		preferredResolutionY = Game1.graphics.GraphicsDevice.Adapter.SupportedDisplayModes.Last().Height;
+		// UWP: SupportedDisplayModes pode estar vazio durante Initialize.
+		// Original usa o ultimo modo; aqui cai para 1280x720 (viewport alvo).
+		try
+		{
+			var modes = Game1.graphics.GraphicsDevice.Adapter.SupportedDisplayModes;
+			if (modes != null && modes.Count() > 0)
+			{
+				preferredResolutionX = modes.Last().Width;
+				preferredResolutionY = modes.Last().Height;
+			}
+			else
+			{
+				preferredResolutionX = 1280;
+				preferredResolutionY = 720;
+			}
+		}
+		catch (Exception)
+		{
+			preferredResolutionX = 1280;
+			preferredResolutionY = 720;
+		}
 		vsyncEnabled = true;
 		GameRunner.instance.OnWindowSizeChange(null, null);
 		snappyMenus = true;
