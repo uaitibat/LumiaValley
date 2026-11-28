@@ -16,6 +16,23 @@ namespace LumiaValley
         {
             InitializeComponent();
             Suspending += OnSuspending;
+            // Loga qualquer excecao fatal no LocalFolder para diagnostico
+            // pelo MTP (o app fecha antes de podermos ver a tela).
+            UnhandledException += (sender, args) =>
+            {
+                try
+                {
+                    var text = DateTime.Now.ToString("o") + "\n" +
+                               args.Exception.ToString() + "\n";
+                    var file = Windows.Storage.ApplicationData.Current.LocalFolder
+                        .CreateFileAsync("crash.log",
+                            Windows.Storage.CreationCollisionOption.AppendToDefault)
+                        .AsTask().GetAwaiter().GetResult();
+                    Windows.Storage.FileIO.AppendTextAsync(file, text)
+                        .AsTask().GetAwaiter().GetResult();
+                }
+                catch (Exception) { }
+            };
         }
 
         protected override void OnLaunched(LaunchActivatedEventArgs e)
