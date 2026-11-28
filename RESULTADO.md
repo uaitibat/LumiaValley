@@ -1,5 +1,15 @@
 # Experimento: bulk port 1:1 do Stardew 1.5.6
 
+## Launcher V1.1 e Content real (28/11/2026)
+
+O app virou launcher vertical (`LumiaValleyV1.1`) com a foto do usuario de
+fundo e dois botoes: "Pasta do jogo" (opcional) e "Iniciar jogo". O `Content/`
+voltou a ser embutido no appx, mas agora vem do `Content.zip` da release
+`content` do cofre privado — o **Content real da Steam** (515 MB / 3318
+arquivos), e nao mais o Content reduzido (14 MB / 1213 arquivos) do port
+incremental. O workflow usa `Expand-Archive` e faz upload do appx com
+`-InFile` (streaming) para nao estourar memoria com o appx grande.
+
 ## REGRA DE OURO (usuario, 27/11/2026)
 
 **Sempre usar o codigo original 1:1 como escopo antes de qualquer alteracao.**
