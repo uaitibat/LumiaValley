@@ -72,7 +72,7 @@ jobs:
 
           New-Item -ItemType Directory -Force Content | Out-Null
           Expand-Archive -Path $zip -DestinationPath Content -Force
-          Write-Host "Assets extraidos: $((Get-ChildItem Content -Recurse -File).Count) arquivos"
+          Write-Host "Assets extraidos: $((Get-ChildItem Content -Recurse -File).Count) arquivos (Content real da Steam)"
 
       - name: Configurar MSBuild
         uses: microsoft/setup-msbuild@v2
