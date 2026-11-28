@@ -27,7 +27,7 @@ namespace LumiaValley
                     // Documents e visivel pelo MTP (LocalFolder nao aparece).
                     var docs = Windows.Storage.KnownFolders.DocumentsLibrary;
                     var file = docs.CreateFileAsync("LumiaValley-crash.log",
-                            Windows.Storage.CreationCollisionOption.AppendToDefault)
+                            Windows.Storage.CreationCollisionOption.OpenIfExists)
                         .AsTask().GetAwaiter().GetResult();
                     Windows.Storage.FileIO.AppendTextAsync(file, text)
                         .AsTask().GetAwaiter().GetResult();
