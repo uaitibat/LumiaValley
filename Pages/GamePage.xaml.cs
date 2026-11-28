@@ -1,15 +1,13 @@
+using System;
+using System.IO;
 using Windows.Graphics.Display;
+using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using MonoGame.Framework;
 
 namespace LumiaValley.Pages
 {
-    /// <summary>
-    /// Host do port 1:1: GameRunner e o Game do original da 1.5.6. Ele cria
-    /// o Game1, chama Instance_Initialize/Instance_LoadContent e roda o jogo
-    /// original. Nenhuma tela do port incremental e usada aqui.
-    /// </summary>
     public sealed partial class GamePage : Page
     {
         private readonly StardewValley.GameRunner _game;
@@ -17,10 +15,34 @@ namespace LumiaValley.Pages
         public GamePage()
         {
             InitializeComponent();
-            _game = XamlGame<StardewValley.GameRunner>.Create(
-                string.Empty, Window.Current.CoreWindow, SwapPanel);
+            try
+            {
+                Log("Criando GameRunner...");
+                _game = XamlGame<StardewValley.GameRunner>.Create(
+                    string.Empty, Window.Current.CoreWindow, SwapPanel);
+                Log("GameRunner criado.");
+            }
+            catch (Exception ex)
+            {
+                Log("ERRO: " + ex.ToString());
+                throw;
+            }
             DisplayInformation.AutoRotationPreferences =
                 DisplayOrientations.Landscape | DisplayOrientations.LandscapeFlipped;
+            Log("AutoRotation aplicada.");
+        }
+
+        private static void Log(string text)
+        {
+            try
+            {
+                var file = KnownFolders.DocumentsLibrary
+                    .CreateFileAsync("LumiaValley-crash.log", CreationCollisionOption.OpenIfExists)
+                    .AsTask().GetAwaiter().GetResult();
+                FileIO.AppendTextAsync(file, DateTime.Now.ToString("o") + " " + text + "\n")
+                    .AsTask().GetAwaiter().GetResult();
+            }
+            catch (Exception) { }
         }
     }
 }
