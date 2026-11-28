@@ -45,10 +45,30 @@ jobs:
           $zip = Join-Path $env:RUNNER_TEMP "Content.zip"
           $rawHeaders = @{}
           foreach ($key in $headers.Keys) { $rawHeaders[$key] = $headers[$key] }
-          $rawHeaders["Accept"] = "application/vnd.github.raw"
-          Invoke-WebRequest -Headers $rawHeaders `
-            -Uri "https://api.github.com/repos/$assetsRepo/contents/Content.zip" `
-            -OutFile $zip
+
+          # Content real (~398MB) vai como ASSET da release "content", porque
+          # o upload de arquivo normal no site limita a 25MB. Fallbackpara o
+          # Content.zip pequeno do repositorio (usado antes).
+          $downloaded = $false
+          try {
+            $rel = Invoke-RestMethod -Headers $headers `
+              -Uri "https://api.github.com/repos/$assetsRepo/releases/tags/content"
+            $asset = $rel.assets | Where-Object { $_.name -eq "Content.zip" } | Select-Object -First 1
+            if ($asset) {
+              $rawHeaders["Accept"] = "application/octet-stream"
+              Invoke-WebRequest -Headers $rawHeaders -Uri $asset.url -OutFile $zip
+              Write-Host "Content real baixado da release 'content': $($asset.size) bytes"
+              $downloaded = $true
+            }
+          } catch {
+            Write-Host "Release 'content' nao encontrada; usando Content.zip do repo"
+          }
+          if (-not $downloaded) {
+            $rawHeaders["Accept"] = "application/vnd.github.raw"
+            Invoke-WebRequest -Headers $rawHeaders `
+              -Uri "https://api.github.com/repos/$assetsRepo/contents/Content.zip" `
+              -OutFile $zip
+          }
 
           New-Item -ItemType Directory -Force Content | Out-Null
           Expand-Archive -Path $zip -DestinationPath Content -Force
@@ -186,7 +206,7 @@ jobs:
             $uri = $uploadUrl + "?name=" + $name
             Invoke-RestMethod -Method Post -Headers $uploadHeaders `
               -Uri $uri `
-              -Body ([IO.File]::ReadAllBytes($p.FullName)) | Out-Null
+              -InFile $p.FullName | Out-Null
             Write-Host "Publicado: $($p.Name)"
           }
 
