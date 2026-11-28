@@ -24,8 +24,16 @@ namespace LumiaValley.Pages
 
         private void Refresh()
         {
+            if (LogText == null) return;
             LogText.Text = LaunchLog.Text;
-            LogScroll.ChangeView(null, LogScroll.ScrollableHeight, null, false);
+            // Scroll so ao final SE o ScrollViewer ja estiver pronto. No
+            // construtor da pagina ele ainda e null e derrubava o app.
+            try
+            {
+                if (LogScroll != null && LogScroll.ScrollableHeight > 0)
+                    LogScroll.ChangeView(null, LogScroll.ScrollableHeight, null, false);
+            }
+            catch (Exception) { }
         }
 
         private void Clear_Click(object sender, RoutedEventArgs e)
