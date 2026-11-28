@@ -26,12 +26,9 @@ namespace LumiaValley.Game
             };
             picker.FileTypeFilter.Add("*");
 
-            StorageFolder picked = null;
-            var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
-            await dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
-            {
-                picked = await picker.PickSingleFolderAsync();
-            });
+            // Chamar o picker DIRETO (sem RunAsync aninhado): o RunAsync fazia
+            // o seletor abrir fora do contexto da pagina e retornar null.
+            var picked = await picker.PickSingleFolderAsync();
 
             if (picked == null)
             {
