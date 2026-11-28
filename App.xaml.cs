@@ -68,6 +68,8 @@ namespace LumiaValley
 
         private void OnSuspending(object sender, SuspendingEventArgs e)
         {
+            LaunchLog.Write("App suspending");
+            LaunchLog.FlushToDisk();
             var deferral = e.SuspendingOperation.GetDeferral();
             deferral.Complete();
         }

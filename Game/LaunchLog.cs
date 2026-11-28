@@ -1,62 +1,73 @@
 using System;
-using System.IO;
 using System.Text;
-using Windows.Storage;
 
 namespace LumiaValley.Game
 {
     /// <summary>
-    /// Log persistido em arquivo e mostrado no launcher. Usa System.IO direto
-    /// no caminho do LocalFolder (sincrono e confiavel no UWP), para que o
-    /// log da sessao que fechou apareça na proxima abertura.
+    /// Log em memoria, SEM I/O no construtor estatico (isso fazia o app
+    /// fechar na hora no boot). O log da sessao anterior e carregado
+    /// explicitamente pelo LauncherPage, depois que a tela ja esta up.
     /// </summary>
     public static class LaunchLog
     {
         private static readonly StringBuilder Buf = new StringBuilder();
-        private static readonly string Path;
+        public static event Action Changed;
 
-        static LaunchLog()
+        public static string Text
         {
-            try
+            get
             {
-                Path = System.IO.Path.Combine(
-                    ApplicationData.Current.LocalFolder.Path, "launch.log");
-                if (File.Exists(Path))
-                {
-                    Buf.AppendLine("=== sessao anterior ===");
-                    Buf.Append(File.ReadAllText(Path));
-                    Buf.AppendLine("=== nova sessao ===");
-                }
-            }
-            catch (Exception)
-            {
+                lock (Buf) return Buf.ToString();
             }
         }
-
-        public static string Text { get { return Buf.ToString(); } }
-        public static event Action Changed;
 
         public static void Write(string line)
         {
-            var text = DateTime.Now.ToString("HH:mm:ss") + " " + line + Environment.NewLine;
-            Buf.Append(text);
-            System.Diagnostics.Debug.WriteLine(text);
-            Flush(text);
-            Changed?.Invoke();
-        }
-
-        private static void Flush(string text)
-        {
-            if (string.IsNullOrEmpty(Path)) return;
             try
             {
-                using (var stream = new FileStream(Path, FileMode.Append,
-                    FileAccess.Write, FileShare.ReadWrite))
-                using (var writer = new StreamWriter(stream))
+                lock (Buf)
                 {
-                    writer.Write(text);
-                    writer.Flush();
+                    Buf.AppendLine(DateTime.Now.ToString("HH:mm:ss") + " " + line);
                 }
+                System.Diagnostics.Debug.WriteLine(line);
+            }
+            catch (Exception) { }
+            try { Changed?.Invoke(); } catch (Exception) { }
+        }
+
+        /// <summary>Chamado pelo LauncherPage DEPOIS da tela existir.</summary>
+        public static void LoadPreviousSession()
+        {
+            try
+            {
+                var path = System.IO.Path.Combine(
+                    Windows.Storage.ApplicationData.Current.LocalFolder.Path,
+                    "launch.log");
+                if (System.IO.File.Exists(path))
+                {
+                    var text = System.IO.File.ReadAllText(path);
+                    lock (Buf)
+                    {
+                        Buf.Insert(0, "=== sessao anterior ===\n" + text +
+                            "\n=== nova sessao ===\n");
+                    }
+                    Write("Log da sessao anterior carregado.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Write("Nao foi possivel carregar log anterior: " + ex.Message);
+            }
+        }
+
+        public static void FlushToDisk()
+        {
+            try
+            {
+                var path = System.IO.Path.Combine(
+                    Windows.Storage.ApplicationData.Current.LocalFolder.Path,
+                    "launch.log");
+                System.IO.File.WriteAllText(path, Text);
             }
             catch (Exception) { }
         }

@@ -13,10 +13,17 @@ namespace LumiaValley.Pages
         {
             InitializeComponent();
             LaunchLog.Changed += Refresh;
+            LaunchLog.LoadPreviousSession();
             Refresh();
             LaunchLog.Write("Launcher pronto.");
             LaunchLog.Write("Appx: " + Windows.ApplicationModel.Package.Current.Id.Name +
                 " " + Windows.ApplicationModel.Package.Current.Id.Version);
+
+            // Salva o log a cada 2s para sobreviver ao fechamento do app.
+            var timer = new Windows.UI.Xaml.DispatcherTimer();
+            timer.Interval = TimeSpan.FromSeconds(2);
+            timer.Tick += (s, e) => LaunchLog.FlushToDisk();
+            timer.Start();
         }
 
         private void Refresh()
