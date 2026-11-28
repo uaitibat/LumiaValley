@@ -12,6 +12,14 @@ namespace LumiaValley
     {
         public App()
         {
+            // Marker ANTES de tudo: se aparecer no Documents, o App inicia.
+            try
+            {
+                var p = System.IO.Path.Combine(
+                    Windows.Storage.ApplicationData.Current.LocalFolder.Path, "boot.txt");
+                System.IO.File.WriteAllText(p, "App ctor " + DateTime.Now.ToString("o"));
+            }
+            catch (Exception) { }
             InitializeComponent();
             Suspending += OnSuspending;
             UnhandledException += (sender, e) =>
